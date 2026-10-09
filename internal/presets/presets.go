@@ -1,6 +1,6 @@
 package presets
 
-import "ffmpegstudio/internal/core"
+import "kompeg/internal/core"
 
 func Builtin() []core.Preset {
 	balanced := core.DefaultSettings()

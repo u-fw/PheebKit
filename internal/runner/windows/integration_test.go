@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
-	"ffmpegstudio/internal/compiler"
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/compiler"
+	"kompeg/internal/core"
 )
 
-// Run explicitly: $env:FFSTUDIO_INTEGRATION='1'; go test ./internal/runner/windows -run Integration -v
+// Run explicitly: $env:KOMPEG_INTEGRATION='1'; go test ./internal/runner/windows -run Integration -v
 func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
-	if os.Getenv("FFSTUDIO_INTEGRATION") != "1" {
-		t.Skip("set FFSTUDIO_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
+	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
+		t.Skip("set KOMPEG_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
 	}
-	runner := New(os.Getenv("FFSTUDIO_FFMPEG"), os.Getenv("FFSTUDIO_FFPROBE"))
+	runner := New(os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE"))
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 	dir := t.TempDir()
@@ -130,7 +130,7 @@ func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, entry := range entries {
-			if strings.HasPrefix(entry.Name(), ".ffstudio-") {
+			if strings.HasPrefix(entry.Name(), ".kompeg-") {
 				t.Fatalf("cancellation leaked scratch directory %s", entry.Name())
 			}
 		}

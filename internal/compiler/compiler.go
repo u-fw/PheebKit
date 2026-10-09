@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"ffmpegstudio/internal/capabilities"
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/capabilities"
+	"kompeg/internal/core"
 )
 
 type encoderPolicy struct {

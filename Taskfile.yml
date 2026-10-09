@@ -1,10 +1,8 @@
 version: '3'
 vars:
-  APP_NAME: ffmpegstudio
+  APP_NAME: kompeg
   BIN_DIR: bin
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
-includes:
-  android: ./build/android/Taskfile.yml
 tasks:
   bindings:
     cmds:
@@ -14,23 +12,31 @@ tasks:
     cmds:
       - task: bindings
       - task: build:frontend
-      - wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out ffmpegstudio.syso
-      - go build -tags production -trimpath -ldflags="-s -w -H windowsgui" -o bin/ffmpegstudio.exe .
+      - wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out kompeg.syso
+      - go build -tags production -trimpath -ldflags="-s -w -H windowsgui" -o bin/kompeg.exe .
   build:frontend:
     dir: frontend
     cmds:
       - npm ci
       - npm run build
+  build:dev:
+    cmds:
+      - task: bindings
+      - wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out kompeg.syso
+      - 'go build {{if .EXTRA_TAGS}}-tags {{.EXTRA_TAGS}}{{end}} -buildvcs=false -gcflags=all="-l" -o bin/kompeg-dev.exe .'
   dev:frontend:
     dir: frontend
     cmds:
       - npm run dev -- --port {{.VITE_PORT}} --strictPort
   run:
     cmds:
-      - ./bin/ffmpegstudio.exe
+      - ./bin/kompeg.exe
+  run:dev:
+    cmds:
+      - ./bin/kompeg-dev.exe
   build:server:
     cmds:
-      - go build -tags server -o bin/ffmpegstudio-server.exe .
+      - go build -tags server -o bin/kompeg-server.exe .
   test:
     cmds:
       - go test ./...

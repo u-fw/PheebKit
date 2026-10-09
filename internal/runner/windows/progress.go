@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 func readProgress(reader io.Reader, duration float64, emit func(core.Progress)) error {

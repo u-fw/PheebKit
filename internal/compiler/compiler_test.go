@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 func fixture(t *testing.T) (core.Project, core.Media, core.Capabilities) {

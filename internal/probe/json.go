@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 type document struct {

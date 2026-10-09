@@ -1,0 +1,12 @@
+version: '3'
+tasks:
+  go:mod:tidy:
+    run: once
+    cmds:
+      - go mod tidy
+  build:frontend:
+    dir: frontend
+    cmds:
+      - wails3 generate bindings -ts -i -clean=true
+      - npm ci
+      - npm run build

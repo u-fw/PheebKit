@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 const maxProjectSize = 1024 * 1024

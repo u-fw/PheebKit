@@ -4,7 +4,7 @@ package android
 import (
 	"context"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 type Runner struct{}

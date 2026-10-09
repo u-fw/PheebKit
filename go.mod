@@ -1,4 +1,4 @@
-module ffmpegstudio
+module kompeg
 
 go 1.25.0
 

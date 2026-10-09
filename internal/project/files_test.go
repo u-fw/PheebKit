@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 func TestRoundTripAndFutureSchemaRejection(t *testing.T) {

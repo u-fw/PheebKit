@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 func TestProgressParsesMachineProtocolAndMicroseconds(t *testing.T) {

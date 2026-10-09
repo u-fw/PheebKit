@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 type testRunner struct {

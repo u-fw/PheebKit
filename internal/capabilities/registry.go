@@ -4,7 +4,7 @@ package capabilities
 import (
 	"strings"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 type Definition struct {

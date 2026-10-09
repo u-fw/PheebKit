@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"ffmpegstudio/internal/core"
+	"kompeg/internal/core"
 )
 
 func TestParsePreservesTrackMetadataAndRationalFrameRate(t *testing.T) {
