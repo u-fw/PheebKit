@@ -3,6 +3,7 @@
 package windows
 
 import (
+	"path/filepath"
 	"strings"
 	"syscall"
 )
@@ -22,6 +23,9 @@ func publishFile(from, to string) error {
 }
 
 func extendedPath(path string) string {
+	// Extended Win32 paths disable normalization, so forward slashes and dot
+	// components must be normalized before applying the long-path prefix.
+	path = filepath.Clean(path)
 	if strings.HasPrefix(path, `\\?\`) {
 		return path
 	}
