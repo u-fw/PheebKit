@@ -46,6 +46,7 @@ func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
 	project := core.Project{SchemaVersion: 1, ID: "integration", Inputs: []core.Source{input},
 		Output: core.Source{URI: filepath.Join(dir, "输出 ' $ &.mp4"), Kind: core.SourceLocalFile}, Settings: core.DefaultSettings()}
 	project.Settings.Quality, project.Settings.Preset = 28, "fast"
+	project.Settings.Encoder = "cpu"
 	plan, err := compiler.Compile(project, media, caps)
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +76,35 @@ func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
 		t.Fatalf("progress/stderr separation failed: progress=%d log=%d", progressCount.Load(), logCount.Load())
 	}
 	t.Logf("FFmpeg=%s; HEVC input=%d output=%d saved=%.2f%% elapsed=%.2fs speed=%.2fx updates=%d logs=%d", runner.FFmpeg, result.InputSizeBytes, result.OutputSizeBytes, result.SavedPercent, result.ElapsedSeconds, result.AverageSpeed, progressCount.Load(), logCount.Load())
+
+	t.Run("CPU preserves genuine 10-bit input", func(t *testing.T) {
+		tenBitSource := core.Source{URI: filepath.Join(dir, "CPU 10-bit input.mp4"), Kind: core.SourceLocalFile}
+		generate10 := exec.CommandContext(ctx, runner.FFmpeg, "-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30:duration=2", "-c:v", "libx265", "-preset", "ultrafast", "-x265-params", "log-level=error", "-crf", "18", "-pix_fmt", "yuv420p10le", tenBitSource.URI)
+		hideProcess(generate10)
+		if data, err := generate10.CombinedOutput(); err != nil {
+			t.Fatalf("generate genuine 10-bit fixture: %v\n%s", err, data)
+		}
+		tenBitMedia, err := runner.Probe(ctx, tenBitSource)
+		if err != nil || len(tenBitMedia.Streams) != 1 || tenBitMedia.Streams[0].BitDepth != 10 {
+			t.Fatalf("fixture is not genuine 10-bit: %+v %v", tenBitMedia, err)
+		}
+		tenBitProject := project
+		tenBitProject.Inputs = []core.Source{tenBitSource}
+		tenBitProject.Output = core.Source{URI: filepath.Join(dir, "CPU 10-bit output.mp4"), Kind: core.SourceLocalFile}
+		tenBitProject.Settings.Resolution = 720
+		tenBitPlan, err := compiler.Compile(tenBitProject, tenBitMedia, caps)
+		if err != nil {
+			t.Fatal(err)
+		}
+		tenBitPlan.JobID = "integration-cpu-ten-bit"
+		if _, err := runner.Start(ctx, tenBitPlan, core.Callbacks{}); err != nil {
+			t.Fatal(err)
+		}
+		encoded, err := runner.Probe(ctx, tenBitProject.Output)
+		if err != nil || len(encoded.Streams) != 1 || encoded.Streams[0].BitDepth != 10 || encoded.Streams[0].Height != 720 || encoded.Streams[0].CodecName != "hevc" {
+			t.Fatalf("CPU conversion lost depth or failed resize: %+v %v", encoded, err)
+		}
+	})
 
 	t.Run("cancel real process", func(t *testing.T) {
 		project.Output.URI = filepath.Join(dir, "cancelled output.mp4")

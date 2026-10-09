@@ -74,6 +74,10 @@ func (r *Runner) Capabilities(ctx context.Context) (core.Capabilities, error) {
 		return core.Capabilities{}, fmt.Errorf("scan FFmpeg hardware backends: %w", err)
 	}
 	parsed := capabilities.ParseEncoders(string(encoders))
+	qualified := r.qualifyVideoEncoders(ctx, parsed)
+	if err := ctx.Err(); err != nil {
+		return core.Capabilities{}, fmt.Errorf("scan GPU encoders: %w", err)
+	}
 	hardware := make([]string, 0)
 	for _, line := range strings.Split(string(hwaccels), "\n") {
 		line = strings.TrimSpace(line)
@@ -83,7 +87,8 @@ func (r *Runner) Capabilities(ctx context.Context) (core.Capabilities, error) {
 	}
 	return core.Capabilities{Version: strings.SplitN(strings.TrimSpace(string(version)), "\n", 2)[0],
 		BuildConfiguration: strings.TrimSpace(string(build)), Encoders: parsed,
-		Codecs: capabilities.Resolve(parsed), Hardware: hardware, Platform: "windows"}, nil
+		Codecs: capabilities.ResolveQualified(qualified), Hardware: hardware, Platform: "windows",
+		VideoEncoders: qualified, GPUs: detectGPUs()}, nil
 }
 
 func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callbacks core.Callbacks) (result core.Result, resultErr error) {

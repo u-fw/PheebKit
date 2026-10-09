@@ -119,13 +119,25 @@ func TestExplicitResolutionChoiceAlsoUpscales(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !contains(plan.Args, "scale=-2:2160") {
+	if !hasArguments(plan.Args, []string{"-vf", "scale=-2:2160,format=yuv420p", "-pix_fmt", "+yuv420p"}) {
 		t.Fatalf("explicit output resolution was silently ignored: %q", plan.Args)
 	}
 	project.Settings.Resolution = 0
 	plan, err = Compile(project, media, caps)
-	if err != nil || contains(plan.Args, "-vf") {
+	if err != nil || !hasArguments(plan.Args, []string{"-vf", "scale=iw:ih,format=yuv420p", "-pix_fmt", "+yuv420p"}) {
 		t.Fatalf("original resolution was changed: %q %v", plan.Args, err)
+	}
+}
+
+func TestCPUFallbackRequiresExactTenBitOutput(t *testing.T) {
+	project, media, caps := fixture(t)
+	media.Streams[0].BitDepth = 10
+	plan, err := Compile(project, media, caps)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.EncoderKind != "cpu" || !hasArguments(plan.Args, []string{"-vf", "scale=iw:ih,format=yuv420p10le", "-pix_fmt", "+yuv420p10le"}) {
+		t.Fatalf("CPU fallback allowed implicit bit-depth conversion: %+v", plan)
 	}
 }
 

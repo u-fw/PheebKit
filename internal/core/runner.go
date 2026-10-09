@@ -24,15 +24,39 @@ type ExecutionPlan struct {
 	Preview         string   `json:"preview"`
 	DurationSeconds float64  `json:"durationSeconds"`
 	InputSizeBytes  int64    `json:"inputSizeBytes"`
+	Encoder         string   `json:"encoder"`
+	EncoderKind     string   `json:"encoderKind"`
+	EncoderLabel    string   `json:"encoderLabel"`
+	EncoderReason   string   `json:"encoderReason"`
 }
 
 type Capabilities struct {
-	Version            string    `json:"version"`
-	BuildConfiguration string    `json:"buildConfiguration"`
-	Encoders           []Encoder `json:"encoders"`
-	Codecs             []Codec   `json:"codecs"`
-	Hardware           []string  `json:"hardware"`
-	Platform           string    `json:"platform"`
+	Version            string         `json:"version"`
+	BuildConfiguration string         `json:"buildConfiguration"`
+	Encoders           []Encoder      `json:"encoders"`
+	Codecs             []Codec        `json:"codecs"`
+	Hardware           []string       `json:"hardware"`
+	Platform           string         `json:"platform"`
+	VideoEncoders      []VideoEncoder `json:"videoEncoders"`
+	GPUs               []GPU          `json:"gpus"`
+}
+
+// VideoEncoder reports runtime-qualified hardware encoders, rather than merely
+// the wrappers included in the FFmpeg build. PixelFormats contains tested input
+// formats for GPU encoders; CPU entries retain the established software policy.
+type VideoEncoder struct {
+	Name         string   `json:"name"`
+	Codec        string   `json:"codec"`
+	Label        string   `json:"label"`
+	Kind         string   `json:"kind"`
+	Available    bool     `json:"available"`
+	Reason       string   `json:"reason"`
+	PixelFormats []string `json:"pixelFormats"`
+}
+
+type GPU struct {
+	Name   string `json:"name"`
+	Vendor string `json:"vendor"`
 }
 
 type Encoder struct {

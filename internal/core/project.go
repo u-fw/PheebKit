@@ -13,6 +13,7 @@ type Project struct {
 
 type Settings struct {
 	Codec        string   `json:"codec"`
+	Encoder      string   `json:"encoder"`
 	Quality      int      `json:"quality"`
 	Preset       string   `json:"preset"`
 	Resolution   int      `json:"resolution"`
@@ -31,5 +32,5 @@ type Preset struct {
 }
 
 func DefaultSettings() Settings {
-	return Settings{Codec: "hevc", Quality: 26, Preset: "medium", Audio: "aac", Mode: "quality"}
+	return Settings{Codec: "hevc", Encoder: "auto", Quality: 26, Preset: "medium", Audio: "aac", Mode: "quality"}
 }

@@ -53,25 +53,16 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		return core.ExecutionPlan{}, fmt.Errorf("selected media has no motion video stream (cover art and thumbnails cannot be compressed as a movie)")
 	}
 	settings := project.Settings
-	encoder := ""
-	for _, codec := range capabilities.Resolve(caps.Encoders) {
-		if codec.ID == settings.Codec && codec.Available {
-			encoder = codec.Encoder
-		}
+	selected, pixelFormat, encoderReason, err := capabilities.SelectVideoEncoder(caps, settings.Codec, settings.Encoder, video.BitDepth > 8 && settings.Codec != "h264")
+	if err != nil {
+		return core.ExecutionPlan{}, err
 	}
-	if encoder == "" {
-		return core.ExecutionPlan{}, fmt.Errorf("no supported CPU encoder available for %q in this FFmpeg build", settings.Codec)
-	}
+	encoder := selected.Name
 	if video.HDR != "" {
 		return core.ExecutionPlan{}, fmt.Errorf("HDR compression needs a verified tone-mapping/metadata preservation policy; this spike supports SDR encoding")
 	}
 	if settings.Resolution < 0 || settings.Resolution > 16384 || settings.Resolution%2 != 0 {
 		return core.ExecutionPlan{}, fmt.Errorf("resolution must be 0 (original) or an even height between 2 and 16384")
-	}
-	policy := encoderPolicies[encoder]
-	preset, ok := policy.Presets[settings.Preset]
-	if !ok {
-		return core.ExecutionPlan{}, fmt.Errorf("preset %q is unsupported for encoder %s", settings.Preset, encoder)
 	}
 	ext := strings.ToLower(filepath.Ext(output.URI))
 	if ext != ".mp4" && ext != ".mkv" && ext != ".webm" {
@@ -84,22 +75,11 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if err != nil {
 		return core.ExecutionPlan{}, err
 	}
-	args := []string{"-hide_banner", "-nostdin", "-n", "-progress", "pipe:1", "-nostats", "-i", input.URI, "-map", "0:" + strconv.Itoa(video.Index), "-map", "0:a?", "-sn", "-dn", "-c:v", encoder, policy.Option, preset}
+	args := []string{"-hide_banner", "-nostdin", "-n", "-progress", "pipe:1", "-nostats", "-i", input.URI, "-map", "0:" + strconv.Itoa(video.Index), "-map", "0:a?", "-sn", "-dn"}
+	bitrate := settings.BitrateKbps
 	switch settings.Mode {
 	case "quality":
-		maxCRF := 51
-		if settings.Codec == "av1" {
-			maxCRF = 63
-		}
-		if settings.Quality < 0 || settings.Quality > maxCRF {
-			return core.ExecutionPlan{}, fmt.Errorf("CRF must be between 0 and %d", maxCRF)
-		}
-		args = append(args, "-crf", strconv.Itoa(settings.Quality))
-		if encoder == "libaom-av1" {
-			args = append(args, "-b:v", "0")
-		}
 	case "bitrate", "size":
-		bitrate := settings.BitrateKbps
 		if settings.Mode == "size" {
 			if media.DurationSeconds <= 0 || math.IsNaN(settings.TargetSizeMB) || math.IsInf(settings.TargetSizeMB, 0) || settings.TargetSizeMB <= 0 {
 				return core.ExecutionPlan{}, fmt.Errorf("target size requires a positive size and known media duration")
@@ -113,18 +93,23 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		if bitrate < 50 || bitrate > 1_000_000 {
 			return core.ExecutionPlan{}, fmt.Errorf("video bitrate must be between 50 and 1000000 Kbps after the audio budget")
 		}
-		args = append(args, "-b:v", strconv.Itoa(bitrate)+"k")
 	default:
 		return core.ExecutionPlan{}, fmt.Errorf("unsupported compression mode %q", settings.Mode)
 	}
+	videoArgs, err := VideoArguments(encoder, settings, bitrate)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	args = append(args, videoArgs...)
+	filter := "scale=iw:ih"
 	if settings.Resolution > 0 && settings.Resolution != video.Height {
-		args = append(args, "-vf", "scale=-2:"+strconv.Itoa(settings.Resolution))
+		filter = "scale=-2:" + strconv.Itoa(settings.Resolution)
 	}
-	pixelFormat := "yuv420p"
-	if video.BitDepth > 8 && settings.Codec != "h264" {
-		pixelFormat = "yuv420p10le"
-	}
-	args = append(args, "-pix_fmt", pixelFormat)
+	// Require the requested depth on software encoders too. Custom FFmpeg
+	// builds can have an 8-bit-only libx265/libx264; silently choosing another
+	// format would otherwise discard depth when auto falls back to CPU.
+	filter += ",format=" + pixelFormat
+	args = append(args, "-vf", filter, "-pix_fmt", "+"+pixelFormat)
 	args = append(args, audioArgs...)
 	if ext == ".mp4" {
 		args = append(args, "-movflags", "+faststart")
@@ -135,10 +120,14 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if err := validateRaw(settings.RawArguments); err != nil {
 		return core.ExecutionPlan{}, err
 	}
+	if err := validateEncoderRaw(settings.RawArguments, encoder); err != nil {
+		return core.ExecutionPlan{}, err
+	}
 	args = append(args, settings.RawArguments...)
 	args = append(args, output.URI)
 	return core.ExecutionPlan{ProjectID: project.ID, Input: input, Output: output, Args: args,
-		Preview: Preview("ffmpeg.exe", args), DurationSeconds: media.DurationSeconds, InputSizeBytes: media.SizeBytes}, nil
+		Preview: Preview("ffmpeg.exe", args), DurationSeconds: media.DurationSeconds, InputSizeBytes: media.SizeBytes,
+		Encoder: encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }
 
 func compileAudio(mode string, hasAudio bool, media core.Media, ext string, encoders []core.Encoder) ([]string, int, error) {
