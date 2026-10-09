@@ -41,3 +41,6 @@ func resolveBinary(binary string) string {
 	}
 	return resolved
 }
+
+// ResolveBinary returns the actual executable, including Scoop shim targets.
+func ResolveBinary(binary string) string { return resolveBinary(binary) }

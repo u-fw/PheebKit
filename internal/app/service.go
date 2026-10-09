@@ -18,20 +18,21 @@ import (
 
 // Service is the Wails boundary; the compiler and job engine know nothing of UI.
 type Service struct {
-	app     *application.App
-	runner  core.Runner
-	jobs    *jobs.Manager
-	ctx     context.Context
-	cancel  context.CancelFunc
-	mediaMu sync.RWMutex
-	media   map[string]core.Media
-	capsMu  sync.Mutex
-	caps    *core.Capabilities
+	app      *application.App
+	runner   *runnerProxy
+	jobs     *jobs.Manager
+	ctx      context.Context
+	cancel   context.CancelFunc
+	mediaMu  sync.RWMutex
+	media    map[string]core.Media
+	capsMu   sync.Mutex
+	caps     *core.Capabilities
+	configMu sync.RWMutex
 }
 
 func NewService() *Service {
 	ctx, cancel := context.WithCancel(context.Background())
-	s := &Service{ctx: ctx, cancel: cancel, runner: newPlatformRunner(), media: make(map[string]core.Media)}
+	s := &Service{ctx: ctx, cancel: cancel, runner: &runnerProxy{current: newPlatformRunner()}, media: make(map[string]core.Media)}
 	s.jobs = jobs.New(s.runner, func(job core.Job) {
 		if s.app != nil {
 			s.app.Event.Emit("job:updated", job)
@@ -101,8 +102,20 @@ func (s *Service) ChooseOutput(suggested string) (string, error) {
 }
 
 func (s *Service) Capabilities() (core.Capabilities, error) {
+	return s.scanCapabilities(false)
+}
+
+// RefreshCapabilities reruns real encoder/device qualification after a rescan.
+func (s *Service) RefreshCapabilities() (core.Capabilities, error) {
+	return s.scanCapabilities(true)
+}
+
+func (s *Service) scanCapabilities(refresh bool) (core.Capabilities, error) {
 	s.capsMu.Lock()
 	defer s.capsMu.Unlock()
+	if refresh {
+		s.caps = nil
+	}
 	if s.caps != nil {
 		return *s.caps, nil
 	}
@@ -138,11 +151,13 @@ func (s *Service) Preview(p core.Project) (core.ExecutionPlan, error) {
 	if err != nil {
 		return core.ExecutionPlan{}, err
 	}
-	plan.Preview = compiler.Preview(previewBinary(s.runner), plan.Args)
+	plan.Preview = compiler.Preview(previewBinary(s.runner.snapshot()), plan.Args)
 	return plan, nil
 }
 
 func (s *Service) Start(p core.Project) (core.Job, error) {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
 	plan, err := s.Preview(p)
 	if err != nil {
 		return core.Job{}, err
