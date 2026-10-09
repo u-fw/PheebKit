@@ -1,4 +1,4 @@
-import type { Media, Settings } from "../bridge";
+import type { ExecutionPlan, Media, Settings } from "../bridge";
 import { formatBytes } from "../format";
 import { codecOptions } from "./EncodingSettings";
 import { Icon } from "./Icon";
@@ -11,6 +11,10 @@ export function OutputSummary({
   capabilitiesLoaded,
   validation,
   actionError,
+  previewError,
+  previewLoading,
+  plan,
+  connected,
   starting,
   canStart,
   start,
@@ -22,6 +26,10 @@ export function OutputSummary({
   capabilitiesLoaded: boolean;
   validation: string[];
   actionError: string;
+  previewError: string;
+  previewLoading: boolean;
+  plan: ExecutionPlan | null;
+  connected: boolean;
   starting: boolean;
   canStart: boolean;
   start: () => void;
@@ -36,7 +44,7 @@ export function OutputSummary({
         : null;
   return (
     <section className="surface estimate-card">
-      <div className="section-eyebrow">OUTPUT AT A GLANCE</div>
+      <div className="section-eyebrow">输出概览</div>
       <h2>
         {codecOptions.find((codec) => codec.value === settings.codec)?.title}
       </h2>
@@ -47,7 +55,13 @@ export function OutputSummary({
         </div>
         <Icon name="arrow" />
         <div>
-          <span>{settings.mode === "bitrate" ? "视频流估算" : "目标体积"}</span>
+          <span>
+            {settings.mode === "bitrate"
+              ? "视频流估算"
+              : settings.mode === "size"
+                ? `${settings.targetSizeMB} MB 目标`
+                : "输出大小"}
+          </span>
           <strong>{estimate ? `≈ ${estimate}` : "按内容决定"}</strong>
         </div>
       </div>
@@ -65,15 +79,23 @@ export function OutputSummary({
         <span>音频</span>
         <strong>{settings.audio.toUpperCase()}</strong>
         <span>处理方式</span>
-        <strong>本地 CPU</strong>
+        <strong>
+          {plan
+            ? `${plan.encoderKind === "gpu" ? "GPU" : "CPU"} · ${plan.encoderLabel}`
+            : settings.encoder === "auto"
+              ? "自动 · 优先 GPU"
+              : settings.encoder === "cpu"
+                ? "CPU"
+                : settings.encoder}
+        </strong>
       </div>
       {!hasVideo && (
-        <p className="inline-error">
-          源媒体没有视频轨。此 Spike 压缩流程需要视频文件。
-        </p>
+        <p className="inline-error">源媒体没有视频轨，请选择视频文件。</p>
       )}
       {capabilitiesLoaded && !encoderAvailable && (
-        <p className="inline-error">当前 FFmpeg 构建缺少所选视频编码器。</p>
+        <p className="inline-error">
+          所选编码方式在当前设备上不可用，请更换处理方式或视频编码。
+        </p>
       )}
       {validation.length > 0 && (
         <div className="validation-errors" role="alert">
@@ -87,12 +109,36 @@ export function OutputSummary({
           {actionError}
         </p>
       )}
+      {previewError && (
+        <p className="inline-error" role="alert">
+          执行方案无法生成：{previewError}
+        </p>
+      )}
+      {!connected && (
+        <p className="inline-error">
+          原生媒体处理服务未连接，请在 kompeg 应用中操作。
+        </p>
+      )}
+      {(previewLoading || !capabilitiesLoaded) &&
+        !validation.length &&
+        !previewError &&
+        connected && (
+          <p className="plan-status" role="status">
+            {!capabilitiesLoaded
+              ? "正在检测设备与编码器…"
+              : "正在检查输出设置…"}
+          </p>
+        )}
       <button
         className="button primary start-button"
         onClick={start}
         disabled={!canStart}
       >
-        {starting ? "正在创建任务…" : "开始压缩"}
+        {starting
+          ? "正在创建任务…"
+          : previewLoading
+            ? "正在检查设置…"
+            : "开始压缩"}
         <Icon name="arrow" />
       </button>
       <span className="field-hint">任务进入队列后可查看进度和取消。</span>

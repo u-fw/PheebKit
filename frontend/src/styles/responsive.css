@@ -39,6 +39,9 @@
   }
 }
 @media (max-width: 960px) {
+  html {
+    scroll-padding-block-end: calc(var(--bottom-nav-height) + var(--space-4));
+  }
   :root {
     --font-display: 1.875rem;
     --topbar-height: 64px;
@@ -60,11 +63,18 @@
   .topbar-actions {
     gap: var(--space-2);
   }
+  .desktop-native .topbar-actions {
+    gap: 0;
+  }
   .page {
     padding: var(--space-7) var(--space-6);
   }
   .app-alert {
     margin: var(--space-4) var(--space-6) 0;
+  }
+  .environment-alert {
+    margin-left: var(--space-6);
+    margin-right: var(--space-6);
   }
   .bottom-nav {
     display: grid;
@@ -157,19 +167,11 @@
     padding-left: var(--space-5);
     padding-right: var(--space-3);
   }
-  .breadcrumb {
-    gap: var(--space-2);
-    font-size: 0.6875rem;
-  }
-  .breadcrumb > span {
+  .desktop-native .platform-badge {
     display: none;
   }
-  .breadcrumb > .icon {
-    display: none;
-  }
-  .breadcrumb strong {
-    font-size: var(--font-md);
-    font-weight: 600;
+  .desktop-native .window-controls {
+    margin-left: 0;
   }
   .page {
     padding: var(--space-6) var(--space-4);
@@ -193,6 +195,14 @@
     margin-left: var(--space-4);
     margin-right: var(--space-4);
     padding: var(--space-2) var(--space-3);
+  }
+  .environment-alert {
+    margin-left: var(--space-4);
+    margin-right: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .environment-alert .button {
+    width: 100%;
   }
   .drop-zone {
     min-height: 425px;
@@ -259,6 +269,11 @@
     min-height: 140px;
     flex-direction: row;
     gap: var(--space-4);
+  }
+  .media-card:not(.compact) .media-visual.has-thumbnail {
+    flex-basis: auto;
+    height: 180px;
+    align-self: stretch;
   }
   .film-frame {
     padding: var(--space-4);

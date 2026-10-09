@@ -1,6 +1,12 @@
 * {
   box-sizing: border-box;
 }
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline) transparent;
+  scroll-padding-block-start: calc(var(--topbar-height) + var(--space-4));
+  scroll-padding-block-end: var(--space-4);
+}
 body {
   margin: 0;
   min-width: 320px;
@@ -26,6 +32,9 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
+}
+button:not(:disabled):active {
+  filter: brightness(0.96);
 }
 a {
   color: inherit;

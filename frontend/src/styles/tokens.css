@@ -58,10 +58,10 @@
   --motion-standard: 240ms;
   --motion-page: 320ms;
   --easing: cubic-bezier(0.2, 0, 0, 1);
-  --sidebar-width: 240px;
+  --sidebar-width: 212px;
   --content-width: 1240px;
   --control-height: 48px;
-  --topbar-height: 76px;
+  --topbar-height: 64px;
   --bottom-nav-height: 76px;
   --icon-size: 22px;
   --font-xs: 0.75rem;

@@ -2,6 +2,7 @@ import type { Media, Project, Settings } from "./bridge";
 
 export const defaultSettings: Settings = {
   codec: "hevc",
+  encoder: "auto",
   quality: 26,
   preset: "medium",
   resolution: 0,
@@ -16,6 +17,7 @@ export function validateSettings(
   settings: Settings,
   outputPath: string,
   inputPath: string,
+  media?: Pick<Media, "streams" | "durationSeconds">,
 ): string[] {
   const errors: string[] = [];
   if (!outputPath.trim()) errors.push("请选择输出文件。");
@@ -47,7 +49,26 @@ export function validateSettings(
     (!Number.isFinite(settings.targetSizeMB) || settings.targetSizeMB <= 0)
   )
     errors.push("目标文件大小必须大于 0 MB。");
+  if (
+    settings.mode === "size" &&
+    media &&
+    (!Number.isFinite(media.durationSeconds) || media.durationSeconds <= 0)
+  )
+    errors.push("目标体积需要已知的视频时长，请换用质量优先模式。");
+  const audioError = targetSizeAudioError(settings, media);
+  if (audioError) errors.push(audioError);
   return errors;
+}
+
+export function targetSizeAudioError(
+  settings: Settings,
+  media?: Pick<Media, "streams">,
+): string {
+  return settings.mode === "size" &&
+    settings.audio === "copy" &&
+    media?.streams.some((stream) => stream.codecType === "audio")
+    ? "目标体积需要计算音频预算。请将音频改为 AAC 或 Opus，或使用质量优先模式保留原始音频。"
+    : "";
 }
 
 export function makeProject(

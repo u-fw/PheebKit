@@ -5,6 +5,40 @@
   gap: var(--space-6);
   align-items: start;
 }
+.processing-field {
+  margin-top: var(--space-5);
+}
+.field-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin: var(--space-4) 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-container);
+}
+.field-notice > .icon {
+  flex-shrink: 0;
+}
+.field-notice > div {
+  min-width: 0;
+}
+.field-notice p {
+  font-size: var(--font-xs);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.field-notice .button {
+  margin-top: var(--space-3);
+  font-size: var(--font-xs);
+}
+.error-notice {
+  color: var(--error);
+  background: var(--error-container);
+}
+.error-notice p {
+  color: var(--error);
+}
 .settings-column,
 .preview-column {
   display: flex;

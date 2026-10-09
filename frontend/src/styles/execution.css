@@ -206,3 +206,8 @@ pre {
   color: var(--error);
   margin-bottom: var(--space-1);
 }
+.plan-status {
+  margin-top: var(--space-4);
+  color: var(--muted);
+  font-size: var(--font-xs);
+}

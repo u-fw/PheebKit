@@ -1,6 +1,7 @@
 import { useState } from "react";
-import type { Capabilities, Settings } from "../bridge";
-import { parseRawArguments } from "../project";
+import type { Capabilities, ExecutionPlan, Media, Settings } from "../bridge";
+import { parseRawArguments, targetSizeAudioError } from "../project";
+import { formatBytes } from "../format";
 import { Icon } from "./Icon";
 import { MaterialSelect } from "./MaterialSelect";
 
@@ -47,18 +48,43 @@ const presets = [
 ];
 
 export function EncodingSettings({
+  media,
   settings,
   update,
   capabilities,
   customResolution,
   setCustomResolution,
+  plan,
 }: {
+  media: Media;
   settings: Settings;
   update: UpdateSettings;
   capabilities: Capabilities | null;
   customResolution: boolean;
   setCustomResolution: (value: boolean) => void;
+  plan: ExecutionPlan | null;
 }) {
+  const audioError = targetSizeAudioError(settings, media);
+  const encoderOptions = [
+    {
+      value: "auto",
+      label: "自动 · 优先 GPU",
+      description: "通过实际编码测试后选用；不可用时使用 CPU",
+    },
+    { value: "cpu", label: "CPU · 软件编码", description: "使用软件编码器" },
+    ...(capabilities?.videoEncoders
+      .filter(
+        (encoder) => encoder.codec === settings.codec && encoder.kind === "gpu",
+      )
+      .map((encoder) => ({
+        value: encoder.name,
+        label: encoder.label,
+        description: encoder.available
+          ? "GPU 编码测试通过"
+          : encoder.reason || "当前设备不可用",
+        disabled: !encoder.available,
+      })) ?? []),
+  ];
   return (
     <section className="surface settings-card">
       <div className="section-title">
@@ -71,8 +97,8 @@ export function EncodingSettings({
         </legend>
         <div className="codec-options">
           {codecOptions.map((codec) => {
-            const available = capabilities?.codecs.some(
-              (entry) => entry.id === codec.value && entry.available,
+            const available = capabilities?.videoEncoders.some(
+              (entry) => entry.codec === codec.value && entry.available,
             );
             return (
               <button
@@ -144,7 +170,7 @@ export function EncodingSettings({
         <label className="field-label target-field">
           {settings.mode === "bitrate"
             ? "目标视频码率 (kbps)"
-            : "目标文件大小 (MB)"}
+            : "目标文件大小 (MB，十进制)"}
           <input
             type="number"
             min="1"
@@ -162,7 +188,7 @@ export function EncodingSettings({
           />
           <span className="field-hint">
             {settings.mode === "size"
-              ? "根据时长计算视频码率；容器开销可能使实际大小略有差异。"
+              ? `1 MB = 1,000,000 字节。${Number.isFinite(settings.targetSizeMB) && settings.targetSizeMB > 0 ? `${settings.targetSizeMB} MB ≈ ${formatBytes(settings.targetSizeMB * 1_000_000)}。` : ""}按时长分配视频和音频码率，实际大小可能有差异。`
               : "音频和容器开销会计入最终文件大小。"}
           </span>
         </label>
@@ -183,8 +209,29 @@ export function EncodingSettings({
           value={settings.audio}
           options={audioOptions}
           onChange={(value) => update("audio", value)}
+          describedBy={audioError ? "target-audio-error" : undefined}
+          invalid={Boolean(audioError)}
         />
       </div>
+      {audioError && (
+        <div
+          className="field-notice error-notice"
+          id="target-audio-error"
+          role="alert"
+        >
+          <Icon name="info" />
+          <div>
+            <p>{audioError}</p>
+            <button
+              type="button"
+              className="button outlined"
+              onClick={() => update("audio", "aac")}
+            >
+              切换为 AAC
+            </button>
+          </div>
+        </div>
+      )}
       {customResolution && (
         <label className="field-label">
           输出高度 (px)
@@ -201,11 +248,33 @@ export function EncodingSettings({
           <span className="field-hint">保持宽高比；宽度由编码器自动计算。</span>
         </label>
       )}
-      <div className="encoder-info">
+      <div className="processing-field">
+        <MaterialSelect
+          label="处理方式"
+          value={settings.encoder}
+          options={encoderOptions}
+          onChange={(value) => update("encoder", value)}
+          disabled={!capabilities}
+        />
+      </div>
+      <div className="encoder-info" aria-live="polite">
         <Icon name="info" />
         <div>
-          <strong>CPU 软件编码</strong>
-          <span>使用设备上的可用编码器，保持兼容与可控。</span>
+          <strong>
+            {plan
+              ? `${plan.encoderKind === "gpu" ? "GPU" : "CPU"} · ${plan.encoderLabel}`
+              : settings.encoder === "auto"
+                ? "自动选择可用编码器"
+                : settings.encoder === "cpu"
+                  ? "CPU 软件编码"
+                  : "指定 GPU 编码器"}
+          </strong>
+          <span>
+            {plan?.encoderReason ||
+              (capabilities
+                ? "以完成设备检测后的执行方案为准。"
+                : "正在检测 FFmpeg 编码器和设备支持…")}
+          </span>
         </div>
       </div>
     </section>
@@ -230,14 +299,14 @@ export function AdvancedSettings({
           <span>高级设置</span>
         </div>
         <span>
-          CRF · Preset · Raw argv
+          质量 · 速度 · 更多参数
           <Icon name="chevron" />
         </span>
       </summary>
       <div className="advanced-content">
         <div className="field-grid">
           <label className="field-label">
-            CRF
+            {settings.encoder === "cpu" ? "质量参数 · CRF" : "质量参数"}
             <input
               type="number"
               min="0"
@@ -248,7 +317,9 @@ export function AdvancedSettings({
               }
             />
             <span className="field-hint">
-              仅质量模式使用。数值越低，质量越高。
+              {settings.encoder === "cpu"
+                ? "仅质量模式使用 CRF。数值越低，质量越高。"
+                : "仅质量模式使用。CPU 使用 CRF，GPU 使用对应编码器的质量参数；数值越低，质量越高。"}
             </span>
           </label>
           <MaterialSelect

@@ -18,7 +18,10 @@ export type IconName =
   | "chevron"
   | "terminal"
   | "info"
-  | "pause";
+  | "pause"
+  | "minimise"
+  | "maximise"
+  | "restore";
 
 const paths: Record<IconName, string> = {
   studio: "M6 5v14 M7 12l9-7 M7 12l9 7 M17 9l4 3-4 3z",
@@ -44,6 +47,9 @@ const paths: Record<IconName, string> = {
   terminal: "M3 4h18v16H3z M7 9l3 3-3 3 M13 15h4",
   info: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18 M12 11v6 M12 7h.01",
   pause: "M8 5v14 M16 5v14",
+  minimise: "M5 15h14",
+  maximise: "M5 5h14v14H5z",
+  restore: "M8 8h11v11H8z M5 15V5h10",
 };
 
 export function Icon({

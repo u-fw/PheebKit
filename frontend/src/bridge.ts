@@ -7,6 +7,7 @@ export type Stream = Core.Stream;
 export type Media = Omit<Core.Media, "streams"> & { streams: Stream[] };
 export type Settings = Omit<Core.Settings, "rawArguments"> & {
   rawArguments: string[];
+  encoder: string;
 };
 export type Project = Omit<Core.Project, "inputs" | "settings"> & {
   inputs: Source[];
@@ -14,11 +15,46 @@ export type Project = Omit<Core.Project, "inputs" | "settings"> & {
 };
 export type ExecutionPlan = Omit<Core.ExecutionPlan, "args"> & {
   args: string[];
+  encoder: string;
+  encoderKind: string;
+  encoderLabel: string;
+  encoderReason: string;
 };
+export interface VideoEncoder {
+  name: string;
+  codec: string;
+  label: string;
+  kind: string;
+  available: boolean;
+  reason: string;
+  pixelFormats: string[];
+}
 export interface Capabilities {
   version: string;
   encoders: string[];
   codecs: Core.Codec[];
+  videoEncoders: VideoEncoder[];
+  gpus: { name: string; vendor: string }[];
+}
+export interface BinaryStatus {
+  path: string;
+  version: string;
+  source: string;
+  available: boolean;
+}
+export interface EnvironmentStatus {
+  platform: string;
+  ready: boolean;
+  ffmpeg: BinaryStatus;
+  ffprobe: BinaryStatus;
+  message: string;
+  configurable: boolean;
+}
+export interface Thumbnail {
+  dataUrl: string;
+  source: string;
+  width: number;
+  height: number;
 }
 export interface Job {
   id: string;
@@ -70,22 +106,42 @@ function mediaView(media: Core.Media): Media {
   return { ...media, streams: media.streams ?? [] };
 }
 
+function capabilityView(caps: Core.Capabilities): Capabilities {
+  return {
+    version: caps.version,
+    encoders: (caps.encoders ?? []).map((encoder) => encoder.name),
+    codecs: caps.codecs ?? [],
+    videoEncoders: (caps.videoEncoders ?? []).map((encoder) => ({
+      ...encoder,
+      pixelFormats: encoder.pixelFormats ?? [],
+    })),
+    gpus: caps.gpus ?? [],
+  };
+}
+
 export const API = {
   getPlatform: async (): Promise<string> => Service.GetPlatform(),
+  getEnvironment: async (): Promise<EnvironmentStatus> =>
+    Service.GetEnvironment(),
+  configureFFmpeg: async (
+    ffmpegPath: string,
+    ffprobePath: string,
+  ): Promise<EnvironmentStatus> =>
+    Service.ConfigureFFmpeg(ffmpegPath, ffprobePath),
+  chooseFFmpeg: async (): Promise<EnvironmentStatus | null> =>
+    Service.ChooseFFmpeg(),
+  getThumbnail: async (uri: string): Promise<Thumbnail> =>
+    Service.GetThumbnail(uri),
   chooseMedia: async (): Promise<Media | null> => {
     const media = await Service.ChooseMedia();
     return media ? mediaView(media) : null;
   },
   probe: async (path: string): Promise<Media> =>
     mediaView(await Service.Probe(path)),
-  capabilities: async (): Promise<Capabilities> => {
-    const caps = await Service.Capabilities();
-    return {
-      version: caps.version,
-      encoders: (caps.encoders ?? []).map((e) => e.name),
-      codecs: caps.codecs ?? [],
-    };
-  },
+  capabilities: async (): Promise<Capabilities> =>
+    capabilityView(await Service.Capabilities()),
+  refreshCapabilities: async (): Promise<Capabilities> =>
+    capabilityView(await Service.RefreshCapabilities()),
   preview: async (project: Project): Promise<ExecutionPlan> => {
     const plan = await Service.Preview(project);
     return { ...plan, args: plan.args ?? [] };

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API } from "../bridge";
-import type { Capabilities, Job, Media } from "../bridge";
+import type { Capabilities, EnvironmentStatus, Job, Media } from "../bridge";
 import { errorMessage } from "../format";
 
 export function useStudio() {
@@ -8,11 +8,72 @@ export function useStudio() {
   const [connected, setConnected] = useState(false);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [capabilityError, setCapabilityError] = useState("");
+  const [environment, setEnvironment] = useState<EnvironmentStatus | null>(
+    null,
+  );
+  const [environmentBusy, setEnvironmentBusy] = useState(false);
   const [media, setMedia] = useState<Media | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const importBusy = useRef(false);
+  const environmentGeneration = useRef(0);
+
+  const updateEnvironment = useCallback(
+    async (status: EnvironmentStatus, rescan = false) => {
+      const generation = ++environmentGeneration.current;
+      setEnvironment(status);
+      setCapabilities(null);
+      setCapabilityError("");
+      if (!status.ready) {
+        setCapabilityError(status.message);
+        return;
+      }
+      try {
+        const next = await (rescan
+          ? API.refreshCapabilities()
+          : API.capabilities());
+        if (generation === environmentGeneration.current) setCapabilities(next);
+      } catch (cause) {
+        if (generation === environmentGeneration.current)
+          setCapabilityError(errorMessage(cause));
+      }
+    },
+    [],
+  );
+
+  const refreshEnvironment = useCallback(async () => {
+    setEnvironmentBusy(true);
+    try {
+      await updateEnvironment(await API.getEnvironment(), true);
+    } finally {
+      setEnvironmentBusy(false);
+    }
+  }, [updateEnvironment]);
+
+  const chooseFFmpeg = useCallback(async () => {
+    setEnvironmentBusy(true);
+    try {
+      const status = await API.chooseFFmpeg();
+      if (status) await updateEnvironment(status);
+    } finally {
+      setEnvironmentBusy(false);
+    }
+  }, [updateEnvironment]);
+
+  const configureFFmpeg = useCallback(
+    async (ffmpegPath: string, ffprobePath: string) => {
+      setEnvironmentBusy(true);
+      try {
+        await updateEnvironment(
+          await API.configureFFmpeg(ffmpegPath, ffprobePath),
+        );
+      } finally {
+        setEnvironmentBusy(false);
+      }
+    },
+    [updateEnvironment],
+  );
 
   const importPaths = useCallback(async (paths: string[]) => {
     if (!paths.length || importBusy.current) return;
@@ -50,25 +111,63 @@ export function useStudio() {
   useEffect(() => {
     let alive = true;
     let subscriptionError = "";
-    void Promise.allSettled([
-      API.getPlatform(),
-      API.capabilities(),
-      API.jobs(),
-    ]).then((results) => {
-      if (!alive) return;
-      const [platformResult, capabilityResult, jobResult] = results;
-      if (platformResult.status === "fulfilled") {
-        setPlatform(platformResult.value);
+    const generationRef = environmentGeneration;
+    const initialGeneration = environmentGeneration.current;
+    const platformRequest = API.getPlatform();
+    const environmentRequest = API.getEnvironment();
+    void environmentRequest
+      .then((status) => {
+        if (alive && initialGeneration === environmentGeneration.current)
+          setEnvironment(status);
+      })
+      .catch((cause: unknown) => {
+        if (alive && initialGeneration === environmentGeneration.current)
+          setCapabilityError(`FFmpeg 环境检测失败：${errorMessage(cause)}`);
+      });
+    void platformRequest
+      .then((value) => {
+        if (!alive) return;
+        setPlatform(value);
         setConnected(true);
-      } else {
+      })
+      .catch((cause: unknown) => {
+        if (!alive) return;
         setPlatform("浏览器预览");
         setError(
-          `原生桥接不可用：${errorMessage(platformResult.reason)}。请在 Wails 应用中导入和处理媒体。`,
+          `原生桥接不可用：${errorMessage(cause)}。请在 Wails 应用中导入和处理媒体。`,
         );
-      }
-      if (capabilityResult.status === "fulfilled")
+      });
+    void Promise.allSettled([
+      platformRequest,
+      API.capabilities(),
+      API.jobs(),
+      environmentRequest,
+    ]).then((results) => {
+      if (!alive) return;
+      const [platformResult, capabilityResult, jobResult, environmentResult] =
+        results;
+      if (
+        capabilityResult.status === "fulfilled" &&
+        initialGeneration === environmentGeneration.current
+      )
         setCapabilities(capabilityResult.value);
-      else setCapabilityError(errorMessage(capabilityResult.reason));
+      else if (
+        capabilityResult.status === "rejected" &&
+        initialGeneration === environmentGeneration.current
+      )
+        setCapabilityError(errorMessage(capabilityResult.reason));
+      if (
+        environmentResult.status === "fulfilled" &&
+        initialGeneration === environmentGeneration.current
+      )
+        setEnvironment(environmentResult.value);
+      else if (
+        environmentResult.status === "rejected" &&
+        platformResult.status === "fulfilled"
+      )
+        setCapabilityError(
+          `FFmpeg 环境检测失败：${errorMessage(environmentResult.reason)}`,
+        );
       if (jobResult.status === "fulfilled") setJobs(jobResult.value);
       else if (platformResult.status === "fulfilled")
         setError(`任务队列加载失败：${errorMessage(jobResult.reason)}`);
@@ -114,6 +213,7 @@ export function useStudio() {
     }
     return () => {
       alive = false;
+      generationRef.current++;
       if (timer) clearTimeout(timer);
       unsubscribe.forEach((off) => off());
     };
@@ -148,6 +248,11 @@ export function useStudio() {
     connected,
     capabilities,
     capabilityError,
+    environment,
+    environmentBusy,
+    refreshEnvironment,
+    chooseFFmpeg,
+    configureFFmpeg,
     media,
     jobs,
     error,

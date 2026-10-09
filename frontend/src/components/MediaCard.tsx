@@ -1,5 +1,6 @@
 import type { Media, Stream } from "../bridge";
 import { formatBitrate, formatBytes, formatDuration } from "../format";
+import { useThumbnail } from "../hooks/useThumbnail";
 import { Icon } from "./Icon";
 
 function streamLabel(stream: Stream): string {
@@ -26,19 +27,37 @@ export function MediaCard({
     (stream) => stream.codecType === "subtitle",
   );
   const video = videos[0];
+  const cover = useThumbnail(media);
+  const extension = media.name.match(/\.([a-z0-9]{1,8})$/i)?.[1];
+  const format =
+    extension?.toUpperCase() ||
+    media.container.split(",")[0]?.toUpperCase() ||
+    "MEDIA";
   return (
     <article
       className={`media-card surface ${compact ? "compact" : ""}`}
       aria-label="媒体信息"
     >
-      <div className="media-visual" aria-hidden="true">
-        <div className="film-frame">
-          <Icon name={video ? "video" : "audio"} />
-        </div>
+      <div
+        className={`media-visual ${cover.thumbnail ? "has-thumbnail" : ""}`}
+        aria-hidden="true"
+      >
+        {cover.thumbnail ? (
+          <img
+            className="media-thumbnail"
+            src={cover.thumbnail.dataUrl}
+            alt=""
+            width={cover.thumbnail.width}
+            height={cover.thumbnail.height}
+          />
+        ) : (
+          <div className="film-frame">
+            <Icon name={video ? "video" : "audio"} />
+          </div>
+        )}
         <span>
-          {media.container
-            ? media.container.split(",")[0].toUpperCase()
-            : "MEDIA"}
+          {format}
+          {cover.loading ? " · 读取封面…" : cover.failed ? " · 无可用封面" : ""}
         </span>
       </div>
       <div className="media-details">
@@ -59,7 +78,14 @@ export function MediaCard({
             </span>
           )}
           {video && (
-            <span className="chip">{video.frameRate || "未知"} FPS</span>
+            <span className="chip" title={`${video.frameRate} FPS`}>
+              {video.frameRate > 0
+                ? new Intl.NumberFormat("zh-CN", {
+                    maximumFractionDigits: 2,
+                  }).format(video.frameRate)
+                : "未知"}{" "}
+              FPS
+            </span>
           )}
           {video?.hdr && <span className="chip accent-chip">{video.hdr}</span>}
         </div>

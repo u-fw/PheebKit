@@ -6,6 +6,7 @@ export type {
     Codec,
     Encoder,
     ExecutionPlan,
+    GPU,
     Job,
     Media,
     Progress,
@@ -13,5 +14,6 @@ export type {
     Result,
     Settings,
     Source,
-    Stream
+    Stream,
+    VideoEncoder
 } from "./models.js";

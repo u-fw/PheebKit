@@ -4,6 +4,7 @@ import (
 	"embed"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -20,6 +21,7 @@ func init() {
 	application.RegisterEvent[core.Job]("job:updated")
 	application.RegisterEvent[string]("bridge:ready")
 	application.RegisterEvent[[]string]("media:drop")
+	application.RegisterEvent[bool]("window:maximised")
 }
 
 func main() {
@@ -34,8 +36,9 @@ func main() {
 	service.Attach(a)
 	a.OnShutdown(service.Close)
 	window := a.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title: "kompeg · Technical Spike",
+		Title: "kompeg",
 		Width: 1280, Height: 860, MinWidth: 360, MinHeight: 620,
+		Frameless:        runtime.GOOS == "windows",
 		EnableFileDrop:   true,
 		BackgroundColour: application.NewRGB(15, 22, 23),
 		URL:              "/",
@@ -43,6 +46,11 @@ func main() {
 	window.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
 		a.Event.Emit("media:drop", event.Context().DroppedFiles())
 	})
+	for _, eventType := range []events.WindowEventType{events.Common.WindowMaximise, events.Common.WindowUnMaximise} {
+		window.OnWindowEvent(eventType, func(*application.WindowEvent) {
+			a.Event.Emit("window:maximised", window.IsMaximised())
+		})
+	}
 	if err := a.Run(); err != nil {
 		log.Fatal(err)
 	}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { API } from "../bridge";
-import type { ExecutionPlan, Media, Settings } from "../bridge";
+import type { Capabilities, ExecutionPlan, Media, Settings } from "../bridge";
 import { errorMessage } from "../format";
 import { makeProject, validateSettings } from "../project";
 
@@ -17,6 +17,7 @@ export function useExecutionPlan(
   output: string,
   connected: boolean,
   projectID: string,
+  capabilities: Capabilities | null,
 ) {
   const [preview, setPreview] = useState<PreviewState>({
     key: "",
@@ -30,11 +31,12 @@ export function useExecutionPlan(
     output,
     connected,
     projectID,
+    capabilities,
   ]);
   const valid = Boolean(
     media &&
     connected &&
-    !validateSettings(settings, output, media.source.uri).length,
+    !validateSettings(settings, output, media.source.uri, media).length,
   );
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export function useExecutionPlan(
       alive = false;
       clearTimeout(timer);
     };
-  }, [media, settings, output, connected, projectID, key, valid]);
+  }, [media, settings, output, connected, projectID, capabilities, key, valid]);
 
   return {
     plan: valid && preview.key === key ? preview.plan : null,

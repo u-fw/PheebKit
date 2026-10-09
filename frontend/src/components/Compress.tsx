@@ -48,13 +48,19 @@ export function Compress({
     output,
     connected,
     projectID,
+    capabilities,
   );
   const validation = media
-    ? validateSettings(settings, output, media.source.uri)
+    ? validateSettings(settings, output, media.source.uri, media)
     : [];
   const encoderAvailable = Boolean(
-    capabilities?.codecs.some(
-      (codec) => codec.id === settings.codec && codec.available,
+    capabilities?.videoEncoders.some(
+      (encoder) =>
+        encoder.codec === settings.codec &&
+        encoder.available &&
+        (settings.encoder === "auto" ||
+          (settings.encoder === "cpu" && encoder.kind === "cpu") ||
+          settings.encoder === encoder.name),
     ),
   );
   const hasVideo = Boolean(
@@ -67,7 +73,13 @@ export function Compress({
   );
 
   function update<K extends keyof Settings>(key: K, value: Settings[K]) {
-    setSettings((current) => ({ ...current, [key]: value }));
+    setSettings((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === "codec" && current.encoder !== "cpu"
+        ? { encoder: "auto" }
+        : {}),
+    }));
     setActionError("");
   }
 
@@ -90,7 +102,9 @@ export function Compress({
       starting ||
       validation.length ||
       !encoderAvailable ||
-      !hasVideo
+      !hasVideo ||
+      !preview.plan ||
+      preview.loading
     )
       return;
     setStarting(true);
@@ -113,8 +127,8 @@ export function Compress({
       <div className="page">
         <header className="page-heading">
           <div>
-            <div className="section-eyebrow">COMPRESS</div>
-            <h1>为好画质，腾点空间。</h1>
+            <div className="section-eyebrow">本地媒体处理</div>
+            <h1>压缩视频</h1>
             <p>导入一个视频，开始配置压缩任务。</p>
           </div>
         </header>
@@ -138,9 +152,9 @@ export function Compress({
     <div className="page compress-page">
       <header className="page-heading">
         <div>
-          <div className="section-eyebrow">COMPRESS</div>
-          <h1>更小，依然出色。</h1>
-          <p>简单的设置，完整的控制。</p>
+          <div className="section-eyebrow">本地媒体处理</div>
+          <h1>压缩视频</h1>
+          <p>调整输出格式、处理方式和文件大小。</p>
         </div>
         <span className="chip accent-chip">
           <Icon name="video" />
@@ -151,11 +165,13 @@ export function Compress({
       <div className="compress-layout">
         <div className="settings-column">
           <EncodingSettings
+            media={media}
             settings={settings}
             update={update}
             capabilities={capabilities}
             customResolution={customResolution}
             setCustomResolution={setCustomResolution}
+            plan={preview.plan}
           />
           <AdvancedSettings settings={settings} update={update} />
           <section className="surface output-card">
@@ -196,6 +212,10 @@ export function Compress({
             capabilitiesLoaded={capabilities !== null}
             validation={validation}
             actionError={actionError}
+            previewError={preview.error}
+            previewLoading={preview.loading}
+            plan={preview.plan}
+            connected={connected}
             starting={starting}
             canStart={
               connected &&

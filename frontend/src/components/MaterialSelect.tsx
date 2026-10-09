@@ -10,12 +10,16 @@ export function MaterialSelect({
   options,
   onChange,
   disabled = false,
+  describedBy,
+  invalid = false,
 }: {
   label: string;
   value: string;
   options: readonly SelectOption[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  describedBy?: string;
+  invalid?: boolean;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -138,6 +142,8 @@ export function MaterialSelect({
         className="material-select-trigger"
         role="combobox"
         aria-haspopup="listbox"
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
         aria-expanded={open}
         aria-controls={open ? `${id}-listbox` : undefined}
         aria-labelledby={`${id}-label ${id}-value`}

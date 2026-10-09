@@ -75,3 +75,148 @@
 .encoder-chips .chip {
   font-family: "Cascadia Code", Consolas, monospace;
 }
+.settings-description {
+  margin-top: var(--space-3);
+  font-size: var(--font-sm);
+  line-height: 1.7;
+}
+.binary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+.binary-details {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-container);
+  min-width: 0;
+}
+.binary-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.binary-heading h3 {
+  font-size: var(--font-md);
+}
+.binary-details dl > div {
+  margin-top: var(--space-3);
+}
+.binary-details dd {
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.binary-version {
+  margin-top: var(--space-3);
+  font-size: var(--font-xs);
+  overflow-wrap: anywhere;
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+.manual-environment,
+.encoder-disclosure {
+  margin-top: var(--space-5);
+}
+.manual-environment summary,
+.encoder-disclosure summary {
+  padding: var(--space-3) 0;
+  font-size: var(--font-sm);
+  cursor: pointer;
+}
+.manual-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+}
+.manual-fields > .button {
+  align-self: flex-start;
+}
+.discovery-hint,
+.settings-status {
+  margin-top: var(--space-4);
+  font-size: var(--font-xs);
+  overflow-wrap: anywhere;
+}
+.settings-status {
+  color: var(--primary);
+}
+.gpu-devices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+.gpu-device {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--surface-accent);
+  border-radius: var(--radius-md);
+}
+.gpu-device .icon {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.gpu-device strong,
+.gpu-device span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.gpu-device strong {
+  font-size: var(--font-md);
+}
+.gpu-device span {
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--font-xs);
+}
+.gpu-encoders {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.gpu-encoder {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  min-width: 0;
+}
+.gpu-encoder > div {
+  min-width: 0;
+}
+.gpu-encoder strong,
+.gpu-encoder code {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: var(--font-xs);
+}
+.gpu-encoder code {
+  margin-top: var(--space-1);
+  color: var(--muted);
+}
+.gpu-encoder p {
+  flex-basis: 100%;
+  font-size: var(--font-xs);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.gpu-encoder.available {
+  border-color: var(--outline);
+  background: var(--surface-tonal);
+}

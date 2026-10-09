@@ -6,7 +6,7 @@ Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approv
 
 ## Windows development
 
-Requires Go 1.25+, Node 24+, WebView2 and an FFmpeg build with `libx265` and `ffprobe`. Install the exact CLI once:
+Requires Go 1.25+, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Install the exact CLI once:
 
 ```powershell
 go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
@@ -25,6 +25,10 @@ $env:KOMPEG_FFPROBE = 'D:\Tools\ffmpeg\bin\ffprobe.exe'
 ```
 
 Use `wails3 dev -config build/config.yml` for frontend development. Ordinary browser previews cannot execute native operations. Drag a video onto the workspace or use the file picker, review media details, configure compression, inspect the backend command preview, start a job and follow progress/cancel/results in Queue.
+
+FFmpeg discovery prefers `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE`, then `FFMPEG_PATH` / `FFPROBE_PATH`, then application settings and PATH. Values can identify the executable or its directory. Missing/invalid binaries show a setup prompt; Settings lets you select `ffmpeg.exe` and verifies its sibling `ffprobe.exe`. Paths are saved in `%APPDATA%/kompeg/ffmpeg.json`, without modifying Windows environment variables. Explicit environment overrides must be corrected in the environment and require restarting the app. Reconfiguration is blocked while jobs are active.
+
+New compression settings default to GPU preference. NVENC, QSV and AMF are offered only after bounded real encoding trials; unavailable combinations fall back to CPU with a visible reason. Source artwork prefers Windows thumbnail providers and falls back to FFmpeg cover/frame extraction.
 
 ## Verification commands
 
@@ -69,6 +73,6 @@ See [architecture](docs/architecture.md), [UI design](docs/ui-design.md), [runne
 
 ## Current scope
 
-Home, Media Card, SDR compression settings, limited advanced argv, command preview, queue, real cancel and result metrics form the first vertical slice. Remux/extract/editing, HDR encoding, unrestricted Raw Command, all component scanners, GPU selection, process pause/resume and project/preset management UI are later milestones. Windows FFmpeg is discovered rather than bundled; distribution licensing/packaging must be decided before release.
+Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression settings, limited advanced argv, command preview, queue, real cancel and result metrics form the first vertical slice. Remux/extract/editing, HDR encoding, unrestricted Raw Command, all component scanners, process pause/resume and project/preset management UI are later milestones. Windows FFmpeg is discovered rather than bundled; distribution licensing/packaging must be decided before release.
 
 Android SDK/NDK/emulator and a connected device are absent on the audited machine. The pinned Android task assets also require a POSIX build host. APK build, Android Go binding and native FFmpeg execution are therefore not verified; responsive UI reuse alone does not satisfy those criteria.

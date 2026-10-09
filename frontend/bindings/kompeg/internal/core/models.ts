@@ -8,6 +8,8 @@ export interface Capabilities {
     "codecs": Codec[] | null;
     "hardware": string[] | null;
     "platform": string;
+    "videoEncoders": VideoEncoder[] | null;
+    "gpus": GPU[] | null;
 }
 
 /**
@@ -35,6 +37,15 @@ export interface ExecutionPlan {
     "preview": string;
     "durationSeconds": number;
     "inputSizeBytes": number;
+    "encoder": string;
+    "encoderKind": string;
+    "encoderLabel": string;
+    "encoderReason": string;
+}
+
+export interface GPU {
+    "name": string;
+    "vendor": string;
 }
 
 export interface Job {
@@ -95,6 +106,7 @@ export interface Result {
 
 export interface Settings {
     "codec": string;
+    "encoder": string;
     "quality": number;
     "preset": string;
     "resolution": number;
@@ -128,4 +140,19 @@ export interface Stream {
     "title": string;
     "attachedPicture": boolean;
     "timedThumbnails": boolean;
+}
+
+/**
+ * VideoEncoder reports runtime-qualified hardware encoders, rather than merely
+ * the wrappers included in the FFmpeg build. PixelFormats contains tested input
+ * formats for GPU encoders; CPU entries retain the established software policy.
+ */
+export interface VideoEncoder {
+    "name": string;
+    "codec": string;
+    "label": string;
+    "kind": string;
+    "available": boolean;
+    "reason": string;
+    "pixelFormats": string[] | null;
 }

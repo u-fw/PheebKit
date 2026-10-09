@@ -160,7 +160,7 @@ export function Queue({
       <header className="page-heading">
         <div>
           <div className="section-eyebrow">JOB QUEUE</div>
-          <h1>每一项任务，都有迹可循。</h1>
+          <h1>任务队列</h1>
           <p>实时进度、执行日志和实际处理结果。</p>
         </div>
         <button className="button outlined" onClick={refresh}>

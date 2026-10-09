@@ -5,3 +5,9 @@ import * as Service from "./service.js";
 export {
     Service
 };
+
+export type {
+    BinaryStatus,
+    Environment,
+    Thumbnail
+} from "./models.js";

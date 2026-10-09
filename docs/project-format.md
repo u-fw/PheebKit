@@ -18,6 +18,7 @@ Projects use UTF-8 JSON in `.ffproject` files. The Go model is the source of tru
   },
   "settings": {
     "codec": "hevc",
+    "encoder": "auto",
     "quality": 26,
     "preset": "medium",
     "resolution": 0,
@@ -30,7 +31,9 @@ Projects use UTF-8 JSON in `.ffproject` files. The Go model is the source of tru
 }
 ```
 
-`resolution: 0` preserves the input dimensions; positive even heights express the output intent. Codec families are `h264`, `hevc`, `av1`. Audio is `copy`, `aac`, `opus`. Modes are `quality`, `bitrate`, `size`. CRF is codec-dependent. Target size uses decimal MB (1,000,000 bytes) with a one-pass video bitrate budget and muxing allowance; it is not an exact size promise.
+`resolution: 0` preserves the input dimensions; positive even heights express the output intent. Codec families are `h264`, `hevc`, `av1`. `encoder: "auto"` prefers runtime-qualified GPU encoders, `"cpu"` selects software, and a specific encoder name requests that tested GPU encoder. Legacy files omitting `encoder` retain CPU behavior. This optional additive field stays in schema version 1; older strict readers will reject files containing it and need updating.
+
+Audio is `copy`, `aac`, `opus`. Modes are `quality`, `bitrate`, `size`. The quality value maps to CRF on CPU, CQ on NVENC, ICQ on QSV and CQP on AMF; equivalent numeric values do not promise equal visual quality across encoders. Target size uses decimal MB (1,000,000 bytes) with a one-pass video bitrate budget and muxing allowance; it is not an exact size promise. Media with audio must use AAC/Opus in size mode to supply a known audio bitrate budget. For example, 100 MB is 95.37 MiB, the binary unit used in the size display.
 
 Android inputs/outputs retain `kind: content-uri` and the original document URI. Do not save temporary cache paths as substitutes for the URI or persist per-session `ffkitsaf:` handles. The spike rejects URI execution until a native adapter is integrated.
 

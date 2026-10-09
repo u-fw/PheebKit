@@ -5,6 +5,7 @@ import { Icon } from "./components/Icon";
 import type { IconName } from "./components/Icon";
 import { Queue } from "./components/Queue";
 import { SettingsPage } from "./components/SettingsPage";
+import { WindowControls } from "./components/WindowControls";
 import { useStudio } from "./hooks/useStudio";
 
 type Page = "home" | "compress" | "queue" | "settings";
@@ -51,7 +52,9 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell ${studio.connected && studio.platform === "windows" ? "desktop-native" : ""}`}
+    >
       <a className="skip-link" href="#workspace">
         跳到工作区
       </a>
@@ -70,7 +73,7 @@ export default function App() {
           </span>
           <span>
             <strong>kompeg</strong>
-            <small>MEDIA WORKSPACE</small>
+            <small>本地媒体工作台</small>
           </span>
         </a>
         <div className="sidebar-label">工作空间</div>
@@ -100,21 +103,15 @@ export default function App() {
             <span className="tiny-dot" />
             LOCAL FIRST
           </div>
-          <p>
-            媒体留在你的设备。
-            <br />
-            创作由你掌控。
-          </p>
           <div className="build-tag">
-            创作，从容一点 <span>0.1</span>
+            kompeg <span>0.1</span>
           </div>
         </div>
       </aside>
       <div className="workspace-shell">
         <header className="topbar glass">
-          <div className="breadcrumb">
-            <span>kompeg</span>
-            <Icon name="chevron" />
+          <div className="workspace-title">
+            <Icon name={currentNav?.icon || "home"} />
             <strong>{currentNav?.label}</strong>
           </div>
           <div className="topbar-actions">
@@ -122,7 +119,7 @@ export default function App() {
               className={`platform-badge ${studio.connected ? "connected" : ""}`}
             >
               <span className="tiny-dot" />
-              {studio.platform}
+              {studio.connected ? "本地处理" : "界面预览"}
             </span>
             <button
               className="icon-button"
@@ -131,9 +128,30 @@ export default function App() {
             >
               <Icon name={theme === "light" ? "moon" : "sun"} />
             </button>
+            {studio.connected && studio.platform === "windows" && (
+              <WindowControls onError={studio.setError} />
+            )}
           </div>
         </header>
         <main id="workspace" tabIndex={-1} data-file-drop-target>
+          {studio.environment &&
+            studio.environment.configurable &&
+            !studio.environment.ready &&
+            page !== "settings" && (
+              <div className="environment-alert" role="alert">
+                <Icon name="info" />
+                <div>
+                  <strong>需要配置 FFmpeg</strong>
+                  <p>{studio.environment.message}</p>
+                </div>
+                <button
+                  className="button outlined"
+                  onClick={() => navigate("settings")}
+                >
+                  前往设置
+                </button>
+              </div>
+            )}
           {studio.error && (
             <div className="app-alert" role="alert">
               <Icon name="info" />
@@ -183,15 +201,16 @@ export default function App() {
               connected={studio.connected}
               capabilities={studio.capabilities}
               capabilityError={studio.capabilityError}
+              environment={studio.environment}
+              environmentBusy={studio.environmentBusy}
+              refreshEnvironment={studio.refreshEnvironment}
+              chooseFFmpeg={studio.chooseFFmpeg}
+              configureFFmpeg={studio.configureFFmpeg}
               theme={theme}
               toggleTheme={toggleTheme}
             />
           )}
         </main>
-        <footer className="workspace-footer">
-          <span>kompeg</span>
-          <span>让媒体处理，更简单。</span>
-        </footer>
       </div>
       <nav className="bottom-nav glass" aria-label="移动端主导航">
         {navigation.map((item) => (

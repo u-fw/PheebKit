@@ -14,12 +14,20 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 // @ts-ignore: Unused imports
 import * as core$0 from "../core/models.js";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
+
 export function Cancel(id: string): $CancellablePromise<void> {
     return $Call.ByID(1852083749, id);
 }
 
 export function Capabilities(): $CancellablePromise<core$0.Capabilities> {
     return $Call.ByID(1476031073);
+}
+
+export function ChooseFFmpeg(): $CancellablePromise<$models.Environment | null> {
+    return $Call.ByID(1877963603);
 }
 
 export function ChooseMedia(): $CancellablePromise<core$0.Media | null> {
@@ -30,8 +38,20 @@ export function ChooseOutput(suggested: string): $CancellablePromise<string> {
     return $Call.ByID(3414295343, suggested);
 }
 
+export function ConfigureFFmpeg(ffmpegPath: string, ffprobePath: string): $CancellablePromise<$models.Environment> {
+    return $Call.ByID(3260152768, ffmpegPath, ffprobePath);
+}
+
+export function GetEnvironment(): $CancellablePromise<$models.Environment> {
+    return $Call.ByID(2101974642);
+}
+
 export function GetPlatform(): $CancellablePromise<string> {
     return $Call.ByID(1948034858);
+}
+
+export function GetThumbnail(uri: string): $CancellablePromise<$models.Thumbnail> {
+    return $Call.ByID(1060548783, uri);
 }
 
 export function Jobs(): $CancellablePromise<core$0.Job[] | null> {
@@ -44,6 +64,13 @@ export function Preview(p: core$0.Project): $CancellablePromise<core$0.Execution
 
 export function Probe(uri: string): $CancellablePromise<core$0.Media> {
     return $Call.ByID(3925590791, uri);
+}
+
+/**
+ * RefreshCapabilities reruns real encoder/device qualification after a rescan.
+ */
+export function RefreshCapabilities(): $CancellablePromise<core$0.Capabilities> {
+    return $Call.ByID(1478811256);
 }
 
 export function Start(p: core$0.Project): $CancellablePromise<core$0.Job> {
