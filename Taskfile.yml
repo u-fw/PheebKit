@@ -1,0 +1,41 @@
+version: '3'
+vars:
+  APP_NAME: ffmpegstudio
+  BIN_DIR: bin
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+includes:
+  android: ./build/android/Taskfile.yml
+tasks:
+  bindings:
+    cmds:
+      - go mod tidy
+      - wails3 generate bindings -ts -i -clean=true
+  build:
+    cmds:
+      - task: bindings
+      - task: build:frontend
+      - wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out ffmpegstudio.syso
+      - go build -tags production -trimpath -ldflags="-s -w -H windowsgui" -o bin/ffmpegstudio.exe .
+  build:frontend:
+    dir: frontend
+    cmds:
+      - npm ci
+      - npm run build
+  dev:frontend:
+    dir: frontend
+    cmds:
+      - npm run dev -- --port {{.VITE_PORT}} --strictPort
+  run:
+    cmds:
+      - ./bin/ffmpegstudio.exe
+  build:server:
+    cmds:
+      - go build -tags server -o bin/ffmpegstudio-server.exe .
+  test:
+    cmds:
+      - go test ./...
+      - go vet ./...
+      - npm --prefix frontend run test
+      - npm --prefix frontend run lint
+      - npm --prefix frontend run typecheck
+      - npm --prefix frontend run format:check

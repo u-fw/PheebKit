@@ -1,0 +1,10 @@
+/bin/
+/.tools/
+/_scaffold/
+/artifacts/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/coverage/
+*.syso
+*.log
+.DS_Store
