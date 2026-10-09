@@ -1,4 +1,4 @@
-# FFmpeg Studio architecture
+# kompeg architecture
 
 The first milestone is a technical spike, not the complete product. Targets are Windows 10/11 and Android. Wails v3 Beta and experimental Android support were explicitly approved for this spike on 2026-10-09; they are not a production stability claim.
 
