@@ -1,0 +1,204 @@
+.compress-layout {
+  margin-top: var(--space-6);
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(290px, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.settings-column,
+.preview-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.preview-column {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-6));
+}
+.preview-column > * {
+  min-width: 0;
+}
+.settings-card,
+.output-card,
+.estimate-card,
+.command-card,
+.preferences-card {
+  padding: var(--space-6);
+}
+.settings-card > .section-title {
+  margin-bottom: var(--space-6);
+}
+.settings-card {
+  background: var(--surface-tonal);
+}
+.estimate-card {
+  background: var(--surface-accent);
+  border-color: var(--outline);
+}
+fieldset {
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+legend {
+  font-size: var(--font-md);
+  font-weight: 500;
+  padding: 0;
+  margin-bottom: var(--space-3);
+}
+legend > span {
+  color: var(--subtle);
+  margin-left: var(--space-2);
+  font-size: var(--font-xs);
+  font-weight: 400;
+}
+.codec-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 5rem), 1fr));
+  gap: var(--space-2);
+}
+.codec-option {
+  padding: var(--space-4) var(--space-3);
+  border: 1px solid var(--outline);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  text-align: left;
+  min-height: 84px;
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast);
+}
+.codec-option.selected {
+  background: var(--primary-container);
+  border-color: transparent;
+  color: var(--on-primary-container);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+.codec-option > span {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  display: flex;
+  gap: var(--space-1);
+  justify-content: space-between;
+  align-items: center;
+}
+.codec-option .icon {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+.codec-option small {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+.codec-option:not(.selected):hover:not(:disabled) {
+  background: var(--surface-container);
+}
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--surface-container);
+  gap: var(--space-1);
+}
+.segmented button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: var(--space-3) var(--space-2);
+  min-height: 44px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  white-space: nowrap;
+  color: var(--muted);
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+.segmented button .icon {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+.segmented button.selected {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  box-shadow: var(--elevation);
+  font-weight: 600;
+}
+.segmented button:hover:not(.selected) {
+  background: var(--surface-container-high);
+}
+.field-hint {
+  font-size: var(--font-xs);
+  color: var(--muted);
+  line-height: 1.65;
+  display: block;
+  font-weight: 400;
+}
+.split-hint {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-2) 0;
+  font-size: 0.6875rem;
+}
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--font-md);
+  font-weight: 500;
+  min-width: 0;
+}
+input,
+select,
+textarea {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background: var(--surface-container);
+  color: var(--color);
+  min-height: var(--control-height);
+  font-size: var(--font-sm);
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast);
+}
+input:focus,
+textarea:focus {
+  background: var(--surface);
+  border-color: var(--primary);
+}
+input[type="number"] {
+  appearance: textfield;
+}
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+textarea {
+  resize: vertical;
+  line-height: 1.8;
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--primary);
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}

@@ -8,6 +8,8 @@ Filled primary buttons, pill navigation and checked segmented controls express s
 
 The vendor-prefixed backdrop declaration precedes the standard declaration. The previous reverse order caused production CSS optimization to retain only a WebKit property that the audited Chromium WebView did not recognize. Final native verification confirms the standard computed value is `blur(26px)`; transparency alone is not treated as blur proof.
 
+`frontend/src/styles.css` is the stylesheet entrypoint. Tokens, base rules, shell, workspace, media, compression, select, execution, queue, settings and responsive rules live in separate files under `frontend/src/styles/`. Their declaration order is preserved; the split produces identical production assets.
+
 Desktop uses a sidebar. Widths up to 960px switch to a bottom navigation rather than shrinking the desktop sidebar, including phone landscape. Safe-area insets, 44+ px targets, focus outlines, semantic controls and reduced-motion settings support touch and keyboard use. Light and dark themes use local persistence; fonts use the local system stack so the application works offline.
 
 Home begins with file selection or drag/drop. A real Go probe result supplies the Media Card; no example file is presented as an imported file. Compress exposes codec family, quality, resolution, audio and output. Advanced controls expose CRF, preset and one argv element per raw-argument line. UI never constructs the executable command.

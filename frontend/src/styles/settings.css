@@ -1,0 +1,77 @@
+.preferences-card + .preferences-card {
+  margin-top: var(--space-5);
+}
+.preference-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+.preference-row h3 {
+  font-size: var(--font-md);
+  margin-bottom: var(--space-2);
+}
+.preference-row p {
+  font-size: var(--font-sm);
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.6875rem;
+  color: var(--muted);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--surface-container);
+}
+.status-pill.connected {
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+}
+.environment-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+}
+.environment-grid dd {
+  font-size: var(--font-md);
+  line-height: 1.6;
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-5);
+}
+.notice .icon {
+  color: var(--primary);
+}
+.notice p {
+  font-size: var(--font-sm);
+  overflow-wrap: anywhere;
+}
+.version-text {
+  background: var(--code-background);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--font-xs);
+  line-height: 1.7;
+  margin: var(--space-5) 0;
+}
+.preferences-card > h3 {
+  font-size: var(--font-md);
+}
+.encoder-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.encoder-chips .chip {
+  font-family: "Cascadia Code", Consolas, monospace;
+}

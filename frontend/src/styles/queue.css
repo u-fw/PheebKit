@@ -1,0 +1,183 @@
+.empty-state {
+  min-height: 360px;
+  padding: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.empty-state > .icon {
+  color: var(--primary);
+  width: var(--space-12);
+  height: var(--space-12);
+  padding: var(--space-2);
+  background: var(--primary-container);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+.empty-state h2 {
+  font-size: var(--font-heading);
+}
+.empty-state p {
+  font-size: var(--font-md);
+  margin: var(--space-3) 0 var(--space-6);
+}
+.queue-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+.queue-toolbar .segmented {
+  max-width: 440px;
+  flex: 1;
+}
+.queue-toolbar .segmented button {
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
+}
+.job-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.job-card {
+  padding: var(--space-6);
+}
+.job-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.job-file-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--surface-container);
+  color: var(--primary);
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.job-file-icon.completed {
+  background: var(--success-container);
+}
+.job-heading > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.job-heading h2 {
+  font-size: var(--font-body);
+  overflow-wrap: anywhere;
+}
+.job-state {
+  display: inline-block;
+  color: var(--muted);
+  font-size: var(--font-xs);
+  margin-top: var(--space-2);
+}
+.state-running,
+.state-completed {
+  color: var(--success);
+}
+.state-failed {
+  color: var(--error);
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-xs);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-3);
+}
+.progress-label > span {
+  color: var(--muted);
+}
+progress {
+  display: block;
+  height: var(--space-2);
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  appearance: none;
+  background: var(--surface-container);
+  accent-color: var(--primary);
+}
+progress::-webkit-progress-bar {
+  background: var(--surface-container);
+}
+progress::-webkit-progress-value {
+  background: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width var(--motion-standard);
+}
+progress::-moz-progress-bar {
+  background: var(--primary);
+  border-radius: var(--radius-full);
+}
+.job-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+.job-metrics dd {
+  font-size: var(--font-title);
+}
+.result-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--success-container);
+  color: var(--success);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-5);
+  font-size: var(--font-sm);
+}
+.result-banner strong {
+  margin-left: auto;
+}
+.job-output {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  color: var(--muted);
+  margin-top: var(--space-5);
+  font-size: var(--font-xs);
+  line-height: 1.7;
+}
+.job-output .icon {
+  width: var(--space-4);
+  height: var(--space-4);
+  margin-top: 2px;
+}
+.job-output span {
+  overflow-wrap: anywhere;
+}
+.job-logs {
+  border-top: 1px solid var(--outline-variant);
+  margin-top: var(--space-5);
+}
+.job-logs summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: var(--control-height);
+  font-size: var(--font-xs);
+}
+.job-logs summary > span {
+  color: var(--muted);
+}
+.job-logs pre {
+  padding: var(--space-4);
+  background: var(--code-background);
+  border-radius: var(--radius-md);
+  font-size: 0.6875rem;
+  line-height: 1.8;
+  max-height: 320px;
+  overflow: auto;
+}

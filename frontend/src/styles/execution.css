@@ -1,0 +1,208 @@
+.target-field {
+  margin-bottom: var(--space-6);
+}
+.encoder-info {
+  display: flex;
+  gap: var(--space-3);
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-top: var(--space-5);
+  align-items: center;
+}
+.encoder-info .icon {
+  color: var(--primary);
+}
+.encoder-info strong,
+.encoder-info span {
+  display: block;
+}
+.encoder-info strong {
+  font-size: var(--font-xs);
+  font-weight: 500;
+}
+.encoder-info span {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  margin-top: var(--space-1);
+  line-height: 1.6;
+}
+.advanced-card summary {
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  list-style: none;
+  font-size: var(--font-md);
+  min-height: var(--control-height);
+  border-radius: var(--radius-lg);
+  background: var(--surface-tonal);
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+.advanced-card summary > div,
+.advanced-card summary > span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.advanced-card summary > span {
+  font-size: 0.6875rem;
+  color: var(--subtle);
+}
+.advanced-card summary > span > .icon {
+  width: var(--space-4);
+  height: var(--space-4);
+  transition: transform var(--motion-fast);
+}
+.advanced-card[open] summary > span > .icon {
+  transform: rotate(90deg);
+}
+.advanced-content {
+  padding: 0 var(--space-6) var(--space-6);
+}
+.output-card .section-title {
+  margin-bottom: var(--space-5);
+}
+.output-card .section-title > .icon {
+  color: var(--muted);
+}
+.output-field {
+  display: flex;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+.output-field input {
+  flex: 1;
+}
+.output-field .button {
+  border-radius: var(--radius-sm);
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+.estimate-card h2 {
+  margin-top: var(--space-3);
+  font-size: var(--font-heading);
+}
+.size-comparison {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-4);
+}
+.size-comparison > div {
+  flex: 1;
+  min-width: 0;
+}
+.size-comparison span {
+  display: block;
+  font-size: var(--font-xs);
+  color: var(--muted);
+  margin-bottom: var(--space-2);
+}
+.size-comparison strong {
+  font-size: var(--font-title);
+  overflow-wrap: anywhere;
+}
+.size-comparison > div:last-child strong {
+  color: var(--primary);
+}
+.size-comparison > .icon {
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--subtle);
+}
+.estimate-card > p {
+  font-size: var(--font-xs);
+}
+.summary-divider {
+  height: 1px;
+  background: var(--outline-variant);
+  margin: var(--space-5) 0;
+}
+.output-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  font-size: var(--font-xs);
+}
+.output-summary > span {
+  color: var(--muted);
+}
+.output-summary > strong {
+  font-weight: 500;
+  text-align: right;
+}
+.start-button {
+  width: 100%;
+  margin-top: var(--space-6);
+}
+.estimate-card > .field-hint {
+  margin-top: var(--space-3);
+  text-align: center;
+  font-size: 0.6875rem;
+}
+.command-card {
+  padding: var(--space-5);
+}
+.command-card .section-title {
+  gap: var(--space-2);
+}
+.command-card .section-title h3 {
+  font-size: var(--font-xs);
+}
+.command-card .section-title h3 .icon {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+.compact-button {
+  padding: var(--space-2);
+  font-size: var(--font-xs);
+}
+.compact-button .icon {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+.command-card > p {
+  font-size: 0.6875rem;
+  margin: var(--space-1) 0 var(--space-3);
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+.command-card pre {
+  background: var(--code-background);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 0.6875rem;
+  line-height: 1.9;
+  min-height: 120px;
+  max-height: 400px;
+  overflow: auto;
+}
+.command-card > .subtle-label,
+.copy-status {
+  display: block;
+  margin-top: var(--space-3);
+  font-size: 0.6875rem;
+}
+.copy-status {
+  color: var(--primary);
+  overflow-wrap: anywhere;
+}
+.inline-error,
+.validation-errors {
+  font-size: var(--font-xs);
+  color: var(--error);
+  margin-top: var(--space-4);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.validation-errors p {
+  color: var(--error);
+  margin-bottom: var(--space-1);
+}
