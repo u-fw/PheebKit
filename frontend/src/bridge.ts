@@ -62,6 +62,7 @@ export interface Job {
   state: string;
   input: Source;
   output: Source;
+  queuedAt?: string;
   startedAt: string;
   completedAt: string;
   duration: number;
@@ -85,6 +86,7 @@ function jobView(job: Core.Job): Job {
     state: job.state,
     input: job.input,
     output: job.output,
+    queuedAt: job.queuedAt,
     startedAt: job.startedAt,
     completedAt: job.completedAt,
     duration: job.result?.elapsedSeconds ?? 0,

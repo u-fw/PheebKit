@@ -25,11 +25,12 @@ export function validateSettings(
     errors.push("输出文件不能覆盖源文件，请选择新路径。");
   const maxQuality = settings.codec === "av1" ? 63 : 51;
   if (
-    !Number.isInteger(settings.quality) ||
-    settings.quality < 0 ||
-    settings.quality > maxQuality
+    settings.mode === "quality" &&
+    (!Number.isInteger(settings.quality) ||
+      settings.quality < 0 ||
+      settings.quality > maxQuality)
   )
-    errors.push(`CRF 必须是 0–${maxQuality} 的整数。`);
+    errors.push(`质量参数必须是 0–${maxQuality} 的整数。`);
   if (
     !Number.isInteger(settings.resolution) ||
     settings.resolution < 0 ||

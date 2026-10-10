@@ -32,6 +32,7 @@ export interface ExecutionPlan {
     "jobID": string;
     "projectID": string;
     "input": Source;
+    "sourceFingerprint"?: string;
     "output": Source;
     "args": string[] | null;
     "preview": string;
@@ -65,6 +66,7 @@ export interface Job {
 
 export interface Media {
     "source": Source;
+    "sourceFingerprint"?: string;
     "name": string;
     "container": string;
     "sizeBytes": number;

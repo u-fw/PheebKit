@@ -27,6 +27,7 @@ export function useExecutionPlan(
   });
   const key = JSON.stringify([
     media?.source.uri,
+    media?.sourceFingerprint,
     settings,
     output,
     connected,

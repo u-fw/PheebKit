@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { API } from "../bridge";
 import type { Capabilities, EnvironmentStatus, Job, Media } from "../bridge";
 import { errorMessage } from "../format";
+import { JobHistory } from "../jobHistory";
+import { refreshEnvironmentSnapshot } from "../environmentRefresh";
 
 export function useStudio() {
   const [platform, setPlatform] = useState("连接中");
@@ -18,38 +20,49 @@ export function useStudio() {
   const [busy, setBusy] = useState(false);
   const importBusy = useRef(false);
   const environmentGeneration = useRef(0);
+  const jobHistory = useRef(new JobHistory());
 
-  const updateEnvironment = useCallback(
-    async (status: EnvironmentStatus, rescan = false) => {
-      const generation = ++environmentGeneration.current;
-      setEnvironment(status);
-      setCapabilities(null);
-      setCapabilityError("");
-      if (!status.ready) {
-        setCapabilityError(status.message);
-        return;
-      }
-      try {
-        const next = await (rescan
-          ? API.refreshCapabilities()
-          : API.capabilities());
-        if (generation === environmentGeneration.current) setCapabilities(next);
-      } catch (cause) {
-        if (generation === environmentGeneration.current)
-          setCapabilityError(errorMessage(cause));
-      }
-    },
-    [],
-  );
+  const updateEnvironment = useCallback(async (status: EnvironmentStatus) => {
+    const generation = ++environmentGeneration.current;
+    setEnvironment(status);
+    setCapabilities(null);
+    setCapabilityError("");
+    if (!status.ready) {
+      setCapabilityError(status.message);
+      return;
+    }
+    try {
+      const next = await API.capabilities();
+      if (generation === environmentGeneration.current) setCapabilities(next);
+    } catch (cause) {
+      if (generation === environmentGeneration.current)
+        setCapabilityError(errorMessage(cause));
+    }
+  }, []);
 
   const refreshEnvironment = useCallback(async () => {
+    const generation = ++environmentGeneration.current;
     setEnvironmentBusy(true);
+    setCapabilities(null);
+    setCapabilityError("");
     try {
-      await updateEnvironment(await API.getEnvironment(), true);
+      await refreshEnvironmentSnapshot(
+        API,
+        () => generation === environmentGeneration.current,
+        (snapshot) => {
+          setEnvironment(snapshot.environment);
+          setCapabilities(snapshot.capabilities);
+        },
+      );
+    } catch (cause) {
+      if (generation === environmentGeneration.current)
+        setCapabilityError(errorMessage(cause));
+      throw cause;
     } finally {
-      setEnvironmentBusy(false);
+      if (generation === environmentGeneration.current)
+        setEnvironmentBusy(false);
     }
-  }, [updateEnvironment]);
+  }, []);
 
   const chooseFFmpeg = useCallback(async () => {
     setEnvironmentBusy(true);
@@ -113,6 +126,7 @@ export function useStudio() {
     let subscriptionError = "";
     const generationRef = environmentGeneration;
     const initialGeneration = environmentGeneration.current;
+    const jobsRequestedAt = jobHistory.current.revision;
     const platformRequest = API.getPlatform();
     const environmentRequest = API.getEnvironment();
     void environmentRequest
@@ -163,38 +177,31 @@ export function useStudio() {
         setEnvironment(environmentResult.value);
       else if (
         environmentResult.status === "rejected" &&
-        platformResult.status === "fulfilled"
+        platformResult.status === "fulfilled" &&
+        initialGeneration === environmentGeneration.current
       )
         setCapabilityError(
           `FFmpeg 环境检测失败：${errorMessage(environmentResult.reason)}`,
         );
-      if (jobResult.status === "fulfilled") setJobs(jobResult.value);
+      if (jobResult.status === "fulfilled")
+        setJobs(jobHistory.current.reconcile(jobResult.value, jobsRequestedAt));
       else if (platformResult.status === "fulfilled")
         setError(`任务队列加载失败：${errorMessage(jobResult.reason)}`);
       if (subscriptionError && platformResult.status === "fulfilled")
         setError(subscriptionError);
     });
 
-    const pending = new Map<string, Job>();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const unsubscribe: (() => void)[] = [];
     try {
       unsubscribe.push(
         API.subscribeJobs((job) => {
-          pending.set(job.id, job);
+          if (!alive) return;
+          jobHistory.current.update([job]);
           if (timer) return;
           timer = setTimeout(() => {
-            const updates = [...pending.values()];
-            pending.clear();
             timer = undefined;
-            if (alive)
-              setJobs((current) => {
-                const merged = new Map(
-                  current.map((entry) => [entry.id, entry]),
-                );
-                updates.forEach((entry) => merged.set(entry.id, entry));
-                return [...merged.values()];
-              });
+            if (alive) setJobs(jobHistory.current.list());
           }, 150);
         }),
       );
@@ -220,11 +227,7 @@ export function useStudio() {
   }, [importPaths]);
 
   const addJob = useCallback((job: Job) => {
-    setJobs((current) =>
-      current.some((entry) => entry.id === job.id)
-        ? current
-        : [...current, job],
-    );
+    setJobs(jobHistory.current.update([job]));
   }, []);
 
   const cancelJob = useCallback(async (id: string) => {
@@ -236,8 +239,9 @@ export function useStudio() {
   }, []);
 
   const refreshJobs = useCallback(async () => {
+    const requestedAt = jobHistory.current.revision;
     try {
-      setJobs(await API.jobs());
+      setJobs(jobHistory.current.reconcile(await API.jobs(), requestedAt));
     } catch (cause) {
       setError(`刷新失败：${errorMessage(cause)}`);
     }

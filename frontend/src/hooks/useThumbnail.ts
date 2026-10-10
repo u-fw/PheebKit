@@ -8,6 +8,7 @@ const maxCachedThumbnails = 24;
 function loadThumbnail(media: Media): Promise<Thumbnail> {
   const key = JSON.stringify([
     media.source.uri,
+    media.sourceFingerprint,
     media.sizeBytes,
     media.durationSeconds,
   ]);
@@ -28,6 +29,7 @@ function loadThumbnail(media: Media): Promise<Thumbnail> {
 export function useThumbnail(media: Media) {
   const key = JSON.stringify([
     media.source.uri,
+    media.sourceFingerprint,
     media.sizeBytes,
     media.durationSeconds,
   ]);
