@@ -15,6 +15,7 @@ import (
 	"kompeg/internal/capabilities"
 	"kompeg/internal/core"
 	"kompeg/internal/probe"
+	"kompeg/internal/sourcefile"
 )
 
 type Runner struct {
@@ -40,6 +41,10 @@ func (r *Runner) Probe(ctx context.Context, source core.Source) (core.Media, err
 	if err := localFile(source, true); err != nil {
 		return core.Media{}, err
 	}
+	fingerprint, err := sourcefile.Fingerprint(source.URI)
+	if err != nil {
+		return core.Media{}, err
+	}
 	args := []string{"-v", "error", "-show_format", "-show_streams", "-show_chapters", "-show_programs", "-of", "json", "-i", source.URI}
 	data, err := capture(ctx, r.FFprobe, args, false)
 	if err != nil {
@@ -49,6 +54,10 @@ func (r *Runner) Probe(ctx context.Context, source core.Source) (core.Media, err
 	if err != nil {
 		return core.Media{}, err
 	}
+	if err := sourcefile.Verify(source.URI, fingerprint); err != nil {
+		return core.Media{}, err
+	}
+	media.SourceFingerprint = fingerprint
 	// Filesystem size is authoritative when container metadata omits it.
 	if stat, err := os.Stat(source.URI); err == nil {
 		media.SizeBytes = stat.Size()
@@ -96,6 +105,9 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 		return core.Result{}, fmt.Errorf("execution requires a job ID")
 	}
 	if err := validatePlan(plan); err != nil {
+		return core.Result{}, err
+	}
+	if err := sourcefile.Verify(plan.Input.URI, plan.SourceFingerprint); err != nil {
 		return core.Result{}, err
 	}
 	outputParent := filepath.Dir(plan.Output.URI)
@@ -170,6 +182,11 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	}
 	if ctx.Err() != nil {
 		return core.Result{}, ctx.Err()
+	}
+	// A source edited during encoding must not be published as the analyzed
+	// video, even if FFmpeg happened to finish reading the older open handle.
+	if err := sourcefile.Verify(plan.Input.URI, plan.SourceFingerprint); err != nil {
+		return core.Result{}, err
 	}
 	// Publish only a completed file. The platform primitive never replaces an
 	// output that appeared while encoding, even if another process created it.

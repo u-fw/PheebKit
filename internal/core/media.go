@@ -13,13 +13,14 @@ const (
 )
 
 type Media struct {
-	Source          Source   `json:"source"`
-	Name            string   `json:"name"`
-	Container       string   `json:"container"`
-	SizeBytes       int64    `json:"sizeBytes"`
-	DurationSeconds float64  `json:"durationSeconds"`
-	Bitrate         int64    `json:"bitrate"`
-	Streams         []Stream `json:"streams"`
+	Source            Source   `json:"source"`
+	SourceFingerprint string   `json:"sourceFingerprint,omitempty"`
+	Name              string   `json:"name"`
+	Container         string   `json:"container"`
+	SizeBytes         int64    `json:"sizeBytes"`
+	DurationSeconds   float64  `json:"durationSeconds"`
+	Bitrate           int64    `json:"bitrate"`
+	Streams           []Stream `json:"streams"`
 }
 
 type Stream struct {

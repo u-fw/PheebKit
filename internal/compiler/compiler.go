@@ -127,7 +127,8 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	args = append(args, output.URI)
 	return core.ExecutionPlan{ProjectID: project.ID, Input: input, Output: output, Args: args,
 		Preview: Preview("ffmpeg.exe", args), DurationSeconds: media.DurationSeconds, InputSizeBytes: media.SizeBytes,
-		Encoder: encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
+		SourceFingerprint: media.SourceFingerprint,
+		Encoder:           encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }
 
 func compileAudio(mode string, hasAudio bool, media core.Media, ext string, encoders []core.Encoder) ([]string, int, error) {

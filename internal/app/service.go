@@ -14,25 +14,35 @@ import (
 	"kompeg/internal/compiler"
 	"kompeg/internal/core"
 	"kompeg/internal/jobs"
+	"kompeg/internal/sourcefile"
 )
 
 // Service is the Wails boundary; the compiler and job engine know nothing of UI.
 type Service struct {
-	app      *application.App
-	runner   *runnerProxy
-	jobs     *jobs.Manager
-	ctx      context.Context
-	cancel   context.CancelFunc
-	mediaMu  sync.RWMutex
-	media    map[string]core.Media
-	capsMu   sync.Mutex
-	caps     *core.Capabilities
-	configMu sync.RWMutex
+	app                *application.App
+	runner             *runnerProxy
+	jobs               *jobs.Manager
+	ctx                context.Context
+	cancel             context.CancelFunc
+	mediaMu            sync.RWMutex
+	media              map[string]core.Media
+	capsMu             sync.Mutex
+	caps               *core.Capabilities
+	configMu           sync.RWMutex
+	environment        Environment
+	configuration      binaryConfig
+	configurationError string
 }
 
 func NewService() *Service {
 	ctx, cancel := context.WithCancel(context.Background())
-	s := &Service{ctx: ctx, cancel: cancel, runner: &runnerProxy{current: newPlatformRunner()}, media: make(map[string]core.Media)}
+	config, err := readBinaryConfig()
+	environment := discoverEnvironment(config)
+	s := &Service{ctx: ctx, cancel: cancel, runner: &runnerProxy{current: newPlatformRunner(environment)}, media: make(map[string]core.Media), environment: environment, configuration: config}
+	if err != nil {
+		s.configurationError = "无法读取 FFmpeg 配置：" + err.Error()
+		log.Print(s.configurationError)
+	}
 	s.jobs = jobs.New(s.runner, func(job core.Job) {
 		if s.app != nil {
 			s.app.Event.Emit("job:updated", job)
@@ -64,12 +74,31 @@ func source(uri string) core.Source {
 }
 
 func (s *Service) Probe(uri string) (core.Media, error) {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	return s.probe(uri)
+}
+
+func (s *Service) probe(uri string) (core.Media, error) {
+	input := source(uri)
+	fingerprint := ""
+	if input.Kind == core.SourceLocalFile {
+		var err error
+		fingerprint, err = sourcefile.Fingerprint(uri)
+		if err != nil {
+			return core.Media{}, err
+		}
+	}
 	ctx, cancel := context.WithTimeout(s.ctx, 2*time.Minute)
 	defer cancel()
-	m, err := s.runner.Probe(ctx, source(uri))
+	m, err := s.runner.Probe(ctx, input)
 	if err != nil {
 		return core.Media{}, err
 	}
+	if err := sourcefile.Verify(uri, fingerprint); err != nil {
+		return core.Media{}, err
+	}
+	m.SourceFingerprint = fingerprint
 	s.mediaMu.Lock()
 	s.media[m.Source.URI] = m
 	s.mediaMu.Unlock()
@@ -102,11 +131,18 @@ func (s *Service) ChooseOutput(suggested string) (string, error) {
 }
 
 func (s *Service) Capabilities() (core.Capabilities, error) {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
 	return s.scanCapabilities(false)
 }
 
 // RefreshCapabilities reruns real encoder/device qualification after a rescan.
 func (s *Service) RefreshCapabilities() (core.Capabilities, error) {
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+	if err := s.reloadEnvironment(); err != nil {
+		return core.Capabilities{}, err
+	}
 	return s.scanCapabilities(true)
 }
 
@@ -130,6 +166,12 @@ func (s *Service) scanCapabilities(refresh bool) (core.Capabilities, error) {
 }
 
 func (s *Service) Preview(p core.Project) (core.ExecutionPlan, error) {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	return s.preview(p)
+}
+
+func (s *Service) preview(p core.Project) (core.ExecutionPlan, error) {
 	if len(p.Inputs) != 1 {
 		return core.ExecutionPlan{}, errors.New("the spike requires exactly one input")
 	}
@@ -138,13 +180,19 @@ func (s *Service) Preview(p core.Project) (core.ExecutionPlan, error) {
 	s.mediaMu.RUnlock()
 	if !found {
 		var err error
-		m, err = s.Probe(p.Inputs[0].URI)
+		m, err = s.probe(p.Inputs[0].URI)
 		if err != nil {
 			return core.ExecutionPlan{}, err
 		}
 	}
-	caps, err := s.Capabilities()
+	if err := sourcefile.Verify(m.Source.URI, m.SourceFingerprint); err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	caps, err := s.scanCapabilities(false)
 	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	if err := sourcefile.Verify(m.Source.URI, m.SourceFingerprint); err != nil {
 		return core.ExecutionPlan{}, err
 	}
 	plan, err := compiler.Compile(p, m, caps)
@@ -158,7 +206,7 @@ func (s *Service) Preview(p core.Project) (core.ExecutionPlan, error) {
 func (s *Service) Start(p core.Project) (core.Job, error) {
 	s.configMu.RLock()
 	defer s.configMu.RUnlock()
-	plan, err := s.Preview(p)
+	plan, err := s.preview(p)
 	if err != nil {
 		return core.Job{}, err
 	}

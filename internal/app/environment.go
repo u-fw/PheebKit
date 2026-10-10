@@ -140,6 +140,7 @@ func discoverEnvironment(config binaryConfig) Environment {
 }
 
 func checkBinary(ctx context.Context, binary BinaryStatus, name string) (BinaryStatus, error) {
+	binary.Available, binary.Version = false, ""
 	cmd := exec.CommandContext(ctx, binary.Path, "-version")
 	hidePlatformProcess(cmd)
 	var stdout, stderr limitedBuffer
@@ -158,6 +159,7 @@ func checkBinary(ctx context.Context, binary BinaryStatus, name string) (BinaryS
 }
 
 func validateEnvironment(ctx context.Context, environment Environment) Environment {
+	environment.Message = ""
 	var failures []string
 	var err error
 	environment.FFmpeg, err = checkBinary(ctx, environment.FFmpeg, "ffmpeg")
@@ -186,13 +188,79 @@ func (s *Service) GetEnvironment() Environment {
 	}
 	s.configMu.RLock()
 	defer s.configMu.RUnlock()
+	ctx, cancel := context.WithTimeout(s.ctx, 8*time.Second)
+	defer cancel()
+	// Report the binaries owned by this instance, not settings another window
+	// may have written while this instance was processing jobs.
+	environment := validateEnvironment(ctx, s.environment)
 	config, err := readBinaryConfig()
 	if err != nil {
-		return Environment{Platform: runtime.GOOS, Configurable: true, Message: "无法读取 FFmpeg 配置：" + err.Error()}
+		environment.Message = appendEnvironmentMessage(environment.Message, "无法读取共享 FFmpeg 配置："+err.Error()+"。本窗口继续使用上方路径。")
+	} else if config != s.configuration || !sameSelectedEnvironment(discoverEnvironment(config), s.environment) {
+		environment.Message = appendEnvironmentMessage(environment.Message, "检测到 FFmpeg 配置已在其他窗口或应用外更改。本窗口继续使用上方路径；请等待任务结束，再点击重新检测以同步配置。")
+	} else if s.configurationError != "" {
+		environment.Message = appendEnvironmentMessage(environment.Message, s.configurationError)
+	}
+	return environment
+}
+
+func appendEnvironmentMessage(message, addition string) string {
+	if message == "" {
+		return addition
+	}
+	return message + "\n" + addition
+}
+
+func sameSelectedEnvironment(a, b Environment) bool {
+	return a.FFmpeg.Path == b.FFmpeg.Path && a.FFmpeg.Source == b.FFmpeg.Source && a.FFprobe.Path == b.FFprobe.Path && a.FFprobe.Source == b.FFprobe.Source
+}
+
+func (s *Service) hasPendingJobs() bool {
+	for _, job := range s.jobs.List() {
+		if job.State == core.JobQueued || job.State == core.JobPreparing || job.State == core.JobRunning || job.State == core.JobCancelling {
+			return true
+		}
+	}
+	return false
+}
+
+// reloadEnvironment is called with configMu held exclusively. Job creation
+// holds its read lock, so an idle check and runner replacement are one operation.
+func (s *Service) reloadEnvironment() error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	config, err := readBinaryConfig()
+	if err != nil {
+		return fmt.Errorf("无法读取 FFmpeg 配置，仍使用本窗口原有路径：%w", err)
+	}
+	selected := discoverEnvironment(config)
+	if config == s.configuration && sameSelectedEnvironment(selected, s.environment) {
+		s.configurationError = ""
+		return nil
+	}
+	if s.hasPendingJobs() {
+		return errors.New("FFmpeg 配置已更改，请等待所有任务结束或取消任务后，再重新检测并同步路径。")
 	}
 	ctx, cancel := context.WithTimeout(s.ctx, 8*time.Second)
 	defer cancel()
-	return validateEnvironment(ctx, discoverEnvironment(config))
+	selected = validateEnvironment(ctx, selected)
+	if !selected.Ready {
+		return errors.New("无法同步新配置，本窗口继续使用原有路径。\n" + selected.Message)
+	}
+	s.applyEnvironment(selected, config)
+	return nil
+}
+
+func (s *Service) applyEnvironment(environment Environment, config binaryConfig) {
+	s.runner.replace(newConfiguredRunner(environment.FFmpeg.Path, environment.FFprobe.Path))
+	s.environment, s.configuration, s.configurationError = environment, config, ""
+	s.capsMu.Lock()
+	s.caps = nil
+	s.capsMu.Unlock()
+	if s.app != nil {
+		s.app.Event.Emit("environment:updated", environment)
+	}
 }
 
 func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, error) {
@@ -201,10 +269,8 @@ func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, 
 	}
 	s.configMu.Lock()
 	defer s.configMu.Unlock()
-	for _, job := range s.jobs.List() {
-		if job.State == core.JobQueued || job.State == core.JobPreparing || job.State == core.JobRunning || job.State == core.JobCancelling {
-			return Environment{}, errors.New("请等待所有任务结束或取消任务后，再更改 FFmpeg 路径。")
-		}
+	if s.hasPendingJobs() {
+		return Environment{}, errors.New("请等待所有任务结束或取消任务后，再更改 FFmpeg 路径。")
 	}
 	if strings.TrimSpace(ffmpegPath) == "" {
 		return Environment{}, errors.New("请选择 ffmpeg.exe 或填写 FFmpeg 所在目录。")
@@ -231,13 +297,7 @@ func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, 
 	if err := writeBinaryConfig(config); err != nil {
 		return Environment{}, fmt.Errorf("保存 FFmpeg 配置失败：%w", err)
 	}
-	s.runner.replace(newConfiguredRunner(selected.FFmpeg.Path, selected.FFprobe.Path))
-	s.capsMu.Lock()
-	s.caps = nil
-	s.capsMu.Unlock()
-	if s.app != nil {
-		s.app.Event.Emit("environment:updated", selected)
-	}
+	s.applyEnvironment(selected, config)
 	return selected, nil
 }
 

@@ -5,17 +5,11 @@ package app
 import (
 	"kompeg/internal/core"
 	"kompeg/internal/runner/windows"
-	"log"
 	"os/exec"
 	"syscall"
 )
 
-func newPlatformRunner() core.Runner {
-	config, err := readBinaryConfig()
-	if err != nil {
-		log.Printf("read FFmpeg configuration: %v", err)
-	}
-	environment := discoverEnvironment(config)
+func newPlatformRunner(environment Environment) core.Runner {
 	return newConfiguredRunner(environment.FFmpeg.Path, environment.FFprobe.Path)
 }
 

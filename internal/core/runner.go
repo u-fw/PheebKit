@@ -16,18 +16,19 @@ type Runner interface {
 }
 
 type ExecutionPlan struct {
-	JobID           string   `json:"jobID"`
-	ProjectID       string   `json:"projectID"`
-	Input           Source   `json:"input"`
-	Output          Source   `json:"output"`
-	Args            []string `json:"args"`
-	Preview         string   `json:"preview"`
-	DurationSeconds float64  `json:"durationSeconds"`
-	InputSizeBytes  int64    `json:"inputSizeBytes"`
-	Encoder         string   `json:"encoder"`
-	EncoderKind     string   `json:"encoderKind"`
-	EncoderLabel    string   `json:"encoderLabel"`
-	EncoderReason   string   `json:"encoderReason"`
+	JobID             string   `json:"jobID"`
+	ProjectID         string   `json:"projectID"`
+	Input             Source   `json:"input"`
+	SourceFingerprint string   `json:"sourceFingerprint,omitempty"`
+	Output            Source   `json:"output"`
+	Args              []string `json:"args"`
+	Preview           string   `json:"preview"`
+	DurationSeconds   float64  `json:"durationSeconds"`
+	InputSizeBytes    int64    `json:"inputSizeBytes"`
+	Encoder           string   `json:"encoder"`
+	EncoderKind       string   `json:"encoderKind"`
+	EncoderLabel      string   `json:"encoderLabel"`
+	EncoderReason     string   `json:"encoderReason"`
 }
 
 type Capabilities struct {

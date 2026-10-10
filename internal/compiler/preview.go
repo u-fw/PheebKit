@@ -32,6 +32,11 @@ func validateRaw(args []string) error {
 		if strings.ContainsRune(args[i+1], 0) || strings.HasPrefix(args[i+1], "-") || args[i+1] == "" {
 			return fmt.Errorf("advanced option %s requires a nonempty value", args[i])
 		}
+		if rules, codecParameters := safeCodecParameters[args[i]]; codecParameters {
+			if err := validateCodecParameters(args[i], args[i+1], rules); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

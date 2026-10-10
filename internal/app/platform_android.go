@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-func newPlatformRunner() core.Runner { return androidrunner.New() }
+func newPlatformRunner(_ Environment) core.Runner { return androidrunner.New() }
 
 func previewBinary(core.Runner) string            { return "ffmpeg" }
 func newConfiguredRunner(_, _ string) core.Runner { return androidrunner.New() }

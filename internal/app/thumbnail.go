@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"kompeg/internal/core"
+	"kompeg/internal/sourcefile"
 )
 
 type Thumbnail struct {
@@ -67,6 +68,8 @@ func thumbnailData(data []byte, source string) (Thumbnail, error) {
 }
 
 func (s *Service) GetThumbnail(uri string) (Thumbnail, error) {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
 	s.mediaMu.RLock()
 	media, found := s.media[uri]
 	s.mediaMu.RUnlock()
@@ -75,6 +78,9 @@ func (s *Service) GetThumbnail(uri string) (Thumbnail, error) {
 	}
 	if media.Source.Kind != core.SourceLocalFile {
 		return Thumbnail{}, core.ErrUnsupported
+	}
+	if err := sourcefile.Verify(media.Source.URI, media.SourceFingerprint); err != nil {
+		return Thumbnail{}, err
 	}
 	info, err := os.Stat(media.Source.URI)
 	if err != nil || !info.Mode().IsRegular() {
@@ -89,10 +95,20 @@ func (s *Service) GetThumbnail(uri string) (Thumbnail, error) {
 	defer release()
 	if data, err := platformThumbnail(ctx, media.Source.URI); err == nil {
 		if thumbnail, err := thumbnailData(data, "windows-shell"); err == nil {
+			if err := sourcefile.Verify(media.Source.URI, media.SourceFingerprint); err != nil {
+				return Thumbnail{}, err
+			}
 			return thumbnail, nil
 		}
 	}
-	return ffmpegThumbnail(ctx, previewBinary(s.runner.snapshot()), media)
+	thumbnail, err := ffmpegThumbnail(ctx, previewBinary(s.runner.snapshot()), media)
+	if err != nil {
+		return Thumbnail{}, err
+	}
+	if err := sourcefile.Verify(media.Source.URI, media.SourceFingerprint); err != nil {
+		return Thumbnail{}, err
+	}
+	return thumbnail, nil
 }
 
 func thumbnailStream(media core.Media) (core.Stream, string, bool) {
