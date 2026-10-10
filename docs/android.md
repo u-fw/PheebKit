@@ -1,5 +1,7 @@
 # Android technical spike
 
+Android development and APK distribution are deferred by the owner as of 2026-10-10. The findings below are retained for a future milestone; current release packaging targets Windows x64 only.
+
 Status recorded on 2026-10-09 (Asia/Singapore). Shared Go packages cross-compiled for Android arm64 with cgo disabled, and Android main-overlay generation succeeded. An Android build attempt failed before native compilation. No Android APK, device launch or frontend-to-Go call has been verified on this machine. Native FFmpeg integration follows the shell spike; it is not implemented by this milestone.
 
 ## Version and support boundary

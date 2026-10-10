@@ -1,0 +1,29 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { readVersion } from "./version.mjs";
+
+const { version, windowsVersion } = readVersion();
+function update(path, indent, mutate) {
+  const url = new URL(`../${path}`, import.meta.url);
+  const before = readFileSync(url, "utf8");
+  const value = JSON.parse(before);
+  mutate(value);
+  const after = JSON.stringify(value, null, indent) + "\n";
+  if (before.replaceAll("\r\n", "\n") !== after) writeFileSync(url, after);
+}
+update("frontend/package.json", 2, (value) => {
+  value.version = version;
+});
+update("frontend/package-lock.json", 2, (value) => {
+  value.version = version;
+  value.packages[""].version = version;
+});
+update("build/windows/info.json", "\t", (value) => {
+  value.fixed.file_version = windowsVersion;
+  value.fixed.product_version = windowsVersion;
+  for (const info of Object.values(value.info)) {
+    info.FileVersion = version;
+    info.ProductVersion = version;
+    info.Comments = "Windows experimental release; Android deferred";
+  }
+});
+console.log(`kompeg ${version} (Windows ${windowsVersion})`);

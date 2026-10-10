@@ -1,6 +1,6 @@
 # kompeg
 
-A Windows 10/11 and Android video-processing technical spike using Go Core, Wails v3, React and strict TypeScript. Windows uses real installed FFmpeg binaries. The Android runner is an explicit unsupported mock until the native integration milestone.
+A Windows 10/11 x64 video-processing experimental application using Go Core, Wails v3, React and strict TypeScript. Windows uses real installed FFmpeg binaries. Android work is deferred; its unsupported mock/native-shell research remains in source and no APK is released.
 
 Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approved for this spike. This repository is not a production release. [Environment audit](docs/environment.md) and [Android blockers](docs/android.md) distinguish installed tools, source support and actual runtime evidence.
 
@@ -36,7 +36,7 @@ Settings also accepts a custom HTTPS archive download link. Mirrors of the exact
 
 New compression settings default to GPU preference. NVENC, QSV and AMF are offered only after bounded real encoding trials; unavailable combinations fall back to CPU with a visible reason. Source artwork prefers Windows thumbnail providers and falls back to FFmpeg cover/frame extraction.
 
-For the proposed no-install application and separate Windows installer, see [Windows distribution](docs/windows-distribution.md). No installer has been built or verified yet.
+Windows packaging produces an installer, a standalone ZIP and SHA-256 checksums from the same build. `VERSION` is the version source; Settings, EXE resources and package metadata stay synchronized. See [Windows distribution and verification](docs/windows-distribution.md) for packaging commands, local lifecycle checks and remaining clean-machine/signing checks. Publication remains a separate owner action.
 
 ## Verification commands
 

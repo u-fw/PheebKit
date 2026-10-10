@@ -351,6 +351,9 @@ export function SettingsPage({
           <p>Android 媒体处理仍在开发中，当前版本暂不可执行压缩任务。</p>
         </div>
       )}
+      <p className="field-hint">
+        kompeg {__KOMPEG_VERSION__} · Windows 测试版 · Android 暂缓
+      </p>
     </div>
   );
 }

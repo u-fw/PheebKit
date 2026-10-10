@@ -25,6 +25,11 @@ func init() {
 }
 
 func main() {
+	releaseGuard, err := holdInstallerGuard()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer releaseGuard()
 	service := app.NewService()
 	a := application.New(application.Options{
 		Name:        "kompeg",

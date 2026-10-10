@@ -6,6 +6,7 @@ vars:
 tasks:
   bindings:
     cmds:
+      - node scripts/sync-version.mjs
       - go mod tidy
       - wails3 generate bindings -ts -i -clean=true
   build:
@@ -39,6 +40,7 @@ tasks:
       - go build -tags server -o bin/kompeg-server.exe .
   test:
     cmds:
+      - node --test scripts/version.test.mjs
       - go test ./...
       - go vet ./...
       - npm --prefix frontend run test
