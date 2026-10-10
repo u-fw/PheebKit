@@ -37,6 +37,8 @@ Audio is `copy`, `aac`, `opus`. Modes are `quality`, `bitrate`, `size`. The qual
 
 Android inputs/outputs retain `kind: content-uri` and the original document URI. Do not save temporary cache paths as substitutes for the URI or persist per-session `ffkitsaf:` handles. The spike rejects URI execution until a native adapter is integrated.
 
+Optional `trim: { "startSeconds": 30.5, "endSeconds": 70.5 }` retains a single range relative to the source beginning. Missing/null processes the entire input. Trim requires a known source duration and AAC/Opus for media containing audio. The compiler rejects invalid boundaries and known shorter-than-frame ranges; progress and target-size budgets use the selected duration. This additive schema-1 field is preserved by current load/save functions; older strict readers must be updated. See [trimming](trimming.md).
+
 No final command string is persisted. Probe data and Execution Plan are derived. Raw arguments remain separate argv elements. `internal/project` supplies size-limited, strict load/save functions; unknown versions and fields fail explicitly. A migration must be added before introducing schema version 2. The first UI does not yet expose project save/load or recent-project browsing.
 
 Presets carry `schemaVersion`, `id`, `name` and the same settings object. The first package contains built-in quality presets. User preset import/export and migration UI are later scope.

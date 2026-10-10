@@ -53,6 +53,16 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		return core.ExecutionPlan{}, fmt.Errorf("selected media has no motion video stream (cover art and thumbnails cannot be compressed as a movie)")
 	}
 	settings := project.Settings
+	duration, err := outputDuration(settings.Trim, media.DurationSeconds)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	if settings.Trim != nil && video.FrameRate > 0 && !math.IsNaN(video.FrameRate) && !math.IsInf(video.FrameRate, 0) && duration < 1/video.FrameRate {
+		return core.ExecutionPlan{}, fmt.Errorf("trim duration must include at least one video frame (%.3f seconds)", 1/video.FrameRate)
+	}
+	if settings.Trim != nil && audio && settings.Audio == "copy" {
+		return core.ExecutionPlan{}, fmt.Errorf("trimming requires AAC/Opus audio encoding for accurate boundaries; copied audio is packet-aligned")
+	}
 	selected, pixelFormat, encoderReason, err := capabilities.SelectVideoEncoder(caps, settings.Codec, settings.Encoder, video.BitDepth > 8 && settings.Codec != "h264")
 	if err != nil {
 		return core.ExecutionPlan{}, err
@@ -75,20 +85,30 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if err != nil {
 		return core.ExecutionPlan{}, err
 	}
-	args := []string{"-hide_banner", "-nostdin", "-n", "-progress", "pipe:1", "-nostats", "-i", input.URI, "-map", "0:" + strconv.Itoa(video.Index), "-map", "0:a?", "-sn", "-dn"}
+	args := []string{"-hide_banner", "-nostdin", "-n", "-progress", "pipe:1", "-nostats"}
+	if settings.Trim != nil {
+		// Input seeking decodes/discards the prefix up to the requested boundary.
+		// Both video and audio are encoded; output -t limits the selected duration.
+		args = append(args, "-ss", strconv.FormatFloat(settings.Trim.StartSeconds, 'f', -1, 64), "-accurate_seek")
+	}
+	args = append(args, "-i", input.URI)
+	if settings.Trim != nil {
+		args = append(args, "-t", strconv.FormatFloat(duration, 'f', -1, 64), "-map_chapters", "-1")
+	}
+	args = append(args, "-map", "0:"+strconv.Itoa(video.Index), "-map", "0:a?", "-sn", "-dn")
 	bitrate := settings.BitrateKbps
 	switch settings.Mode {
 	case "quality":
 	case "bitrate", "size":
 		if settings.Mode == "size" {
-			if media.DurationSeconds <= 0 || math.IsNaN(settings.TargetSizeMB) || math.IsInf(settings.TargetSizeMB, 0) || settings.TargetSizeMB <= 0 {
+			if duration <= 0 || math.IsNaN(duration) || math.IsInf(duration, 0) || math.IsNaN(settings.TargetSizeMB) || math.IsInf(settings.TargetSizeMB, 0) || settings.TargetSizeMB <= 0 {
 				return core.ExecutionPlan{}, fmt.Errorf("target size requires a positive size and known media duration")
 			}
 			if audio && settings.Audio == "copy" {
 				return core.ExecutionPlan{}, fmt.Errorf("target size requires AAC/Opus so the audio budget is known")
 			}
 			// A one-pass estimate with 2%% muxing allowance, not a size guarantee.
-			bitrate = int(settings.TargetSizeMB*1_000_000*8*0.98/media.DurationSeconds/1000) - audioKbps
+			bitrate = int(settings.TargetSizeMB*1_000_000*8*0.98/duration/1000) - audioKbps
 		}
 		if bitrate < 50 || bitrate > 1_000_000 {
 			return core.ExecutionPlan{}, fmt.Errorf("video bitrate must be between 50 and 1000000 Kbps after the audio budget")
@@ -125,9 +145,15 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	}
 	args = append(args, settings.RawArguments...)
 	args = append(args, output.URI)
+	var trim *core.TimeRange
+	if settings.Trim != nil {
+		copy := *settings.Trim
+		trim = &copy
+	}
 	return core.ExecutionPlan{ProjectID: project.ID, Input: input, Output: output, Args: args,
-		Preview: Preview("ffmpeg.exe", args), DurationSeconds: media.DurationSeconds, InputSizeBytes: media.SizeBytes,
+		Preview: Preview("ffmpeg.exe", args), DurationSeconds: duration, InputSizeBytes: media.SizeBytes,
 		SourceFingerprint: media.SourceFingerprint,
+		Trim:              trim,
 		Encoder:           encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }
 

@@ -1,4 +1,5 @@
 import type { Media, Project, Settings } from "./bridge";
+import { trimError } from "./trim";
 
 export const defaultSettings: Settings = {
   codec: "hevc",
@@ -20,6 +21,25 @@ export function validateSettings(
   media?: Pick<Media, "streams" | "durationSeconds">,
 ): string[] {
   const errors: string[] = [];
+  if (settings.trim) {
+    const video = media?.streams.find(
+      (stream) =>
+        stream.codecType === "video" &&
+        !stream.attachedPicture &&
+        !stream.timedThumbnails,
+    );
+    const rangeError = trimError(
+      settings,
+      media?.durationSeconds ?? 0,
+      video?.frameRate,
+    );
+    if (rangeError) errors.push(rangeError);
+    if (
+      settings.audio === "copy" &&
+      media?.streams.some((stream) => stream.codecType === "audio")
+    )
+      errors.push("剪辑需要将音频编码为 AAC 或 Opus，以保持起止时间准确。");
+  }
   if (!outputPath.trim()) errors.push("请选择输出文件。");
   if (outputPath === inputPath && inputPath)
     errors.push("输出文件不能覆盖源文件，请选择新路径。");

@@ -8,6 +8,36 @@
 .processing-field {
   margin-top: var(--space-5);
 }
+.trim-fields {
+  margin-top: var(--space-5);
+}
+.trim-fields > div {
+  min-width: 0;
+}
+.trim-fields input:not([type="range"]) {
+  font-variant-numeric: tabular-nums;
+}
+.trim-fields .trim-slider {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  margin-top: var(--space-2);
+  accent-color: var(--primary);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.trim-duration {
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  margin: var(--space-4) 0;
+  font-variant-numeric: tabular-nums;
+}
+.trim-duration strong {
+  margin-left: var(--space-2);
+}
 .field-notice {
   display: flex;
   align-items: flex-start;

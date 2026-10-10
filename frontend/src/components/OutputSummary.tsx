@@ -2,6 +2,7 @@ import type { ExecutionPlan, Media, Settings } from "../bridge";
 import { formatBytes } from "../format";
 import { codecOptions } from "./EncodingSettings";
 import { Icon } from "./Icon";
+import { formatTimecode, selectedDuration, trimError } from "../trim";
 
 export function OutputSummary({
   media,
@@ -34,12 +35,22 @@ export function OutputSummary({
   canStart: boolean;
   start: () => void;
 }) {
+  const video = media.streams.find(
+    (stream) =>
+      stream.codecType === "video" &&
+      !stream.attachedPicture &&
+      !stream.timedThumbnails,
+  );
+  const rangeInvalid = Boolean(
+    trimError(settings, media.durationSeconds, video?.frameRate),
+  );
   const estimate =
     settings.mode === "size"
       ? formatBytes(settings.targetSizeMB * 1_000_000)
       : settings.mode === "bitrate"
         ? formatBytes(
-            ((settings.bitrateKbps * 1000) / 8) * media.durationSeconds,
+            ((settings.bitrateKbps * 1000) / 8) *
+              selectedDuration(settings, media.durationSeconds),
           )
         : null;
   return (
@@ -72,6 +83,25 @@ export function OutputSummary({
       </p>
       <div className="summary-divider" />
       <div className="output-summary">
+        <span>处理范围</span>
+        <strong>{settings.trim ? "剪辑并压缩" : "完整视频"}</strong>
+        <span>输出时长</span>
+        <strong>
+          {rangeInvalid
+            ? "待修正范围"
+            : formatTimecode(
+                selectedDuration(settings, media.durationSeconds),
+              ) || "未知"}
+        </strong>
+        {settings.trim && (
+          <>
+            <span>起止时间</span>
+            <strong>
+              {formatTimecode(settings.trim.startSeconds) || "—"} →{" "}
+              {formatTimecode(settings.trim.endSeconds) || "—"}
+            </strong>
+          </>
+        )}
         <span>分辨率</span>
         <strong>
           {settings.resolution ? `${settings.resolution}p` : "原始"}
@@ -138,7 +168,9 @@ export function OutputSummary({
           ? "正在创建任务…"
           : previewLoading
             ? "正在检查设置…"
-            : "开始压缩"}
+            : settings.trim
+              ? "开始剪辑并压缩"
+              : "开始压缩"}
         <Icon name="arrow" />
       </button>
       <span className="field-hint">任务进入队列后可查看进度和取消。</span>

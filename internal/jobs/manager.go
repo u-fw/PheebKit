@@ -87,9 +87,13 @@ func (m *Manager) Enqueue(plan core.ExecutionPlan) (core.Job, error) {
 	}
 	plan.JobID = id
 	plan.Args = append([]string(nil), plan.Args...)
+	if plan.Trim != nil {
+		copy := *plan.Trim
+		plan.Trim = &copy
+	}
 	job := core.Job{ID: id, ProjectID: plan.ProjectID, Input: plan.Input, Output: plan.Output,
 		State: core.JobQueued, QueuedAt: time.Now(), Logs: []string{},
-		Progress: core.Progress{TotalTimeSeconds: plan.DurationSeconds}}
+		Progress: core.Progress{TotalTimeSeconds: plan.DurationSeconds}, Trim: plan.Trim}
 	m.records[id] = &record{job: job, plan: plan}
 	m.order = append(m.order, id)
 	m.publishLocked(job)
@@ -284,6 +288,10 @@ func (m *Manager) pruneHistory() {
 
 func snapshot(job core.Job) core.Job {
 	job.Logs = append([]string{}, job.Logs...)
+	if job.Trim != nil {
+		trim := *job.Trim
+		job.Trim = &trim
+	}
 	if job.Result != nil {
 		result := *job.Result
 		job.Result = &result

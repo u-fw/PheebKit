@@ -42,6 +42,7 @@ export interface ExecutionPlan {
     "encoderKind": string;
     "encoderLabel": string;
     "encoderReason": string;
+    "trim"?: TimeRange | null;
 }
 
 export interface GPU {
@@ -62,6 +63,7 @@ export interface Job {
     "result"?: Result | null;
     "error": string;
     "logs": string[] | null;
+    "trim"?: TimeRange | null;
 }
 
 export interface Media {
@@ -117,6 +119,7 @@ export interface Settings {
     "bitrateKbps": number;
     "targetSizeMB": number;
     "rawArguments": string[] | null;
+    "trim"?: TimeRange | null;
 }
 
 export interface Source {
@@ -142,6 +145,14 @@ export interface Stream {
     "title": string;
     "attachedPicture": boolean;
     "timedThumbnails": boolean;
+}
+
+/**
+ * TimeRange is relative to the source start, in seconds. Nil retains the full input.
+ */
+export interface TimeRange {
+    "startSeconds": number;
+    "endSeconds": number;
 }
 
 /**

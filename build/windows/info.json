@@ -1,14 +1,14 @@
 {
 	"fixed": {
-		"file_version": "0.1.0.10001",
-		"product_version": "0.1.0.10001"
+		"file_version": "0.1.0.10002",
+		"product_version": "0.1.0.10002"
 	},
 	"info": {
 		"0409": {
-			"FileVersion": "0.1.0-beta.1",
+			"FileVersion": "0.1.0-beta.2",
 			"InternalName": "kompeg",
 			"OriginalFilename": "kompeg.exe",
-			"ProductVersion": "0.1.0-beta.1",
+			"ProductVersion": "0.1.0-beta.2",
 			"CompanyName": "kompeg",
 			"FileDescription": "A shared Windows and Android FFmpeg workspace",
 			"LegalCopyright": "© 2026 kompeg contributors",

@@ -19,6 +19,17 @@ func TestRoundTripAndFutureSchemaRejection(t *testing.T) {
 	if err != nil || result.Inputs[0].URI != input.Inputs[0].URI || result.Settings.Codec != "hevc" {
 		t.Fatalf("round trip lost intent: %+v %v", result, err)
 	}
+	if result.Settings.Trim != nil {
+		t.Fatal("legacy whole-video project acquired a trim range")
+	}
+	input.Settings.Trim = &core.TimeRange{StartSeconds: 2.5, EndSeconds: 7.75}
+	if err := Save(path, input); err != nil {
+		t.Fatal(err)
+	}
+	result, err = Load(path)
+	if err != nil || result.Settings.Trim == nil || *result.Settings.Trim != *input.Settings.Trim {
+		t.Fatalf("trim range was lost in persistence: %+v %v", result.Settings.Trim, err)
+	}
 	for _, raw := range []string{`{"schemaVersion":2}`, `{"schemaVersion":1} {}`, `{"schemaVersion":1,"unexpected":true}`} {
 		if err := os.WriteFile(path, []byte(raw), 0600); err != nil {
 			t.Fatal(err)

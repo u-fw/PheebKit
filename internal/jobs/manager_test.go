@@ -120,6 +120,28 @@ func TestCompletionFailureAndClose(t *testing.T) {
 	}
 }
 
+func TestTrimQueueSnapshotsDoNotShareMutableIntent(t *testing.T) {
+	runner := &testRunner{started: make(chan string, 1), release: make(chan struct{})}
+	manager := New(runner, nil)
+	defer manager.Close()
+	trim := &core.TimeRange{StartSeconds: 2.5, EndSeconds: 3.75}
+	job, err := manager.Enqueue(core.ExecutionPlan{JobID: "trim", DurationSeconds: 1.25, Trim: trim})
+	if err != nil {
+		t.Fatal(err)
+	}
+	trim.EndSeconds = 99
+	job.Trim.StartSeconds = 99
+	again, _ := manager.Get(job.ID)
+	if again.Trim.StartSeconds != 2.5 || again.Trim.EndSeconds != 3.75 {
+		t.Fatalf("external intent mutation changed queued range: %+v", again.Trim)
+	}
+	again.Trim.EndSeconds = 100
+	latest, _ := manager.Get(job.ID)
+	if latest.Trim.EndSeconds != 3.75 {
+		t.Fatal("Get exposes mutable queue trim storage")
+	}
+}
+
 func awaitStart(t *testing.T, started <-chan string, id string) {
 	t.Helper()
 	select {

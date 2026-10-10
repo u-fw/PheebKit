@@ -15,5 +15,6 @@ export type {
     Settings,
     Source,
     Stream,
+    TimeRange,
     VideoEncoder
 } from "./models.js";

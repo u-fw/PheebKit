@@ -36,6 +36,8 @@ Settings also accepts a custom HTTPS archive download link. Mirrors of the exact
 
 New compression settings default to GPU preference. NVENC, QSV and AMF are offered only after bounded real encoding trials; unavailable combinations fall back to CPU with a visible reason. Source artwork prefers Windows thumbnail providers and falls back to FFmpeg cover/frame extraction.
 
+Compression defaults to the complete source duration. Select **剪辑并压缩** to retain one start/end range using timecode inputs or keyboard-accessible sliders. The same FFmpeg invocation trims and encodes once; progress, speed and size-mode bitrate budget use the selected duration. Audio uses AAC/Opus for accurate boundaries (Copy changes to AAC when enabling trim). See [trimming behavior and verification](docs/trimming.md).
+
 Windows packaging produces an installer, a standalone ZIP and SHA-256 checksums from the same build. `VERSION` is the version source; Settings, EXE resources and package metadata stay synchronized. See [Windows distribution and verification](docs/windows-distribution.md) for packaging commands, local lifecycle checks and remaining clean-machine/signing checks. Publication remains a separate owner action.
 
 ## Verification commands
@@ -87,6 +89,6 @@ kompeg's original code is licensed under the GNU General Public License version 
 
 ## Current scope
 
-Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression settings, limited advanced argv, command preview, queue, real cancel and result metrics form the first vertical slice. Remux/extract/editing, HDR encoding, unrestricted Raw Command, all component scanners, process pause/resume and project/preset management UI are later milestones. Windows FFmpeg is discovered rather than bundled; distribution licensing/packaging must be decided before release.
+Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression with optional single-range trimming, limited advanced argv, command preview, queue, real cancel and result metrics form the first vertical slice. Remux/extract, multi-clip editing, HDR encoding, unrestricted Raw Command, all component scanners, process pause/resume and project/preset management UI are later milestones. Windows FFmpeg is discovered rather than bundled; third-party redistribution needs its own source/notice review.
 
 Android SDK/NDK/emulator and a connected device are absent on the audited machine. The pinned Android task assets also require a POSIX build host. APK build, Android Go binding and native FFmpeg execution are therefore not verified; responsive UI reuse alone does not satisfy those criteria.

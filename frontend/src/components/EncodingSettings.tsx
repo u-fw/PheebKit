@@ -200,7 +200,17 @@ export function EncodingSettings({
         <MaterialSelect
           label="音频"
           value={settings.audio}
-          options={audioOptions}
+          options={audioOptions.map((option) =>
+            option.value === "copy" &&
+            settings.trim &&
+            media.streams.some((stream) => stream.codecType === "audio")
+              ? {
+                  ...option,
+                  disabled: true,
+                  description: "剪辑时请选择 AAC 或 Opus",
+                }
+              : option,
+          )}
           onChange={(value) => update("audio", value)}
           describedBy={audioError ? "target-audio-error" : undefined}
           invalid={Boolean(audioError)}

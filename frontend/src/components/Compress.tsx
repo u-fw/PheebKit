@@ -9,6 +9,7 @@ import { EncodingSettings, AdvancedSettings } from "./EncodingSettings";
 import { Icon } from "./Icon";
 import { MediaCard } from "./MediaCard";
 import { OutputSummary } from "./OutputSummary";
+import { TrimSettings } from "./TrimSettings";
 
 type Props = {
   media: Media | null;
@@ -152,7 +153,7 @@ export function Compress({
       <header className="page-heading">
         <div>
           <h1>压缩视频</h1>
-          <p>调整输出格式、处理方式和文件大小。</p>
+          <p>选择完整视频或片段，调整输出格式和文件大小。</p>
         </div>
         <span className="chip accent-chip">
           <Icon name="video" />
@@ -162,6 +163,14 @@ export function Compress({
       <MediaCard media={media} compact />
       <div className="compress-layout">
         <div className="settings-column">
+          <TrimSettings
+            media={media}
+            settings={settings}
+            onChange={(next) => {
+              setSettings(next);
+              setActionError("");
+            }}
+          />
           <EncodingSettings
             media={media}
             settings={settings}

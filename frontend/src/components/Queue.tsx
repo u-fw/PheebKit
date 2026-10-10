@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Job } from "../bridge";
 import { formatBytes, formatDuration, savedPercent } from "../format";
 import { Icon } from "./Icon";
+import { formatTimecode } from "../trim";
 
 const stateNames: Record<string, string> = {
   queued: "等待中",
@@ -44,6 +45,12 @@ function JobCard({ job, cancel }: { job: Job; cancel: (id: string) => void }) {
           </button>
         )}
       </div>
+      {job.trim && (
+        <p className="field-hint">
+          剪辑并压缩 · {formatTimecode(job.trim.startSeconds)} →{" "}
+          {formatTimecode(job.trim.endSeconds)}
+        </p>
+      )}
       {active && (
         <>
           <div className="progress-label">
@@ -84,6 +91,11 @@ function JobCard({ job, cancel }: { job: Job; cancel: (id: string) => void }) {
             <span>处理完成</span>
             <strong>{savedPercent(job.inputSize, job.outputSize)}</strong>
           </div>
+          {job.trim && (
+            <p className="field-hint">
+              体积减少包含剪掉的内容，比较基准为完整源文件。
+            </p>
+          )}
           <dl className="job-metrics">
             <div>
               <dt>原始大小</dt>

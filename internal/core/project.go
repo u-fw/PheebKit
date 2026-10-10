@@ -12,16 +12,23 @@ type Project struct {
 }
 
 type Settings struct {
-	Codec        string   `json:"codec"`
-	Encoder      string   `json:"encoder"`
-	Quality      int      `json:"quality"`
-	Preset       string   `json:"preset"`
-	Resolution   int      `json:"resolution"`
-	Audio        string   `json:"audio"`
-	Mode         string   `json:"mode"`
-	BitrateKbps  int      `json:"bitrateKbps"`
-	TargetSizeMB float64  `json:"targetSizeMB"`
-	RawArguments []string `json:"rawArguments"`
+	Codec        string     `json:"codec"`
+	Encoder      string     `json:"encoder"`
+	Quality      int        `json:"quality"`
+	Preset       string     `json:"preset"`
+	Resolution   int        `json:"resolution"`
+	Audio        string     `json:"audio"`
+	Mode         string     `json:"mode"`
+	BitrateKbps  int        `json:"bitrateKbps"`
+	TargetSizeMB float64    `json:"targetSizeMB"`
+	RawArguments []string   `json:"rawArguments"`
+	Trim         *TimeRange `json:"trim,omitempty"`
+}
+
+// TimeRange is relative to the source start, in seconds. Nil retains the full input.
+type TimeRange struct {
+	StartSeconds float64 `json:"startSeconds"`
+	EndSeconds   float64 `json:"endSeconds"`
 }
 
 type Preset struct {

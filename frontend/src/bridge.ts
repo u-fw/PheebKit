@@ -59,6 +59,7 @@ export interface Thumbnail {
   height: number;
 }
 export interface Job {
+  trim?: Core.TimeRange | null;
   id: string;
   projectID: string;
   state: string;
@@ -83,6 +84,7 @@ export interface Job {
 
 function jobView(job: Core.Job): Job {
   return {
+    trim: job.trim,
     id: job.id,
     projectID: job.projectID,
     state: job.state,
