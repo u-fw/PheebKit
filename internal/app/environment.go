@@ -172,7 +172,7 @@ func validateEnvironment(ctx context.Context, environment Environment) Environme
 	}
 	environment.Ready = len(failures) == 0
 	if !environment.Ready {
-		environment.Message = strings.Join(failures, "\n") + "\n请在设置中选择 FFmpeg 所在目录或 ffmpeg.exe，kompeg 会同时验证 ffprobe。"
+		environment.Message = strings.Join(failures, "\n") + "\n请在设置中一键下载补全，或选择 FFmpeg 所在目录 / ffmpeg.exe，kompeg 会同时验证 ffprobe。"
 		for _, binary := range []BinaryStatus{environment.FFmpeg, environment.FFprobe} {
 			if !binary.Available && binary.Source != "PATH" && binary.Source != "config" {
 				environment.Message += "\n环境变量 " + binary.Source + " 优先于应用设置；请修正该变量后重新启动 kompeg。"

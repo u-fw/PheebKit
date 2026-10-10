@@ -32,6 +32,9 @@ type Service struct {
 	environment        Environment
 	configuration      binaryConfig
 	configurationError string
+	setupMu            sync.Mutex
+	setupStatus        FFmpegSetupStatus
+	setupCancel        context.CancelFunc
 }
 
 func NewService() *Service {

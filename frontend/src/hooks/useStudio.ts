@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API } from "../bridge";
-import type { Capabilities, EnvironmentStatus, Job, Media } from "../bridge";
+import type {
+  Capabilities,
+  EnvironmentStatus,
+  FFmpegSetupStatus,
+  Job,
+  Media,
+} from "../bridge";
 import { errorMessage } from "../format";
 import { JobHistory } from "../jobHistory";
 import { refreshEnvironmentSnapshot } from "../environmentRefresh";
@@ -14,6 +20,9 @@ export function useStudio() {
     null,
   );
   const [environmentBusy, setEnvironmentBusy] = useState(false);
+  const [ffmpegSetup, setFFmpegSetup] = useState<FFmpegSetupStatus | null>(
+    null,
+  );
   const [media, setMedia] = useState<Media | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
@@ -87,6 +96,47 @@ export function useStudio() {
     },
     [updateEnvironment],
   );
+
+  useEffect(() => {
+    if (!connected || platform !== "windows") return;
+    let alive = true;
+    let lastStage = "";
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    async function poll() {
+      try {
+        const next = await API.getFFmpegSetupStatus();
+        if (!alive) return;
+        setFFmpegSetup(next);
+        const completed =
+          next.stage === "completed" && lastStage !== "completed";
+        lastStage = next.stage;
+        if (completed) {
+          setEnvironmentBusy(true);
+          try {
+            const installedEnvironment = await API.getEnvironment();
+            if (alive) await updateEnvironment(installedEnvironment);
+          } finally {
+            if (alive) setEnvironmentBusy(false);
+          }
+        }
+      } catch (cause) {
+        if (alive) setError(`下载状态检测失败：${errorMessage(cause)}`);
+      }
+      if (alive) timer = setTimeout(() => void poll(), 750);
+    }
+    void poll();
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [connected, platform, updateEnvironment]);
+
+  const startFFmpegSetup = useCallback(async (source: string) => {
+    setFFmpegSetup(await API.startFFmpegSetup(source));
+  }, []);
+  const cancelFFmpegSetup = useCallback(async () => {
+    await API.cancelFFmpegSetup();
+  }, []);
 
   const importPaths = useCallback(async (paths: string[]) => {
     if (!paths.length || importBusy.current) return;
@@ -254,6 +304,9 @@ export function useStudio() {
     capabilityError,
     environment,
     environmentBusy,
+    ffmpegSetup,
+    startFFmpegSetup,
+    cancelFFmpegSetup,
     refreshEnvironment,
     chooseFFmpeg,
     configureFFmpeg,

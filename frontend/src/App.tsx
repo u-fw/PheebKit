@@ -206,7 +206,12 @@ export default function App() {
               capabilities={studio.capabilities}
               capabilityError={studio.capabilityError}
               environment={studio.environment}
-              environmentBusy={studio.environmentBusy}
+              environmentBusy={
+                studio.environmentBusy || Boolean(studio.ffmpegSetup?.active)
+              }
+              ffmpegSetup={studio.ffmpegSetup}
+              startFFmpegSetup={studio.startFFmpegSetup}
+              cancelFFmpegSetup={studio.cancelFFmpegSetup}
               refreshEnvironment={studio.refreshEnvironment}
               chooseFFmpeg={studio.chooseFFmpeg}
               configureFFmpeg={studio.configureFFmpeg}

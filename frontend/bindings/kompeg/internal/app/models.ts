@@ -17,6 +17,19 @@ export interface Environment {
     "configurable": boolean;
 }
 
+export interface FFmpegSetupStatus {
+    "stage": string;
+    "package": string;
+    "source": string;
+    "file": string;
+    "received": number;
+    "total": number;
+    "speed": number;
+    "active": boolean;
+    "error": string;
+    "version": string;
+}
+
 export interface Thumbnail {
     "dataUrl": string;
     "source": string;

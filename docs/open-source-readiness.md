@@ -25,7 +25,7 @@ The Windows experimental slice has passed its current checks after the visual re
 
 ## Before publishing
 
-1. The owner must select a source license; the repository currently has no `LICENSE`. Distribution notices and FFmpeg packaging policy must be settled before distributing bundled third-party binaries. FFmpeg is currently discovered locally and is not bundled.
+1. The owner selected `GPL-3.0-only`; the full license is in the repository's `LICENSE` and the scope is recorded in the README. FFmpeg is discovered locally or explicitly downloaded from upstream/mirror sources into a private directory; see [download policy](ffmpeg-downloads.md). It is not bundled in the executable. Distribution notices and corresponding-source policy must still be settled before distributing project-hosted copies or offline bundles of third-party binaries.
 2. Choose the remote repository and publication identity. No Git remote is configured. Review author/contact metadata and any machine-specific verification notes before making history public.
 3. Add automatic Windows build/unit/frontend checks in CI. Current checks are local; GPU/real-FFmpeg integration needs an appropriate test machine and cannot be inferred from a generic hosted runner.
 4. Keep the experimental scope clear: pinned Wails v3 Beta was approved only for this Technical Spike; Android APK/device execution, HDR encoding, installer/signing and later editing/project-management features remain unverified or unimplemented. Windows 10 also needs a separate runtime smoke test before a broad binary-release claim.

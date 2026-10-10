@@ -1,6 +1,8 @@
 import { Events } from "@wailsio/runtime";
 import * as Service from "../bindings/kompeg/internal/app/service";
 import type * as Core from "../bindings/kompeg/internal/core/models";
+import type { FFmpegSetupStatus } from "../bindings/kompeg/internal/app/models";
+export type { FFmpegSetupStatus };
 
 export type Source = Core.Source;
 export type Stream = Core.Stream;
@@ -122,6 +124,11 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  getFFmpegSetupStatus: async (): Promise<FFmpegSetupStatus> =>
+    Service.GetFFmpegSetupStatus(),
+  startFFmpegSetup: async (source: string): Promise<FFmpegSetupStatus> =>
+    Service.StartFFmpegSetup(source),
+  cancelFFmpegSetup: async (): Promise<void> => Service.CancelFFmpegSetup(),
   getPlatform: async (): Promise<string> => Service.GetPlatform(),
   getEnvironment: async (): Promise<EnvironmentStatus> =>
     Service.GetEnvironment(),

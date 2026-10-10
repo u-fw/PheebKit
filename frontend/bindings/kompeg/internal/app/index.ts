@@ -9,5 +9,6 @@ export {
 export type {
     BinaryStatus,
     Environment,
+    FFmpegSetupStatus,
     Thumbnail
 } from "./models.js";

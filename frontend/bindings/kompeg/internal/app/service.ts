@@ -22,6 +22,10 @@ export function Cancel(id: string): $CancellablePromise<void> {
     return $Call.ByID(1852083749, id);
 }
 
+export function CancelFFmpegSetup(): $CancellablePromise<void> {
+    return $Call.ByID(1538047589);
+}
+
 export function Capabilities(): $CancellablePromise<core$0.Capabilities> {
     return $Call.ByID(1476031073);
 }
@@ -44,6 +48,10 @@ export function ConfigureFFmpeg(ffmpegPath: string, ffprobePath: string): $Cance
 
 export function GetEnvironment(): $CancellablePromise<$models.Environment> {
     return $Call.ByID(2101974642);
+}
+
+export function GetFFmpegSetupStatus(): $CancellablePromise<$models.FFmpegSetupStatus> {
+    return $Call.ByID(1314079415);
 }
 
 export function GetPlatform(): $CancellablePromise<string> {
@@ -75,4 +83,8 @@ export function RefreshCapabilities(): $CancellablePromise<core$0.Capabilities> 
 
 export function Start(p: core$0.Project): $CancellablePromise<core$0.Job> {
     return $Call.ByID(2610696273, p);
+}
+
+export function StartFFmpegSetup(source: string): $CancellablePromise<$models.FFmpegSetupStatus> {
+    return $Call.ByID(514916809, source);
 }

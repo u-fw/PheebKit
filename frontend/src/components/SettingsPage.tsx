@@ -1,7 +1,13 @@
 import { useState } from "react";
-import type { BinaryStatus, Capabilities, EnvironmentStatus } from "../bridge";
+import type {
+  BinaryStatus,
+  Capabilities,
+  EnvironmentStatus,
+  FFmpegSetupStatus,
+} from "../bridge";
 import { errorMessage } from "../format";
 import { Icon } from "./Icon";
+import { FFmpegDownload } from "./FFmpegDownload";
 
 function BinaryDetails({
   label,
@@ -55,6 +61,9 @@ export function SettingsPage({
   refreshEnvironment,
   chooseFFmpeg,
   configureFFmpeg,
+  ffmpegSetup,
+  startFFmpegSetup,
+  cancelFFmpegSetup,
   theme,
   toggleTheme,
 }: {
@@ -67,6 +76,9 @@ export function SettingsPage({
   refreshEnvironment: () => Promise<void>;
   chooseFFmpeg: () => Promise<void>;
   configureFFmpeg: (ffmpegPath: string, ffprobePath: string) => Promise<void>;
+  ffmpegSetup: FFmpegSetupStatus | null;
+  startFFmpegSetup: (source: string) => Promise<void>;
+  cancelFFmpegSetup: () => Promise<void>;
   theme: "light" | "dark";
   toggleTheme: () => void;
 }) {
@@ -109,7 +121,8 @@ export function SettingsPage({
           </span>
         </div>
         <p className="settings-description">
-          优先使用环境变量中的 FFmpeg 和 ffprobe；缺少时可选择本机文件补全。
+          使用环境变量或已配置的 FFmpeg 和
+          ffprobe；缺少时可一键下载或选择本机文件补全。
         </p>
         <div className="binary-grid">
           <BinaryDetails label="FFmpeg" binary={environment?.ffmpeg} />
@@ -146,6 +159,13 @@ export function SettingsPage({
             {environmentBusy ? "正在检测…" : "重新检测"}
           </button>
         </div>
+        <FFmpegDownload
+          status={ffmpegSetup}
+          enabled={configurable && platform === "windows"}
+          busy={environmentBusy}
+          start={startFFmpegSetup}
+          cancel={cancelFFmpegSetup}
+        />
         <details className="manual-environment">
           <summary>手动填写路径</summary>
           <div className="manual-fields">

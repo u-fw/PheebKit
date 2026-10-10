@@ -28,7 +28,9 @@ $env:KOMPEG_FFPROBE = 'D:\Tools\ffmpeg\bin\ffprobe.exe'
 
 Use `wails3 dev -config build/config.yml` for frontend development. Ordinary browser previews cannot execute native operations. Drag a video onto the workspace or use the file picker, review media details, configure compression, inspect the backend command preview, start a job and follow progress/cancel/results in Queue.
 
-FFmpeg discovery prefers `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE`, then `FFMPEG_PATH` / `FFPROBE_PATH`, then application settings and PATH. Values can identify the executable or its directory. Missing/invalid binaries show a setup prompt; Settings lets you select `ffmpeg.exe` and verifies its sibling `ffprobe.exe`. Paths are saved in `%APPDATA%/kompeg/ffmpeg.json`, without modifying Windows environment variables. Explicit environment overrides must be corrected in the environment and require restarting the app. Reconfiguration is blocked while jobs are active.
+FFmpeg discovery prefers `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE`, then `FFMPEG_PATH` / `FFPROBE_PATH`, then application settings and PATH. Values can identify the executable or its directory. Missing/invalid binaries show a setup prompt; Settings lets you download a verified Windows x64 package or select `ffmpeg.exe` and verifies its sibling `ffprobe.exe`. Paths are saved in `%APPDATA%/kompeg/ffmpeg.json`, without modifying Windows environment variables. Explicit environment overrides must be corrected in the environment and require restarting the app. Reconfiguration is blocked while jobs are active.
+
+One-click setup offers Gyan 9.0.2 full stable builds and the older npmmirror 6.1.1 domestic fallback. Automatic mode samples the two stable-package sources first and falls back to the domestic package on failure. Versions, transfer progress, cancellation and retry are visible. Downloads use fixed SHA-256 digests, preserve upstream notices, and install privately under `%LOCALAPPDATA%/kompeg/tools`. See [download policy and verification](docs/ffmpeg-downloads.md).
 
 New compression settings default to GPU preference. NVENC, QSV and AMF are offered only after bounded real encoding trials; unavailable combinations fall back to CPU with a visible reason. Source artwork prefers Windows thumbnail providers and falls back to FFmpeg cover/frame extraction.
 
@@ -73,7 +75,11 @@ docs/                       architecture, design and verification evidence
 
 See [architecture](docs/architecture.md), [UI design](docs/ui-design.md), [runner](docs/ffmpeg-runner.md), [project format](docs/project-format.md), [Android FFmpeg spike](docs/android-ffmpeg-spike.md) and [actual verification](docs/verification.md).
 
-The [open-source readiness review](docs/open-source-readiness.md) records repaired defects, verification and remaining publication decisions. The project owner has not yet selected a license.
+The [open-source readiness review](docs/open-source-readiness.md) records repaired defects, verification and remaining publication decisions.
+
+## License
+
+kompeg's original code is licensed under the GNU General Public License version 3 only (`GPL-3.0-only`). See [LICENSE](LICENSE) for the full terms. Third-party dependencies and assets retain their respective licenses. FFmpeg is currently discovered locally rather than bundled; packaging or downloading FFmpeg does not replace its own license or distribution obligations.
 
 ## Current scope
 
