@@ -7,7 +7,7 @@ import type {
 } from "../bridge";
 import { errorMessage } from "../format";
 import { Icon } from "./Icon";
-import { FFmpegDownload } from "./FFmpegDownload";
+import { FFmpegDownload, explicitEnvironmentOverride } from "./FFmpegDownload";
 
 function BinaryDetails({
   label,
@@ -92,7 +92,10 @@ export function SettingsPage({
   const [ffprobePath, setFFprobePath] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
   const [actionStatus, setActionStatus] = useState("");
-  const configurable = connected && Boolean(environment?.configurable);
+  const configurable =
+    connected &&
+    Boolean(environment?.configurable) &&
+    !explicitEnvironmentOverride(environment);
 
   async function perform(action: () => Promise<void>, success: string) {
     setActionError("");
@@ -167,6 +170,7 @@ export function SettingsPage({
         </div>
         <FFmpegDownload
           status={ffmpegSetup}
+          environment={environment}
           enabled={configurable && platform === "windows"}
           busy={environmentBusy}
           start={startFFmpegSetup}

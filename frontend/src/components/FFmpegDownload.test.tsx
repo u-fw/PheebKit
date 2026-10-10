@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { FFmpegSetupStatus } from "../bridge";
+import type { EnvironmentStatus, FFmpegSetupStatus } from "../bridge";
 import { FFmpegDownload } from "./FFmpegDownload";
 
 const status: FFmpegSetupStatus = {
@@ -15,11 +15,24 @@ const status: FFmpegSetupStatus = {
   error: "",
   version: "",
 };
+const missingEnvironment: EnvironmentStatus = {
+  platform: "windows",
+  ready: false,
+  configurable: true,
+  message: "",
+  ffmpeg: { path: "ffmpeg", source: "PATH", version: "", available: false },
+  ffprobe: { path: "ffprobe", source: "PATH", version: "", available: false },
+};
 const action = async () => undefined;
-function markup(value: FFmpegSetupStatus | null, enabled = true) {
+function markup(
+  value: FFmpegSetupStatus | null,
+  enabled = true,
+  environment: EnvironmentStatus | null = missingEnvironment,
+) {
   return renderToStaticMarkup(
     <FFmpegDownload
       status={value}
+      environment={environment}
       enabled={enabled}
       busy={false}
       start={action}
@@ -29,6 +42,41 @@ function markup(value: FFmpegSetupStatus | null, enabled = true) {
   );
 }
 describe("FFmpeg download feedback", () => {
+  it("blocks repeat downloads for a ready PATH or configured environment", () => {
+    for (const source of ["PATH", "config"]) {
+      const html = markup(null, true, {
+        ...missingEnvironment,
+        ready: true,
+        ffmpeg: { ...missingEnvironment.ffmpeg, available: true, source },
+        ffprobe: { ...missingEnvironment.ffprobe, available: true, source },
+      });
+      expect(html).toContain("无需重复下载");
+      expect(html).toMatch(/<button[^>]*disabled=""[^>]*>已就绪，无需下载/);
+      expect(html).toContain('aria-describedby="ffmpeg-download-block-reason"');
+    }
+  });
+  it("explains explicit overrides even when the selected program is invalid", () => {
+    for (const source of [
+      "KOMPEG_FFMPEG",
+      "FFMPEG_PATH",
+      "KOMPEG_FFPROBE",
+      "FFPROBE_PATH",
+    ]) {
+      const html = markup(null, true, {
+        ...missingEnvironment,
+        ffmpeg: { ...missingEnvironment.ffmpeg, source },
+      });
+      expect(html).toContain(source);
+      expect(html).toContain("清除或修正");
+      expect(html).toMatch(/<button[^>]*disabled=""[^>]*>下载暂不可用/);
+    }
+  });
+  it("waits for environment detection before enabling download", () => {
+    expect(markup(null, true, null)).toContain("正在检测 FFmpeg 环境");
+    expect(markup(null, true, null)).toMatch(
+      /<button[^>]*disabled=""[^>]*>下载暂不可用/,
+    );
+  });
   it("shows version differences and a named source selector", () => {
     const html = markup(null);
     expect(html).toContain("下载来源");

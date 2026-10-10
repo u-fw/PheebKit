@@ -272,6 +272,9 @@ func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, 
 	if s.hasPendingJobs() {
 		return Environment{}, errors.New("请等待所有任务结束或取消任务后，再更改 FFmpeg 路径。")
 	}
+	if variable := explicitFFmpegOverride(); variable != "" {
+		return Environment{}, fmt.Errorf("环境变量 %s 优先于应用配置。请先清除或修正该变量，并重启 kompeg，再切换本机路径。", variable)
+	}
 	if strings.TrimSpace(ffmpegPath) == "" {
 		return Environment{}, errors.New("请选择 ffmpeg.exe 或填写 FFmpeg 所在目录。")
 	}
@@ -299,6 +302,15 @@ func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, 
 	}
 	s.applyEnvironment(selected, config)
 	return selected, nil
+}
+
+func explicitFFmpegOverride() string {
+	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+		if strings.TrimSpace(os.Getenv(variable)) != "" {
+			return variable
+		}
+	}
+	return ""
 }
 
 func (s *Service) ChooseFFmpeg() (*Environment, error) {

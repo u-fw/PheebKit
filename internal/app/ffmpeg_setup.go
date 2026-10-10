@@ -60,10 +60,19 @@ func (s *Service) startFFmpegSetup(packages []ffmpegsetup.Package, custom bool) 
 	if pending {
 		return s.setupStatus, errors.New("请等待所有任务结束或取消任务后，再下载配置 FFmpeg。")
 	}
-	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
-		if strings.TrimSpace(os.Getenv(variable)) != "" {
-			return s.setupStatus, errors.New("环境变量 " + variable + " 优先于下载配置。请先清除或修正该变量，并重启 kompeg。")
-		}
+	if variable := explicitFFmpegOverride(); variable != "" {
+		return s.setupStatus, errors.New("环境变量 " + variable + " 优先于下载配置。请先清除或修正该变量，并重启 kompeg。")
+	}
+	// Revalidate at the native entry point: a stale UI or another caller must
+	// not download over a working environment. NewService has not run these
+	// binaries yet, so the stored Ready flag alone cannot decide eligibility.
+	s.configMu.RLock()
+	checkCtx, checkCancel := context.WithTimeout(s.ctx, 8*time.Second)
+	environment := validateEnvironment(checkCtx, s.environment)
+	checkCancel()
+	s.configMu.RUnlock()
+	if environment.Ready {
+		return s.setupStatus, errors.New("已找到可用的 FFmpeg 和 ffprobe，无需重复下载。需要切换版本时，请选择本机 FFmpeg 路径。")
 	}
 	cache, err := os.UserCacheDir()
 	if err != nil {

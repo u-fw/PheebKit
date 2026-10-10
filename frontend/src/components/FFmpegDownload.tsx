@@ -1,11 +1,41 @@
 import { useState } from "react";
-import type { FFmpegSetupStatus } from "../bridge";
+import type { EnvironmentStatus, FFmpegSetupStatus } from "../bridge";
 import { errorMessage, formatBytes } from "../format";
 import { MaterialSelect } from "./MaterialSelect";
 import {
   CustomDownloadFields,
   customDownloadError,
 } from "./CustomDownloadFields";
+
+export function explicitEnvironmentOverride(
+  environment: EnvironmentStatus | null,
+): string {
+  for (const binary of [environment?.ffmpeg, environment?.ffprobe]) {
+    if (
+      binary &&
+      [
+        "KOMPEG_FFMPEG",
+        "KOMPEG_FFPROBE",
+        "FFMPEG_PATH",
+        "FFPROBE_PATH",
+      ].includes(binary.source)
+    )
+      return binary.source;
+  }
+  return "";
+}
+
+export function downloadBlockReason(
+  environment: EnvironmentStatus | null,
+): string {
+  if (!environment) return "正在检测 FFmpeg 环境，完成后可补全。";
+  const override = explicitEnvironmentOverride(environment);
+  if (override)
+    return `环境变量 ${override} 优先于应用配置。请先清除或修正该变量，并重启 kompeg，再下载或切换本机路径。`;
+  if (environment.ready)
+    return "已找到可用的 FFmpeg 和 ffprobe，无需重复下载。需要切换版本时，请使用上方的本机路径选择。";
+  return "";
+}
 
 const stages: Record<string, string> = {
   selecting: "正在选择下载线路…",
@@ -22,6 +52,7 @@ const stages: Record<string, string> = {
 
 export function FFmpegDownload({
   status,
+  environment,
   enabled,
   busy,
   start,
@@ -29,6 +60,7 @@ export function FFmpegDownload({
   cancel,
 }: {
   status: FFmpegSetupStatus | null;
+  environment: EnvironmentStatus | null;
   enabled: boolean;
   busy: boolean;
   start: (source: string) => Promise<void>;
@@ -47,6 +79,8 @@ export function FFmpegDownload({
   const [otherBuild, setOtherBuild] = useState(false);
   const [trusted, setTrusted] = useState(false);
   const active = Boolean(status?.active);
+  const blockedReason = downloadBlockReason(environment);
+  const canDownload = enabled && !blockedReason;
   async function perform(action: () => Promise<void>) {
     setError("");
     setRequestBusy(true);
@@ -63,6 +97,7 @@ export function FFmpegDownload({
       ? Math.min(100, Math.max(0, (status.received / status.total) * 100))
       : undefined;
   async function startDownload() {
+    if (blockedReason) throw new Error(blockedReason);
     if (source !== "custom") {
       await start(source);
       return;
@@ -88,11 +123,20 @@ export function FFmpegDownload({
           安装到 kompeg 私有目录，无需管理员权限。保留现有系统 PATH。
         </p>
       </div>
+      {blockedReason && (
+        <p
+          id="ffmpeg-download-block-reason"
+          className="field-hint"
+          role="status"
+        >
+          {blockedReason}
+        </p>
+      )}
       <MaterialSelect
         label="下载来源"
         value={source}
         onChange={setSource}
-        disabled={!enabled || busy || active || requestBusy}
+        disabled={!canDownload || busy || active || requestBusy}
         options={[
           { value: "stable", label: "官网推荐 · Gyan 9.0.2 完整构建" },
           { value: "cn", label: "国内镜像 6.1.1 · 较旧版本" },
@@ -105,7 +149,7 @@ export function FFmpegDownload({
           sha256={customHash}
           otherBuild={otherBuild}
           trusted={trusted}
-          disabled={!enabled || busy || active || requestBusy}
+          disabled={!canDownload || busy || active || requestBusy}
           onLink={(value) => {
             setCustomLink(value);
             setTrusted(false);
@@ -174,14 +218,21 @@ export function FFmpegDownload({
         ) : (
           <button
             className="button primary"
-            disabled={!enabled || busy || requestBusy}
+            disabled={!canDownload || busy || requestBusy}
+            aria-describedby={
+              blockedReason ? "ffmpeg-download-block-reason" : undefined
+            }
             onClick={() => void perform(startDownload)}
           >
-            {requestBusy
-              ? "正在开始…"
-              : status?.stage === "failed" || status?.stage === "cancelled"
-                ? "重试下载"
-                : "下载并配置"}
+            {blockedReason
+              ? environment?.ready
+                ? "已就绪，无需下载"
+                : "下载暂不可用"
+              : requestBusy
+                ? "正在开始…"
+                : status?.stage === "failed" || status?.stage === "cancelled"
+                  ? "重试下载"
+                  : "下载并配置"}
           </button>
         )}
       </div>

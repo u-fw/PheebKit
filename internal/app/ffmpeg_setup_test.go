@@ -17,6 +17,74 @@ func TestFFmpegSetupSourceValidation(t *testing.T) {
 	}
 }
 
+func TestExplicitOverrideBlocksDownloadsAndPathWrites(t *testing.T) {
+	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+		t.Run(variable, func(t *testing.T) {
+			directory := t.TempDir()
+			t.Setenv("APPDATA", directory)
+			t.Setenv("LOCALAPPDATA", directory)
+			for _, name := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+				t.Setenv(name, "")
+			}
+			t.Setenv(variable, filepath.Join(directory, "missing.exe"))
+			service := NewService()
+			defer service.Close()
+			_, builtinErr := service.StartFFmpegSetup("stable")
+			_, customErr := service.StartCustomFFmpegSetup("https://example.com/build.7z", strings.Repeat("a", 64), true)
+			_, configureErr := service.ConfigureFFmpeg(filepath.Join(directory, "replacement.exe"), "")
+			for _, err := range []error{builtinErr, customErr, configureErr} {
+				if err == nil || !strings.Contains(err.Error(), variable) {
+					t.Fatalf("explicit override not reported: %v", err)
+				}
+			}
+			if service.GetFFmpegSetupStatus().Active {
+				t.Fatal("blocked request started download")
+			}
+			configurationPath, err := configFile()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := os.Stat(configurationPath); !os.IsNotExist(err) {
+				t.Fatalf("blocked replacement wrote configuration: %v", err)
+			}
+		})
+	}
+}
+
+func TestRealFFmpegSetupReadinessGuard(t *testing.T) {
+	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
+		t.Skip("set KOMPEG_INTEGRATION=1 to verify guards with real PATH binaries")
+	}
+	directory := t.TempDir()
+	t.Setenv("APPDATA", directory)
+	for _, name := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+		t.Setenv(name, "")
+	}
+	service := NewService()
+	defer service.Close()
+	for _, source := range []string{"PATH", "config"} {
+		environment := service.GetEnvironment()
+		if !environment.Ready {
+			t.Fatalf("real environment unavailable: %s", environment.Message)
+		}
+		if source == "config" {
+			if _, err := service.ConfigureFFmpeg(environment.FFmpeg.Path, environment.FFprobe.Path); err != nil {
+				t.Fatal(err)
+			}
+		}
+		_, builtinErr := service.StartFFmpegSetup("stable")
+		_, customErr := service.StartCustomFFmpegSetup("https://example.com/build.7z", strings.Repeat("a", 64), true)
+		for _, err := range []error{builtinErr, customErr} {
+			if err == nil || !strings.Contains(err.Error(), "无需重复下载") {
+				t.Fatalf("%s readiness did not block download: %v", source, err)
+			}
+		}
+		if service.GetFFmpegSetupStatus().Active {
+			t.Fatal("ready environment started download")
+		}
+	}
+}
+
 func TestDownloadedArchitectureRejectsInvalidBinaries(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ffmpeg.exe")
 	if err := os.WriteFile(path, []byte("not a Windows executable"), 0600); err != nil {
@@ -45,6 +113,7 @@ func TestRealCustomFFmpegSetup(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("LOCALAPPDATA", directory)
+	t.Setenv("PATH", "")
 	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Setenv(variable, "")
 	}
@@ -92,6 +161,7 @@ func TestRealCustom7zFFmpegSetup(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("LOCALAPPDATA", directory)
+	t.Setenv("PATH", "")
 	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Setenv(variable, "")
 	}
@@ -141,6 +211,7 @@ func TestRealFFmpegSetup(t *testing.T) {
 			directory := t.TempDir()
 			t.Setenv("APPDATA", directory)
 			t.Setenv("LOCALAPPDATA", directory)
+			t.Setenv("PATH", "")
 			for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 				t.Setenv(variable, "")
 			}

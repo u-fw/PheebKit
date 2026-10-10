@@ -62,3 +62,9 @@ Fixtures exercise 7z, stored RAR, bzip2 TAR, TAR/gzip/XZ, extensionless URLs, DL
 `KOMPEG_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealCustom7zFFmpegSetup$' -count=1 -v` passed on 2026-10-10 (86.74 seconds) with the real 161 MiB Gyan 9.0.2 full 7z. Its publisher SHA-256 was verified against release asset metadata. Extraction, AMD64 checks, execution of both tools, version detection, private configuration persistence and capability scanning passed. Native click-through remains unverified.
 
 The full decoder dependency notices are in `docs/archive-decoder-notices.txt`; distribute them with the Windows executable (a copy is provided in `bin/archive-decoder-notices.txt`).
+
+## Existing-environment safeguards
+
+A ready FFmpeg/ffprobe pair disables one-click setup with a visible explanation. Native built-in and custom setup entry points revalidate actual programs before any download. Explicit FFmpeg-related environment variables also prevent manual path writes that would be ignored by their higher precedence. Ordinary PATH configurations can still be deliberately switched through local-path selection. Download integration tests clear PATH in their isolated profile to exercise the missing-environment case. A real PATH/configuration guard integration test passed on 2026-10-10; 49 frontend tests cover ready, missing, detecting and overridden states. See [Windows distribution proposal](windows-distribution.md) for the proposed no-install/installer split.
+
+After the readiness guards were added, the real custom 7z missing-environment integration passed again (105.84 seconds), using an isolated profile with PATH cleared. Existing-environment rejection and missing-environment installation both passed; production Wails build, Go tests/vet and frontend typecheck/lint/format passed. Native UI click-through for these changes remains unverified.
