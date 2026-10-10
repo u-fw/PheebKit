@@ -91,7 +91,6 @@ export function SettingsPage({
     <div className="page settings-page">
       <header className="page-heading">
         <div>
-          <div className="section-eyebrow">本机偏好</div>
           <h1>设置</h1>
           <p>外观、FFmpeg 路径与设备编码能力。</p>
         </div>

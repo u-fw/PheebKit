@@ -29,7 +29,9 @@ flowchart TD
 
 `Source` distinguishes local filesystem paths from `content://` document URIs. The original reference belongs in Project IR; temporary native SAF handles belong only in the runner. UI changes Project IR, asks Go to compile a plan, and starts that same plan through the job engine.
 
-The Windows spike uses installed software encoders discovered from FFmpeg. Listing an NVENC encoder does not prove that a GPU can execute it; automatic hardware selection needs a later runtime test. H.265 software encoding is the first verified slice.
+The Windows spike discovers installed software encoders and runtime-qualifies NVENC, AMF and QSV candidates using bounded real encoding trials. Automatic selection prefers a qualified GPU, then software with a visible reason. Software HEVC and NVIDIA NVENC are verified on the audited workstation; AMD/Intel execution is not claimed.
+
+Local media and execution plans carry an optional source fingerprint. It combines file identity, size, modification/change timestamps and bounded content samples. Probe validates it before and after inspection; preview and execution reject changed sources, and publication checks it again. This detects ordinary replacement/editing without hashing an entire multi-gigabyte video. It is not a complete content-integrity hash or a file lock.
 
 ## Persistence and compatibility
 

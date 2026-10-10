@@ -101,7 +101,7 @@ export default function App() {
         <div className="sidebar-bottom">
           <div className="local-badge">
             <span className="tiny-dot" />
-            LOCAL FIRST
+            离线工作空间
           </div>
           <div className="build-tag">
             kompeg <span>0.1</span>
@@ -177,7 +177,11 @@ export default function App() {
           {compressVisited && (
             <div hidden={page !== "compress"}>
               <Compress
-                key={studio.media?.source.uri || "empty"}
+                key={
+                  studio.media
+                    ? `${studio.media.source.uri}:${studio.media.sourceFingerprint || ""}`
+                    : "empty"
+                }
                 media={studio.media}
                 capabilities={studio.capabilities}
                 connected={studio.connected}

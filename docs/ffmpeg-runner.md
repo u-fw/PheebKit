@@ -2,6 +2,8 @@
 
 Core owns `Runner.Probe`, `Capabilities`, `Start` and `Cancel`. Execution plans contain argv and `Source` references, never an executable shell string. The application invokes runners from background bridge calls and the job worker; FFmpeg does not block React.
 
+Local source fingerprints are checked around probe, before preview, before queued execution and before output publication. Changed media requires explicit re-import; an old plan does not silently reuse stale stream indices, HDR status or size budgets. File identity/change timestamps and bounded samples detect ordinary replacements/edits, rather than promising a complete content hash or a file lock.
+
 ## Windows
 
 The adapter starts `exec.CommandContext(binary, args...)`; no `cmd.exe /c`, PowerShell invocation or shell concatenation exists in the execution path. Preview is a separately escaped PowerShell display command using the discovered executable path. Discovery prefers `KOMPEG_FFMPEG`/`KOMPEG_FFPROBE`, then `FFMPEG_PATH`/`FFPROBE_PATH`, saved application paths and PATH. Recognized Scoop shims resolve to the actual executable so cancellation owns FFmpeg rather than only a launcher. Environment status validates both binaries with bounded `-version` calls and supplies a configuration prompt if either is missing. Saved configuration is updated atomically; the queue's stable runner proxy allows idle reconfiguration without losing job history. Queued/running jobs block path changes.
@@ -25,6 +27,8 @@ Cancel interrupts the actual process context. Process pause/resume is not suppor
 ## Advanced parameters
 
 The GUI sends raw arguments as one argv element per line, up to 32 option/value pairs. The spike accepts only `-profile:v`, `-level:v`, `-g`, `-bf`, `-maxrate`, `-bufsize`, `-x264-params`, `-x265-params`, `-svtav1-params`, and `-metadata`. Structural process, input, output and progress switches are protected, so this escape hatch cannot add a second input, change the managed output or redirect progress. The full unrestricted Raw Command workspace remains a later milestone. Shell punctuation stays within argv data.
+
+Codec-private parameter strings additionally require exact `key=value` entries from an encoder-specific typed allowlist. Unknown keys, file paths, auxiliary input/output options and multi-pass side files are rejected before execution; FFmpeg's `-n` alone does not protect those codec-managed files. Safe examples include `aq-mode=3` for x264, `log-level=error` for x265 and `tune=0` for SVT-AV1. The supported table lives in `internal/compiler/codec_parameters.go`.
 
 ## Verification
 

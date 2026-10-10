@@ -4,6 +4,8 @@ A Windows 10/11 and Android video-processing technical spike using Go Core, Wail
 
 Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approved for this spike. This repository is not a production release. [Environment audit](docs/environment.md) and [Android blockers](docs/android.md) distinguish installed tools, source support and actual runtime evidence.
 
+![kompeg Windows workspace](docs/images/workspace.png)
+
 ## Windows development
 
 Requires Go 1.25+, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Install the exact CLI once:
@@ -70,6 +72,8 @@ docs/                       architecture, design and verification evidence
 ```
 
 See [architecture](docs/architecture.md), [UI design](docs/ui-design.md), [runner](docs/ffmpeg-runner.md), [project format](docs/project-format.md), [Android FFmpeg spike](docs/android-ffmpeg-spike.md) and [actual verification](docs/verification.md).
+
+The [open-source readiness review](docs/open-source-readiness.md) records repaired defects, verification and remaining publication decisions. The project owner has not yet selected a license.
 
 ## Current scope
 

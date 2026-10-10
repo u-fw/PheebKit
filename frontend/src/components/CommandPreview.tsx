@@ -27,7 +27,7 @@ export function CommandPreview({
       <div className="section-title">
         <h3>
           <Icon name="terminal" />
-          Command Preview
+          执行参数
         </h3>
         <button
           className="button text compact-button"
@@ -38,7 +38,7 @@ export function CommandPreview({
           复制
         </button>
       </div>
-      <p>由 Go Core 根据当前设置生成。</p>
+      <p>根据当前设置生成，用于核对实际处理方式。</p>
       <pre aria-live="polite">
         {loading
           ? "正在生成执行计划…"
@@ -48,7 +48,7 @@ export function CommandPreview({
       </pre>
       {plan && (
         <span className="subtle-label">
-          {plan.args.length} 个独立参数 · 平台 Runner 执行
+          {plan.args.length} 个独立参数 · 本地执行
         </span>
       )}
       {copyStatus && (

@@ -1,7 +1,7 @@
 .media-card {
   display: flex;
   padding: var(--space-6);
-  gap: var(--space-7);
+  gap: var(--space-6);
   min-width: 0;
 }
 .media-visual {
@@ -73,6 +73,7 @@
   margin-top: var(--space-2);
   font-size: var(--font-heading);
   overflow-wrap: anywhere;
+  line-height: 1.45;
 }
 .media-tags {
   display: flex;
@@ -87,8 +88,8 @@ dl {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-5);
-  margin-top: var(--space-6);
-  padding-bottom: var(--space-5);
+  margin-top: var(--space-5);
+  padding-bottom: var(--space-4);
 }
 dt {
   color: var(--muted);
@@ -104,7 +105,7 @@ dd {
 .stream-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   border-top: 1px solid var(--outline-variant);
   padding-top: var(--space-4);
 }
@@ -126,7 +127,7 @@ dd {
   overflow-wrap: anywhere;
 }
 .ready-row {
-  padding: var(--space-7) var(--space-2);
+  padding: var(--space-6) var(--space-2);
   display: flex;
   align-items: center;
   justify-content: space-between;

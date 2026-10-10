@@ -19,7 +19,6 @@ export function Home({
     <div className="page home-page">
       <header className="page-heading">
         <div>
-          <div className="section-eyebrow">本地媒体处理</div>
           <h1>工作台</h1>
           <p>
             {media
@@ -71,27 +70,29 @@ export function Home({
               <Icon name="plus" />
             </div>
           </div>
-          <div className="section-eyebrow">一切从这里开始</div>
-          <h2>{busy ? "正在分析媒体…" : "把视频带进来"}</h2>
-          <p>
-            将文件拖入窗口，或从设备中选择。
-            <br />
-            媒体始终在本地处理。
-          </p>
-          <button
-            className="button primary"
-            onClick={chooseMedia}
-            disabled={busy || !connected}
-          >
-            <Icon name={busy ? "video" : "plus"} />
-            {busy ? "正在读取媒体信息" : "选择媒体文件"}
-          </button>
-          <span className="drop-hint">MP4 · MKV · MOV · WEBM · 音频文件</span>
-          {!connected && (
-            <span className="preview-note">
-              浏览器可预览界面。媒体操作需要 Wails 原生桥接。
-            </span>
-          )}
+          <div className="drop-content">
+            <div className="section-eyebrow">导入媒体</div>
+            <h2>{busy ? "正在分析媒体…" : "选择文件，开始处理"}</h2>
+            <p>
+              将视频或音频拖入窗口，或从设备中选择。
+              <br />
+              媒体始终在本地处理。
+            </p>
+            <button
+              className="button primary"
+              onClick={chooseMedia}
+              disabled={busy || !connected}
+            >
+              <Icon name={busy ? "video" : "plus"} />
+              {busy ? "正在读取媒体信息" : "选择媒体文件"}
+            </button>
+            <span className="drop-hint">MP4 · MKV · MOV · WEBM · 音频文件</span>
+            {!connected && (
+              <span className="preview-note">
+                浏览器可预览界面。媒体操作需要 Wails 原生桥接。
+              </span>
+            )}
+          </div>
         </section>
       )}
       {!media && (

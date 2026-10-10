@@ -127,7 +127,6 @@ export function Compress({
       <div className="page">
         <header className="page-heading">
           <div>
-            <div className="section-eyebrow">本地媒体处理</div>
             <h1>压缩视频</h1>
             <p>导入一个视频，开始配置压缩任务。</p>
           </div>
@@ -152,7 +151,6 @@ export function Compress({
     <div className="page compress-page">
       <header className="page-heading">
         <div>
-          <div className="section-eyebrow">本地媒体处理</div>
           <h1>压缩视频</h1>
           <p>调整输出格式、处理方式和文件大小。</p>
         </div>

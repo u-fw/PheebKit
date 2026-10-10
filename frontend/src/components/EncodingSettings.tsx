@@ -89,12 +89,9 @@ export function EncodingSettings({
     <section className="surface settings-card">
       <div className="section-title">
         <h2>输出设置</h2>
-        <span className="subtle-label">01 / FORMAT</span>
       </div>
       <fieldset>
-        <legend>
-          视频编码 <span>Codec</span>
-        </legend>
+        <legend>视频编码</legend>
         <div className="codec-options">
           {codecOptions.map((codec) => {
             const available = capabilities?.videoEncoders.some(
@@ -124,9 +121,7 @@ export function EncodingSettings({
         </div>
       </fieldset>
       <fieldset>
-        <legend>
-          压缩模式 <span>Rate control</span>
-        </legend>
+        <legend>压缩模式</legend>
         <div className="segmented mode-options">
           {modes.map((mode) => (
             <button
@@ -144,9 +139,7 @@ export function EncodingSettings({
       </fieldset>
       {settings.mode === "quality" ? (
         <fieldset>
-          <legend>
-            画质 <span>Quality</span>
-          </legend>
+          <legend>画质</legend>
           <div className="segmented quality-options">
             {qualities.map((quality) => (
               <button
@@ -330,7 +323,7 @@ export function AdvancedSettings({
           />
         </div>
         <label className="field-label">
-          Raw FFmpeg Arguments
+          附加 FFmpeg 参数
           <textarea
             rows={5}
             placeholder={"-metadata\ntitle=我的视频"}
@@ -343,8 +336,8 @@ export function AdvancedSettings({
           />
           <span className="field-hint">
             每行一个独立 argv 参数，以选项和值成对填写。支持
-            -metadata、-maxrate、-bufsize
-            等编码选项；输入、输出、映射和进度参数由 Core 管理。
+            -metadata、-maxrate、-bufsize 等编码选项。编码器子选项使用
+            key=value，以冒号分隔；仅支持已知安全选项，文件读写与多遍编码选项不可使用。
           </span>
         </label>
       </div>
