@@ -114,14 +114,16 @@ type Job struct {
 	Error       string     `json:"error"`
 	Logs        []string   `json:"logs"`
 	Trim        *TimeRange `json:"trim,omitempty"`
+	Project     *Project   `json:"project,omitempty"`
 }
 
 const (
-	JobQueued     = "queued"
-	JobPreparing  = "preparing"
-	JobRunning    = "running"
-	JobCancelling = "cancelling"
-	JobCancelled  = "cancelled"
-	JobCompleted  = "completed"
-	JobFailed     = "failed"
+	JobQueued      = "queued"
+	JobPreparing   = "preparing"
+	JobRunning     = "running"
+	JobCancelling  = "cancelling"
+	JobCancelled   = "cancelled"
+	JobCompleted   = "completed"
+	JobFailed      = "failed"
+	JobInterrupted = "interrupted"
 )

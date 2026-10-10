@@ -64,6 +64,7 @@ export interface Job {
     "error": string;
     "logs": string[] | null;
     "trim"?: TimeRange | null;
+    "project"?: Project | null;
 }
 
 export interface Media {
@@ -75,6 +76,13 @@ export interface Media {
     "durationSeconds": number;
     "bitrate": number;
     "streams": Stream[] | null;
+}
+
+export interface Preset {
+    "schemaVersion": number;
+    "id": string;
+    "name": string;
+    "settings": Settings;
 }
 
 export interface Progress {

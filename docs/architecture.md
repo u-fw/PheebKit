@@ -1,6 +1,6 @@
-# kompeg architecture
+# PheebKit architecture
 
-The first milestone is a technical spike, not the complete product. Targets are Windows 10/11 and Android. Wails v3 Beta and experimental Android support were explicitly approved for this spike on 2026-10-09; they are not a production stability claim.
+The first milestone is a technical spike, not the complete product. Windows 10/11 x64 is the active target; Android is deferred. Wails v3 Beta and experimental Android support were explicitly approved for this spike on 2026-10-09; they are not a production stability claim.
 
 ```mermaid
 flowchart TD
@@ -38,5 +38,9 @@ Local media and execution plans carry an optional source fingerprint. It combine
 `.ffproject` JSON and presets carry `schemaVersion: 1`. Unknown versions fail explicitly. Raw arguments are separate argv elements and are an escape hatch, not the persisted primary model. The first spike does not reverse-parse edited commands into GUI state.
 
 ## Verification limits
+
+`internal/localstore` supplies bounded atomic JSON updates and cross-process OS file locks. The app merges history by job ID, retaining live jobs from other processes. On startup, active records from dead owners become interrupted display records; no persisted argv is executed. Job snapshots retain a deep copy of the editable Project for reuse. Preferences contain only encoding settings and omit trim and file paths. Storage failures preserve the original file and surface in the UI.
+
+Preview assets are served by an app handler using opaque session tokens issued only for imported media. Every GET/HEAD checks the source fingerprint and supports byte ranges; arbitrary path query parameters are not accepted. FFmpeg frame extraction shares the bounded thumbnail worker gate. The native close hook and application quit hook consult backend work state; confirmed exit cancels the job engine.
 
 Windows gets real process, probe, encode and cancel tests. Android execution and Go binding cannot be called verified without an APK build and device/emulator run. A responsive browser viewport alone verifies layout sharing, not an Android native runtime.

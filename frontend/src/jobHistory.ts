@@ -1,7 +1,12 @@
 import type { Job } from "./bridge";
 
 const historyLimit = 200;
-const terminalStates = new Set(["completed", "failed", "cancelled"]);
+const terminalStates = new Set([
+  "completed",
+  "failed",
+  "cancelled",
+  "interrupted",
+]);
 const stateOrder: Record<string, number> = {
   queued: 0,
   preparing: 1,
@@ -10,6 +15,7 @@ const stateOrder: Record<string, number> = {
   completed: 4,
   failed: 4,
   cancelled: 4,
+  interrupted: 4,
 };
 
 function compareTimestamp(left = "", right = ""): number {

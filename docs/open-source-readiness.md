@@ -1,6 +1,6 @@
 # Open-source readiness — 2026-10-10
 
-The Windows experimental slice has passed its current checks after the visual refinement and defect fixes. No remote repository, push, release or publication was performed. This review does not claim the absence of all bugs or production stability.
+The Windows experimental slice has passed its current checks after the visual refinement and defect fixes. Current branding is 菲比工具箱 / PheebKit; beta.4 adds exit protection, result actions, clip preview, presets and persisted history. See [workflow evidence](workflows.md) for current verification limits. No remote repository, push, release or publication was performed. This review does not claim the absence of all bugs or production stability.
 
 ## Repaired findings
 
@@ -21,7 +21,7 @@ The Windows experimental slice has passed its current checks after the visual re
 - Full Go integration/unit checks, vet and formatting; 38 frontend tests, typecheck, lint, formatting and production build.
 - Native light/dark, phone/landscape, enlarged text, reduced motion and axe checks; details in [verification](verification.md).
 - Lockfile preserved; npm registry audit returned zero known vulnerabilities. Basic tracked-file/key-pattern checks found no matches. Neither check guarantees complete supply-chain or security coverage.
-- Current build is `bin/kompeg.exe`. Generated binaries, dependency folders, local verification media, test configs and archived prototypes are ignored by Git. The showcase screenshot contains no imported user file.
+- Current build is `bin/PheebKit.exe`. Generated binaries, dependency folders, local verification media, test configs and archived prototypes are ignored by Git. Historical screenshots show earlier kompeg builds; they are not current branding evidence.
 
 ## Before publishing
 

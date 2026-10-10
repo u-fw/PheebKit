@@ -12,6 +12,8 @@ Trimmed outputs omit source chapters because their original timestamps may no lo
 
 ## Verification on 2026-10-10
 
+Beta.4 adds source/selected-range playback, current-position boundary buttons and FFmpeg position/boundary frames. Unsupported WebView2 playback falls back to frame navigation. End-boundary thumbnails show a nearby frame; the exact source end is clamped to the last readable frame. These previews do not promise decoded frame-exact playback cuts. New source imports use saved defaults when configured; media-specific trim resets. See [workflow verification](workflows.md).
+
 - Compiler regressions cover seek placement, selected duration and size budget, unchanged whole-input behavior, invalid/unknown/non-finite boundaries, audio policy, shorter-than-frame rejection and raw parameter attempts to override managed timing.
 - Project load/save preserves fractional ranges and old files without trimming. Queue tests verify ranges cannot be changed by mutating caller/snapshot objects.
 - `KOMPEG_INTEGRATION=1 go test ./internal/runner/windows -run '^TestIntegrationTrimExactNonKeyframeRange$' -count=1 -v` passed using the installed FFmpeg. A six-second red/blue/green fixture with a long GOP was cut at non-keyframe 2.5–3.75 seconds. Independently probed output was H.264/AAC and 1.267 seconds (one-frame/container precision); decoding its first RGB frame confirmed blue, not the preceding red interval. Progress used 1.25 seconds.

@@ -14,8 +14,11 @@ $uninstaller = Join-Path $installed 'unins000.exe'
 $toolsRoot = [IO.Path]::GetFullPath((Join-Path $workspace '.tools')) + [IO.Path]::DirectorySeparatorChar
 if (-not [IO.Path]::GetFullPath($root).StartsWith($toolsRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Test paths must stay inside the workspace tools directory' }
 New-Item -ItemType Directory -Force -Path $root | Out-Null
-$config = Join-Path $env:APPDATA 'kompeg/ffmpeg.json'
-$configHash = if (Test-Path -LiteralPath $config) { (Get-FileHash -LiteralPath $config -Algorithm SHA256).Hash } else { '' }
+$configHashes = @{}
+foreach ($name in @('ffmpeg.json', 'history.json', 'preferences.json')) {
+    $path = Join-Path $env:APPDATA "kompeg/$name"
+    $configHashes[$path] = if (Test-Path -LiteralPath $path) { (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash } else { '' }
+}
 
 function Run-Hidden([string]$Path, [string[]]$Arguments) {
     $process = Start-Process -FilePath $Path -ArgumentList $Arguments -WindowStyle Hidden -PassThru
@@ -66,8 +69,10 @@ try {
     Remove-TestInstallation
     if ((Test-Path -LiteralPath $registryPath) -or (Test-Path -LiteralPath (Join-Path $installed 'PheebKit.exe'))) { throw 'Uninstall left application or uninstall registration behind' }
     if (-not (Test-Path -LiteralPath (Join-Path $installed 'keep-user-file.txt'))) { throw 'Uninstall removed user-owned files' }
-    $afterHash = if (Test-Path -LiteralPath $config) { (Get-FileHash -LiteralPath $config).Hash } else { '' }
-    if ($configHash -ne $afterHash) { throw 'Installation modified existing FFmpeg configuration' }
+    foreach ($path in $configHashes.Keys) {
+        $afterHash = if (Test-Path -LiteralPath $path) { (Get-FileHash -LiteralPath $path).Hash } else { '' }
+        if ($configHashes[$path] -ne $afterHash) { throw 'Installation modified existing application configuration or history' }
+    }
     try {
         & (Join-Path $PSScriptRoot 'release-windows.ps1')
         throw 'Existing release was unexpectedly overwritten'

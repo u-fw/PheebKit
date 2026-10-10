@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Job } from "../bridge";
 import { formatBytes, formatDuration, savedPercent } from "../format";
 import { Icon } from "./Icon";
 import { formatTimecode } from "../trim";
+import { API } from "../bridge";
+import { errorMessage } from "../format";
+import { jobErrorHelp } from "../jobError";
 
 const stateNames: Record<string, string> = {
   queued: "等待中",
@@ -12,10 +15,33 @@ const stateNames: Record<string, string> = {
   cancelled: "已取消",
   completed: "已完成",
   failed: "失败",
+  interrupted: "已中断",
 };
 const activeStates = new Set(["queued", "preparing", "running", "cancelling"]);
 
-function JobCard({ job, cancel }: { job: Job; cancel: (id: string) => void }) {
+function JobCard({
+  job,
+  cancel,
+  reuse,
+}: {
+  job: Job;
+  cancel: (id: string) => void;
+  reuse: (id: string) => Promise<void>;
+}) {
+  const [actionError, setActionError] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function action(kind: "file" | "folder" | "reuse") {
+    setBusy(true);
+    setActionError("");
+    try {
+      if (kind === "reuse") await reuse(job.id);
+      else await API.openJobOutput(job.id, kind === "folder");
+    } catch (cause) {
+      setActionError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
   const state = job.state.toLowerCase();
   const active = activeStates.has(state);
   const progress = Math.min(1, Math.max(0, job.progress || 0));
@@ -70,11 +96,11 @@ function JobCard({ job, cancel }: { job: Job; cancel: (id: string) => void }) {
               <dd>{job.fps ? job.fps.toFixed(1) : "—"}</dd>
             </div>
             <div>
-              <dt>Speed</dt>
+              <dt>处理速度</dt>
               <dd>{job.speed ? `${job.speed.toFixed(2)}×` : "—"}</dd>
             </div>
             <div>
-              <dt>Out time</dt>
+              <dt>已处理时长</dt>
               <dd>{formatDuration(job.currentTime)}</dd>
             </div>
             <div>
@@ -125,8 +151,52 @@ function JobCard({ job, cancel }: { job: Job; cancel: (id: string) => void }) {
         </>
       )}
       {job.error && (
+        <div className="inline-error" role="alert">
+          <p>
+            {state === "interrupted"
+              ? "上次处理已中断，请检查输出后重新执行。"
+              : jobErrorHelp(job.error)}
+          </p>
+          <details>
+            <summary>详细原因</summary>
+            <p>{job.error}</p>
+          </details>
+        </div>
+      )}
+      {!active && (
+        <div className="action-row">
+          {state === "completed" && (
+            <>
+              <button
+                className="button outlined"
+                disabled={busy}
+                onClick={() => void action("file")}
+              >
+                打开文件
+              </button>
+              <button
+                className="button outlined"
+                disabled={busy}
+                onClick={() => void action("folder")}
+              >
+                打开所在文件夹
+              </button>
+            </>
+          )}
+          {job.project && (
+            <button
+              className="button outlined"
+              disabled={busy}
+              onClick={() => void action("reuse")}
+            >
+              {busy ? "处理中…" : "沿用设置再处理"}
+            </button>
+          )}
+        </div>
+      )}
+      {actionError && (
         <p className="inline-error" role="alert">
-          {job.error}
+          {actionError}
         </p>
       )}
       <div className="job-output">
@@ -152,11 +222,13 @@ export function Queue({
   cancel,
   refresh,
   compress,
+  reuse,
 }: {
   jobs: Job[];
   cancel: (id: string) => void;
   refresh: () => void;
   compress: () => void;
+  reuse: (id: string) => Promise<void>;
 }) {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const active = jobs.filter((job) =>
@@ -167,17 +239,39 @@ export function Queue({
   );
   const visible =
     filter === "active" ? active : filter === "completed" ? completed : jobs;
+  const [storageError, setStorageError] = useState("");
+  const terminalCount = jobs.length - active.length;
+  useEffect(() => {
+    let alive = true;
+    void API.getWorkspace().then(
+      (value) => {
+        if (alive) setStorageError(value.error);
+      },
+      (cause) => {
+        if (alive)
+          setStorageError(`历史保存状态读取失败：${errorMessage(cause)}`);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [terminalCount, jobs.length]);
   return (
     <div className="page queue-page">
       <header className="page-heading">
         <div>
           <h1>任务队列</h1>
-          <p>实时进度、执行日志和实际处理结果。</p>
+          <p>实时进度、执行日志与最近 200 条本地历史。中断任务不会自动继续。</p>
         </div>
         <button className="button outlined" onClick={refresh}>
           刷新队列
         </button>
       </header>
+      {storageError && (
+        <p className="inline-error" role="alert">
+          {storageError}
+        </p>
+      )}
       <div className="queue-toolbar">
         <div className="segmented">
           <button
@@ -209,7 +303,7 @@ export function Queue({
       {visible.length ? (
         <div className="job-list">
           {[...visible].reverse().map((job) => (
-            <JobCard key={job.id} job={job} cancel={cancel} />
+            <JobCard key={job.id} job={job} cancel={cancel} reuse={reuse} />
           ))}
         </div>
       ) : (

@@ -10,6 +10,7 @@ import { Icon } from "./Icon";
 import { MediaCard } from "./MediaCard";
 import { OutputSummary } from "./OutputSummary";
 import { TrimSettings } from "./TrimSettings";
+import { SavedSettings } from "./SavedSettings";
 
 type Props = {
   media: Media | null;
@@ -18,6 +19,10 @@ type Props = {
   chooseMedia: () => void;
   onJob: (job: Job) => void;
   showQueue: () => void;
+  initialSettings?: Settings;
+  reused?: boolean;
+  visible?: boolean;
+  onSaved?: (value: Settings) => void;
 };
 
 export function Compress({
@@ -27,18 +32,29 @@ export function Compress({
   chooseMedia,
   onJob,
   showQueue,
+  initialSettings,
+  reused = false,
+  visible = true,
+  onSaved,
 }: Props) {
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [settings, setSettings] = useState<Settings>(
+    () => initialSettings ?? defaultSettings,
+  );
   const [output, setOutput] = useState(() =>
     media
       ? suggestedOutput(
           media.source.uri,
-          defaultSettings.codec,
-          defaultSettings.audio,
-        )
+          (initialSettings ?? defaultSettings).codec,
+          (initialSettings ?? defaultSettings).audio,
+        ).replace(/(\.[^.]+)$/, reused ? `-${Date.now()}$1` : "$1")
       : "",
   );
-  const [customResolution, setCustomResolution] = useState(false);
+  const [customResolution, setCustomResolution] = useState(
+    () =>
+      ![0, 720, 1080, 1440, 2160].includes(
+        (initialSettings ?? defaultSettings).resolution,
+      ),
+  );
   const [actionError, setActionError] = useState("");
   const [starting, setStarting] = useState(false);
   const [choosingOutput, setChoosingOutput] = useState(false);
@@ -163,7 +179,19 @@ export function Compress({
       <MediaCard media={media} compact />
       <div className="compress-layout">
         <div className="settings-column">
+          <SavedSettings
+            onSaved={onSaved}
+            settings={settings}
+            apply={(value) => {
+              setSettings({ ...value, trim: settings.trim });
+              setCustomResolution(
+                ![0, 720, 1080, 1440, 2160].includes(value.resolution),
+              );
+              setActionError("");
+            }}
+          />
           <TrimSettings
+            visible={visible}
             media={media}
             settings={settings}
             onChange={(next) => {

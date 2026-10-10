@@ -8,7 +8,11 @@ export {
 
 export type {
     BinaryStatus,
+    CloseRequest,
     Environment,
     FFmpegSetupStatus,
-    Thumbnail
+    JobReuse,
+    Thumbnail,
+    WorkspacePreferences,
+    WorkspaceStatus
 } from "./models.js";

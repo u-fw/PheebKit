@@ -9,6 +9,7 @@ export type {
     GPU,
     Job,
     Media,
+    Preset,
     Progress,
     Project,
     Result,

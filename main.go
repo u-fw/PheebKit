@@ -22,6 +22,7 @@ func init() {
 	application.RegisterEvent[string]("bridge:ready")
 	application.RegisterEvent[[]string]("media:drop")
 	application.RegisterEvent[bool]("window:maximised")
+	application.RegisterEvent[app.CloseRequest]("app:close-requested")
 }
 
 func main() {
@@ -35,8 +36,9 @@ func main() {
 		Name:        "PheebKit",
 		Description: "菲比工具箱 · 本地媒体处理工具",
 		Services:    []application.Service{application.NewService(service)},
-		Assets:      application.AssetOptions{Handler: application.AssetFileServerFS(assets)},
+		Assets:      application.AssetOptions{Handler: service.AssetHandler(application.AssetFileServerFS(assets))},
 		Windows:     windowsDebugOptions(),
+		ShouldQuit:  service.CanClose,
 	})
 	service.Attach(a)
 	a.OnShutdown(service.Close)
@@ -47,6 +49,11 @@ func main() {
 		EnableFileDrop:   true,
 		BackgroundColour: application.NewRGB(15, 22, 23),
 		URL:              "/",
+	})
+	window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {
+		if !service.CanClose() {
+			event.Cancel()
+		}
 	})
 	window.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
 		a.Event.Emit("media:drop", event.Context().DroppedFiles())

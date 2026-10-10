@@ -7,11 +7,15 @@ import type { Events } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import type * as app$0 from "../../../../../kompeg/internal/app/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import type * as core$0 from "../../../../../kompeg/internal/core/models.js";
 
 declare module "@wailsio/runtime" {
     namespace Events {
         interface CustomEvents {
+            "app:close-requested": app$0.CloseRequest;
             "bridge:ready": string;
             "job:updated": core$0.Job;
             "media:drop": string[] | null;

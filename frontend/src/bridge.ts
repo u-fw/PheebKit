@@ -59,6 +59,7 @@ export interface Thumbnail {
   height: number;
 }
 export interface Job {
+  project?: Project | null;
   trim?: Core.TimeRange | null;
   id: string;
   projectID: string;
@@ -84,6 +85,13 @@ export interface Job {
 
 function jobView(job: Core.Job): Job {
   return {
+    project: job.project
+      ? {
+          ...job.project,
+          inputs: job.project.inputs ?? [],
+          settings: settingsView(job.project.settings),
+        }
+      : null,
     trim: job.trim,
     id: job.id,
     projectID: job.projectID,
@@ -112,6 +120,31 @@ function mediaView(media: Core.Media): Media {
   return { ...media, streams: media.streams ?? [] };
 }
 
+function settingsView(settings: Core.Settings): Settings {
+  return {
+    ...settings,
+    rawArguments: settings.rawArguments ?? [],
+    encoder: settings.encoder || "auto",
+  };
+}
+export interface WorkspacePreferences {
+  version: number;
+  lastSettings?: Settings | null;
+  presets: { id: string; name: string; settings: Settings }[];
+}
+function preferencesView(
+  value: Awaited<ReturnType<typeof Service.SaveSettings>>,
+): WorkspacePreferences {
+  return {
+    ...value,
+    lastSettings: value.lastSettings ? settingsView(value.lastSettings) : null,
+    presets: (value.presets ?? []).map((p) => ({
+      ...p,
+      settings: settingsView(p.settings),
+    })),
+  };
+}
+
 function capabilityView(caps: Core.Capabilities): Capabilities {
   return {
     version: caps.version,
@@ -126,6 +159,40 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  deletePreset: async (id: string): Promise<WorkspacePreferences> =>
+    preferencesView(await Service.DeletePreset(id)),
+  confirmQuit: async (): Promise<void> => Service.ConfirmQuit(),
+  onCloseRequested: (
+    callback: (request: { jobs: number; downloading: boolean }) => void,
+  ): (() => void) =>
+    Events.On("app:close-requested", (event) => callback(event.data)),
+  openJobOutput: async (id: string, folder: boolean): Promise<void> =>
+    Service.OpenJobOutput(id, folder),
+  reuseJob: async (
+    id: string,
+  ): Promise<{ media: Media; settings: Settings }> => {
+    const value = await Service.ReuseJob(id);
+    return {
+      media: mediaView(value.media),
+      settings: settingsView(value.project.settings),
+    };
+  },
+  getWorkspace: async (): Promise<{
+    error: string;
+    preferences: WorkspacePreferences;
+  }> => {
+    const value = await Service.GetWorkspace();
+    return { ...value, preferences: preferencesView(value.preferences) };
+  },
+  saveSettings: async (
+    settings: Settings,
+    name: string,
+  ): Promise<WorkspacePreferences> =>
+    preferencesView(await Service.SaveSettings(settings, name)),
+  getMediaPreviewURL: async (uri: string): Promise<string> =>
+    Service.GetMediaPreviewURL(uri),
+  getVideoFrame: async (uri: string, seconds: number): Promise<Thumbnail> =>
+    Service.GetVideoFrame(uri, seconds),
   getFFmpegSetupStatus: async (): Promise<FFmpegSetupStatus> =>
     Service.GetFFmpegSetupStatus(),
   startFFmpegSetup: async (source: string): Promise<FFmpegSetupStatus> =>

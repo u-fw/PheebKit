@@ -6,6 +6,7 @@ import type {
   FFmpegSetupStatus,
   Job,
   Media,
+  Settings,
 } from "../bridge";
 import { errorMessage } from "../format";
 import { JobHistory } from "../jobHistory";
@@ -27,9 +28,19 @@ export function useStudio() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [savedSettings, setSavedSettings] = useState<Settings | undefined>();
+  const [reuse, setReuse] = useState<{
+    settings: Settings;
+    nonce: string;
+  } | null>(null);
   const importBusy = useRef(false);
   const environmentGeneration = useRef(0);
   const jobHistory = useRef(new JobHistory());
+  const savedSettingsRevision = useRef(0);
+  const updateSavedSettings = useCallback((settings: Settings) => {
+    savedSettingsRevision.current++;
+    setSavedSettings(settings);
+  }, []);
 
   const updateEnvironment = useCallback(async (status: EnvironmentStatus) => {
     const generation = ++environmentGeneration.current;
@@ -153,6 +164,7 @@ export function useStudio() {
     setError("");
     try {
       setMedia(await API.probe(paths[0]));
+      setReuse(null);
       if (paths.length > 1)
         setError("本次 Spike 每次分析一个源文件，已导入第一个文件。");
     } catch (cause) {
@@ -170,7 +182,10 @@ export function useStudio() {
     setError("");
     try {
       const selected = await API.chooseMedia();
-      if (selected) setMedia(selected);
+      if (selected) {
+        setMedia(selected);
+        setReuse(null);
+      }
     } catch (cause) {
       setError(`导入失败：${errorMessage(cause)}`);
     } finally {
@@ -187,6 +202,18 @@ export function useStudio() {
     const jobsRequestedAt = jobHistory.current.revision;
     const platformRequest = API.getPlatform();
     const environmentRequest = API.getEnvironment();
+    const workspaceRequest = API.getWorkspace();
+    const initialSavedRevision = savedSettingsRevision.current;
+    // Defaults need not wait for the comparatively slow GPU scan. Later user
+    // saves take precedence over an older startup reply; errors are handled below.
+    void Promise.allSettled([workspaceRequest]).then(([result]) => {
+      if (
+        alive &&
+        result.status === "fulfilled" &&
+        initialSavedRevision === savedSettingsRevision.current
+      )
+        setSavedSettings(result.value.preferences.lastSettings ?? undefined);
+    });
     void environmentRequest
       .then((status) => {
         if (alive && initialGeneration === environmentGeneration.current)
@@ -214,10 +241,20 @@ export function useStudio() {
       API.capabilities(),
       API.jobs(),
       environmentRequest,
+      workspaceRequest,
     ]).then((results) => {
       if (!alive) return;
-      const [platformResult, capabilityResult, jobResult, environmentResult] =
-        results;
+      const [
+        platformResult,
+        capabilityResult,
+        jobResult,
+        environmentResult,
+        workspaceResult,
+      ] = results;
+      if (workspaceResult.status === "fulfilled") {
+        if (workspaceResult.value.error) setError(workspaceResult.value.error);
+      } else if (platformResult.status === "fulfilled")
+        setError(`本地设置读取失败：${errorMessage(workspaceResult.reason)}`);
       if (
         capabilityResult.status === "fulfilled" &&
         initialGeneration === environmentGeneration.current
@@ -288,6 +325,25 @@ export function useStudio() {
     setJobs(jobHistory.current.update([job]));
   }, []);
 
+  const reuseJob = useCallback(async (id: string) => {
+    if (importBusy.current) return false;
+    importBusy.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const next = await API.reuseJob(id);
+      setMedia(next.media);
+      setReuse({ settings: next.settings, nonce: crypto.randomUUID() });
+      return true;
+    } catch (cause) {
+      setError(`无法复用任务：${errorMessage(cause)}`);
+      return false;
+    } finally {
+      importBusy.current = false;
+      setBusy(false);
+    }
+  }, []);
+
   const cancelJob = useCallback(async (id: string) => {
     try {
       await API.cancel(id);
@@ -307,6 +363,10 @@ export function useStudio() {
 
   return {
     platform,
+    savedSettings,
+    setSavedSettings: updateSavedSettings,
+    reuse,
+    reuseJob,
     connected,
     capabilities,
     capabilityError,

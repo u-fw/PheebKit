@@ -2,15 +2,18 @@ import { useState } from "react";
 import type { Media, Settings } from "../bridge";
 import { formatTimecode, selectedDuration, trimError } from "../trim";
 import { TimePicker } from "./TimePicker";
+import { ClipPreview } from "./ClipPreview";
 
 export function TrimSettings({
   media,
   settings,
   onChange,
+  visible = true,
 }: {
   media: Media;
   settings: Settings;
   onChange: (settings: Settings) => void;
+  visible?: boolean;
 }) {
   const trim = settings.trim;
   const total = media.durationSeconds;
@@ -138,6 +141,13 @@ export function TrimSettings({
               剪辑时使用 AAC / Opus 对齐音频；从 Copy 切入时自动选择 AAC。
             </p>
           )}
+          <ClipPreview
+            media={media}
+            start={trim.startSeconds}
+            end={trim.endSeconds}
+            visible={visible}
+            onBoundary={change}
+          />
         </>
       )}
     </section>

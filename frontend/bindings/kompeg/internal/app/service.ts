@@ -46,12 +46,24 @@ export function ConfigureFFmpeg(ffmpegPath: string, ffprobePath: string): $Cance
     return $Call.ByID(3260152768, ffmpegPath, ffprobePath);
 }
 
+export function ConfirmQuit(): $CancellablePromise<void> {
+    return $Call.ByID(4199731478);
+}
+
+export function DeletePreset(id: string): $CancellablePromise<$models.WorkspacePreferences> {
+    return $Call.ByID(2362883055, id);
+}
+
 export function GetEnvironment(): $CancellablePromise<$models.Environment> {
     return $Call.ByID(2101974642);
 }
 
 export function GetFFmpegSetupStatus(): $CancellablePromise<$models.FFmpegSetupStatus> {
     return $Call.ByID(1314079415);
+}
+
+export function GetMediaPreviewURL(uri: string): $CancellablePromise<string> {
+    return $Call.ByID(1337368742, uri);
 }
 
 export function GetPlatform(): $CancellablePromise<string> {
@@ -62,8 +74,20 @@ export function GetThumbnail(uri: string): $CancellablePromise<$models.Thumbnail
     return $Call.ByID(1060548783, uri);
 }
 
+export function GetVideoFrame(uri: string, seconds: number): $CancellablePromise<$models.Thumbnail> {
+    return $Call.ByID(3081822721, uri, seconds);
+}
+
+export function GetWorkspace(): $CancellablePromise<$models.WorkspaceStatus> {
+    return $Call.ByID(4050524942);
+}
+
 export function Jobs(): $CancellablePromise<core$0.Job[] | null> {
     return $Call.ByID(1920824859);
+}
+
+export function OpenJobOutput(id: string, folder: boolean): $CancellablePromise<void> {
+    return $Call.ByID(554295103, id, folder);
 }
 
 export function Preview(p: core$0.Project): $CancellablePromise<core$0.ExecutionPlan> {
@@ -79,6 +103,17 @@ export function Probe(uri: string): $CancellablePromise<core$0.Media> {
  */
 export function RefreshCapabilities(): $CancellablePromise<core$0.Capabilities> {
     return $Call.ByID(1478811256);
+}
+
+export function ReuseJob(id: string): $CancellablePromise<$models.JobReuse> {
+    return $Call.ByID(3841018108, id);
+}
+
+/**
+ * Saves encoding preferences only: source/output paths and trim are media-specific.
+ */
+export function SaveSettings(settings: core$0.Settings, name: string): $CancellablePromise<$models.WorkspacePreferences> {
+    return $Call.ByID(375230187, settings, name);
 }
 
 export function Start(p: core$0.Project): $CancellablePromise<core$0.Job> {

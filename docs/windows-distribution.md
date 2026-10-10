@@ -48,7 +48,7 @@ For publication, create the matching tag, draft a GitHub Release and attach thes
 
 ## Local verification and remaining acceptance
 
-`0.1.0-beta.2` adds optional single-range trimming with compression; `0.1.0-beta.1` artifacts remain unchanged. Feature evidence is recorded in [trimming](trimming.md).
+`0.1.0-beta.4` adds task/preview/history improvements documented in [workflows](workflows.md). Beta.3 introduced PheebKit branding and Material time selectors; beta.2 added optional single-range trimming with compression. Earlier artifacts remain unchanged. Trim evidence is recorded in [trimming](trimming.md).
 
 The current Windows host passed checksum validation, exact installer/ZIP payload comparison, display/version checks, per-user install, same-version reinstall, uninstall, preservation of a user-owned sentinel and existing FFmpeg configuration, plus blocked install/uninstall with the application mutex present. Verification uses a fresh workspace directory and refuses to run if an existing kompeg installation is registered. Logs remain under `.tools`.
 

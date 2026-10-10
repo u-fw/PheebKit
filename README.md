@@ -4,7 +4,7 @@ A Windows 10/11 x64 video-processing experimental application using Go Core, Wai
 
 Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approved for this spike. This repository is not a production release. [Environment audit](docs/environment.md) and [Android blockers](docs/android.md) distinguish installed tools, source support and actual runtime evidence.
 
-![kompeg Windows workspace](docs/images/workspace.png)
+Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 
 ## Windows development
 
@@ -16,7 +16,7 @@ npm --prefix frontend ci
 wails3 generate bindings -ts -i -clean=true
 npm --prefix frontend run build
 wails3 build
-.\bin\kompeg.exe
+.\bin\PheebKit.exe
 ```
 
 `wails3 build` generates the Windows manifest/resource and embeds the production frontend. The manifest enables long paths; filesystem policy and the installed FFmpeg build still determine complete long-path support. For optional explicit binary selection:
@@ -39,6 +39,14 @@ New compression settings default to GPU preference. NVENC, QSV and AMF are offer
 Compression defaults to the complete source duration. Select **剪辑并压缩** to retain one start/end range using Material hour/minute/second selectors, 0.1-second adjustment buttons or keyboard-accessible sliders. The same FFmpeg invocation trims and encodes once; progress, speed and size-mode bitrate budget use the selected duration. Audio uses AAC/Opus for accurate boundaries (Copy changes to AAC when enabling trim). See [trimming behavior and verification](docs/trimming.md).
 
 Windows packaging produces an installer, a standalone ZIP and SHA-256 checksums from the same build. `VERSION` is the version source; Settings, EXE resources and package metadata stay synchronized. See [Windows distribution and verification](docs/windows-distribution.md) for packaging commands, local lifecycle checks and remaining clean-machine/signing checks. Publication remains a separate owner action.
+
+## Task workflow and local preferences
+
+Closing the window (including Alt+F4) checks the native job queue and FFmpeg setup. Active work opens a confirmation dialog; returning preserves work, while explicit exit cancels processing. Completed results offer Open File and Show in Folder; missing/moved files produce an actionable error. Reuse Settings re-probes the source, restores the editable intent and suggests a new output filename, without executing a saved command.
+
+Trim preview offers source playback, selected-range playback, a seek slider, current-position boundary buttons and FFmpeg boundary frames. WebView2 codec support controls playback; unsupported formats retain FFmpeg position-frame navigation. Preview is a positioning aid rather than frame-exact edit playback.
+
+The app saves recent job history (normally 200 records) and up to 20 named encoding configurations under the existing `%APPDATA%/kompeg` directory. Interrupted jobs do not auto-resume. Defaults/presets exclude source/output paths and trim; retained history contains local file paths and diagnostics. Atomic JSON writes use a cross-process file lock. See [task workflow and verification](docs/workflows.md).
 
 ## Verification commands
 
@@ -89,7 +97,7 @@ PheebKit's original code is licensed under the GNU General Public License versio
 
 ## Current scope
 
-Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression with optional single-range trimming, limited advanced argv, command preview, queue, real cancel and result metrics form the first vertical slice. Remux/extract, multi-clip editing, HDR encoding, unrestricted Raw Command, all component scanners, process pause/resume and project/preset management UI are later milestones. Windows FFmpeg is discovered rather than bundled; third-party redistribution needs its own source/notice review.
+Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression with optional single-range trimming/preview, limited advanced argv, command preview, exit protection, queue/result actions, persisted history and local encoding presets form the first vertical slice. Remux/extract, multi-clip editing, HDR encoding, unrestricted Raw Command, all component scanners, process pause/resume, project-file management and preset import/export remain later milestones. Windows FFmpeg is discovered rather than bundled; third-party redistribution needs its own source/notice review.
 
 Android SDK/NDK/emulator and a connected device are absent on the audited machine. The pinned Android task assets also require a POSIX build host. APK build, Android Go binding and native FFmpeg execution are therefore not verified; responsive UI reuse alone does not satisfy those criteria.
 

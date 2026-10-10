@@ -9,6 +9,8 @@ import { WindowControls } from "./components/WindowControls";
 import { useStudio } from "./hooks/useStudio";
 import { BRAND_NAME, BRAND_ENGLISH } from "./brand";
 import { BrandLogo } from "./components/BrandLogo";
+import { API } from "./bridge";
+import { ExitDialog } from "./components/ExitDialog";
 
 type Page = "home" | "compress" | "queue" | "settings";
 const navigation: {
@@ -34,6 +36,14 @@ export default function App() {
   const [compressVisited, setCompressVisited] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(initialTheme);
   const studio = useStudio();
+  const [closeRequest, setCloseRequest] = useState<{
+    jobs: number;
+    downloading: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!studio.connected) return;
+    return API.onCloseRequested(setCloseRequest);
+  }, [studio.connected]);
   const activeCount = studio.jobs.filter((job) =>
     ["queued", "preparing", "running", "cancelling"].includes(
       job.state.toLowerCase(),
@@ -181,10 +191,14 @@ export default function App() {
               <Compress
                 key={
                   studio.media
-                    ? `${studio.media.source.uri}:${studio.media.sourceFingerprint || ""}`
+                    ? `${studio.media.source.uri}:${studio.media.sourceFingerprint || ""}:${studio.reuse?.nonce ?? ""}`
                     : "empty"
                 }
                 media={studio.media}
+                initialSettings={studio.reuse?.settings ?? studio.savedSettings}
+                onSaved={studio.setSavedSettings}
+                reused={Boolean(studio.reuse)}
+                visible={page === "compress"}
                 capabilities={studio.capabilities}
                 connected={studio.connected}
                 chooseMedia={() => void studio.chooseMedia()}
@@ -199,6 +213,11 @@ export default function App() {
               cancel={(id) => void studio.cancelJob(id)}
               refresh={() => void studio.refreshJobs()}
               compress={() => navigate("compress")}
+              reuse={(id) =>
+                studio.reuseJob(id).then((success) => {
+                  if (success) navigate("compress");
+                })
+              }
             />
           )}
           {page === "settings" && (
@@ -242,6 +261,12 @@ export default function App() {
           </button>
         ))}
       </nav>
+      {closeRequest && (
+        <ExitDialog
+          request={closeRequest}
+          dismiss={() => setCloseRequest(null)}
+        />
+      )}
     </div>
   );
 }

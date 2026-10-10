@@ -51,6 +51,14 @@ func (s *Service) startFFmpegSetup(packages []ffmpegsetup.Package, custom bool) 
 	}
 	s.setupMu.Lock()
 	defer s.setupMu.Unlock()
+	s.setupBusy.Store(true)
+	defer func() { s.setupBusy.Store(s.setupStatus.Active) }()
+	s.lifecycleMu.Lock()
+	closing := s.exiting
+	s.lifecycleMu.Unlock()
+	if closing {
+		return s.setupStatus, errors.New("应用正在退出，无法开始环境补全")
+	}
 	if s.setupStatus.Active {
 		return s.setupStatus, errors.New("已有下载进行中。")
 	}
@@ -141,6 +149,7 @@ func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc,
 	s.setupMu.Lock()
 	defer s.setupMu.Unlock()
 	s.setupStatus.Active = false
+	s.setupBusy.Store(false)
 	s.setupCancel = nil
 	if errors.Is(err, context.Canceled) {
 		s.setupStatus.Stage = "cancelled"

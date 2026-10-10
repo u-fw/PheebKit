@@ -30,18 +30,48 @@ type record struct {
 }
 
 type Manager struct {
-	runner    core.Runner
-	ctx       context.Context
-	cancel    context.CancelFunc
-	mu        sync.Mutex
-	records   map[string]*record
-	order     []string
-	queue     chan string
-	events    chan core.Job
-	done      chan struct{}
-	eventDone chan struct{}
-	closed    bool
-	closeOnce sync.Once
+	runner           core.Runner
+	ctx              context.Context
+	cancel           context.CancelFunc
+	mu               sync.Mutex
+	records          map[string]*record
+	order            []string
+	queue            chan string
+	events           chan core.Job
+	done             chan struct{}
+	eventDone        chan struct{}
+	closed           bool
+	closeOnce        sync.Once
+	persist          func([]core.Job) error
+	persistenceError string
+	savedStates      map[string]string
+}
+
+// Restore only restores display records. Persisted commands are never executed.
+func (m *Manager) Restore(history []core.Job, save func([]core.Job) error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, job := range history {
+		if terminal(job.State) && m.records[job.ID] == nil {
+			m.records[job.ID] = &record{job: snapshot(job)}
+			m.order = append(m.order, job.ID)
+		}
+	}
+	m.persist = save
+	m.savedStates = make(map[string]string)
+	for _, job := range history {
+		m.savedStates[job.ID] = job.State
+	}
+}
+
+func (m *Manager) PersistenceError() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.persistenceError
+}
+
+func (m *Manager) EnqueueProject(plan core.ExecutionPlan, project core.Project) (core.Job, error) {
+	return m.enqueue(plan, &project)
 }
 
 func New(runner core.Runner, emit func(core.Job)) *Manager {
@@ -62,6 +92,10 @@ func New(runner core.Runner, emit func(core.Job)) *Manager {
 }
 
 func (m *Manager) Enqueue(plan core.ExecutionPlan) (core.Job, error) {
+	return m.enqueue(plan, nil)
+}
+
+func (m *Manager) enqueue(plan core.ExecutionPlan, project *core.Project) (core.Job, error) {
 	id := plan.JobID
 	if id == "" {
 		var bytes [16]byte
@@ -93,7 +127,8 @@ func (m *Manager) Enqueue(plan core.ExecutionPlan) (core.Job, error) {
 	}
 	job := core.Job{ID: id, ProjectID: plan.ProjectID, Input: plan.Input, Output: plan.Output,
 		State: core.JobQueued, QueuedAt: time.Now(), Logs: []string{},
-		Progress: core.Progress{TotalTimeSeconds: plan.DurationSeconds}, Trim: plan.Trim}
+		Progress: core.Progress{TotalTimeSeconds: plan.DurationSeconds}, Trim: plan.Trim, Project: project}
+	job = snapshot(job)
 	m.records[id] = &record{job: job, plan: plan}
 	m.order = append(m.order, id)
 	m.publishLocked(job)
@@ -260,6 +295,18 @@ func (m *Manager) log(id, line string) {
 }
 
 func (m *Manager) publishLocked(job core.Job) {
+	if m.persist != nil && m.savedStates[job.ID] != job.State {
+		all := make([]core.Job, 0, len(m.order))
+		for _, id := range m.order {
+			all = append(all, snapshot(m.records[id].job))
+		}
+		if err := m.persist(all); err != nil {
+			m.persistenceError = err.Error()
+		} else {
+			m.persistenceError = ""
+			m.savedStates[job.ID] = job.State
+		}
+	}
 	// Event delivery cannot block execution. Drop an old snapshot if a UI is slow;
 	// List/Get always retain the authoritative state and bounded log history.
 	select {
@@ -280,6 +327,7 @@ func (m *Manager) pruneHistory() {
 	for i, id := range m.order {
 		if terminal(m.records[id].job.State) {
 			delete(m.records, id)
+			delete(m.savedStates, id)
 			m.order = append(m.order[:i], m.order[i+1:]...)
 			return
 		}
@@ -287,6 +335,16 @@ func (m *Manager) pruneHistory() {
 }
 
 func snapshot(job core.Job) core.Job {
+	if job.Project != nil {
+		p := *job.Project
+		p.Inputs = append([]core.Source(nil), p.Inputs...)
+		p.Settings.RawArguments = append([]string(nil), p.Settings.RawArguments...)
+		if p.Settings.Trim != nil {
+			trim := *p.Settings.Trim
+			p.Settings.Trim = &trim
+		}
+		job.Project = &p
+	}
 	job.Logs = append([]string{}, job.Logs...)
 	if job.Trim != nil {
 		trim := *job.Trim
@@ -300,5 +358,5 @@ func snapshot(job core.Job) core.Job {
 }
 
 func terminal(state string) bool {
-	return state == core.JobCompleted || state == core.JobFailed || state == core.JobCancelled
+	return state == core.JobCompleted || state == core.JobFailed || state == core.JobCancelled || state == core.JobInterrupted
 }

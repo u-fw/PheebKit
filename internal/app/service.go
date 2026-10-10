@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -35,6 +36,14 @@ type Service struct {
 	setupMu            sync.Mutex
 	setupStatus        FFmpegSetupStatus
 	setupCancel        context.CancelFunc
+	setupBusy          atomic.Bool
+	workspaceOnce      sync.Once
+	workspaceMu        sync.Mutex
+	workspaceError     string
+	lifecycleMu        sync.Mutex
+	exiting            bool
+	previewMu          sync.Mutex
+	previewTokens      map[string]core.Media
 }
 
 func NewService() *Service {
@@ -207,14 +216,26 @@ func (s *Service) preview(p core.Project) (core.ExecutionPlan, error) {
 }
 
 func (s *Service) Start(p core.Project) (core.Job, error) {
+	s.ensureWorkspace()
+	s.lifecycleMu.Lock()
+	if s.exiting {
+		s.lifecycleMu.Unlock()
+		return core.Job{}, errors.New("应用正在退出，无法创建任务")
+	}
+	s.lifecycleMu.Unlock()
 	s.configMu.RLock()
 	defer s.configMu.RUnlock()
 	plan, err := s.preview(p)
 	if err != nil {
 		return core.Job{}, err
 	}
-	return s.jobs.Enqueue(plan)
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+	if s.exiting {
+		return core.Job{}, errors.New("应用正在退出，无法创建任务")
+	}
+	return s.jobs.EnqueueProject(plan, p)
 }
 
 func (s *Service) Cancel(id string) error { return s.jobs.Cancel(id) }
-func (s *Service) Jobs() []core.Job       { return s.jobs.List() }
+func (s *Service) Jobs() []core.Job       { s.ensureWorkspace(); return s.jobs.List() }

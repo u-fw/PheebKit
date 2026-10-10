@@ -41,4 +41,4 @@ Optional `trim: { "startSeconds": 30.5, "endSeconds": 70.5 }` retains a single r
 
 No final command string is persisted. Probe data and Execution Plan are derived. Raw arguments remain separate argv elements. `internal/project` supplies size-limited, strict load/save functions; unknown versions and fields fail explicitly. A migration must be added before introducing schema version 2. The first UI does not yet expose project save/load or recent-project browsing.
 
-Presets carry `schemaVersion`, `id`, `name` and the same settings object. The first package contains built-in quality presets. User preset import/export and migration UI are later scope.
+Presets carry `schemaVersion`, `id`, `name` and the same settings object. The UI now saves/applies/deletes up to 20 named local encoding presets and a default encoding configuration. These exclude media-specific trim and paths. Same-name saving updates the preset. Project file management, preset import/export and migration UI remain later scope. History stores the editable project intent for reuse; a reused job is re-probed and compiled again rather than executing cached commands. See [workflows](workflows.md).
