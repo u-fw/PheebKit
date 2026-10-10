@@ -1,11 +1,7 @@
 import { useState } from "react";
 import type { Media, Settings } from "../bridge";
-import {
-  formatTimecode,
-  parseTimecode,
-  selectedDuration,
-  trimError,
-} from "../trim";
+import { formatTimecode, selectedDuration, trimError } from "../trim";
+import { TimePicker } from "./TimePicker";
 
 export function TrimSettings({
   media,
@@ -20,11 +16,8 @@ export function TrimSettings({
   const total = media.durationSeconds;
   const known = Number.isFinite(total) && total >= 0.001;
   const max = known ? Math.floor(total * 1000) / 1000 : 0;
-  const [startText, setStartText] = useState(() =>
-    formatTimecode(trim?.startSeconds ?? 0),
-  );
-  const [endText, setEndText] = useState(() =>
-    formatTimecode(trim?.endSeconds ?? max),
+  const [range, setRange] = useState(
+    () => trim ?? { startSeconds: 0, endSeconds: max },
   );
   const video = media.streams.find(
     (stream) =>
@@ -40,22 +33,20 @@ export function TrimSettings({
       onChange({ ...settings, trim: null });
       return;
     }
-    const startSeconds = parseTimecode(startText);
-    const endSeconds = parseTimecode(endText);
     onChange({
       ...settings,
-      trim: { startSeconds, endSeconds },
+      trim: range,
       audio: hasAudio && settings.audio === "copy" ? "aac" : settings.audio,
     });
   }
 
-  function change(boundary: "startSeconds" | "endSeconds", text: string) {
+  function change(boundary: "startSeconds" | "endSeconds", value: number) {
     if (!trim) return;
-    if (boundary === "startSeconds") setStartText(text);
-    else setEndText(text);
+    const next = { ...trim, [boundary]: value };
+    setRange(next);
     onChange({
       ...settings,
-      trim: { ...trim, [boundary]: parseTimecode(text) },
+      trim: next,
     });
   }
 
@@ -97,19 +88,15 @@ export function TrimSettings({
             {(["startSeconds", "endSeconds"] as const).map((boundary) => {
               const label =
                 boundary === "startSeconds" ? "开始时间" : "结束时间";
-              const text = boundary === "startSeconds" ? startText : endText;
               return (
                 <div key={boundary}>
-                  <label className="field-label" htmlFor={`trim-${boundary}`}>
-                    {label}
-                  </label>
-                  <input
-                    id={`trim-${boundary}`}
-                    value={text}
-                    onChange={(event) => change(boundary, event.target.value)}
-                    spellCheck={false}
-                    aria-invalid={Boolean(error)}
-                    aria-describedby={`trim-help trim-format${error ? " trim-error" : ""}`}
+                  <TimePicker
+                    label={label}
+                    value={trim[boundary]}
+                    max={max}
+                    onChange={(value) => change(boundary, value)}
+                    invalid={Boolean(error)}
+                    describedBy={`trim-help trim-format${error ? " trim-error" : ""}`}
                   />
                   <input
                     className="trim-slider"
@@ -123,10 +110,7 @@ export function TrimSettings({
                       formatTimecode(trim[boundary]) || "无效时间"
                     }
                     onChange={(event) =>
-                      change(
-                        boundary,
-                        formatTimecode(Number(event.target.value)),
-                      )
+                      change(boundary, Number(event.target.value))
                     }
                   />
                 </div>
@@ -134,8 +118,8 @@ export function TrimSettings({
             })}
           </div>
           <p className="field-hint" id="trim-format">
-            支持
-            时:分:秒.毫秒、分:秒，或秒数。实际切点受视频帧和音频采样精度限制。
+            分别选择时、分、秒，使用 ±0.1
+            秒按钮微调，滑块保留毫秒精度。实际切点受视频帧和音频采样精度限制。
           </p>
           {error ? (
             <p id="trim-error" className="inline-error" role="alert">

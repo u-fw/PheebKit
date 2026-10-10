@@ -31,7 +31,7 @@ export function downloadBlockReason(
   if (!environment) return "正在检测 FFmpeg 环境，完成后可补全。";
   const override = explicitEnvironmentOverride(environment);
   if (override)
-    return `环境变量 ${override} 优先于应用配置。请先清除或修正该变量，并重启 kompeg，再下载或切换本机路径。`;
+    return `环境变量 ${override} 优先于应用配置。请先清除或修正该变量，并重启 菲比工具箱，再下载或切换本机路径。`;
   if (environment.ready)
     return "已找到可用的 FFmpeg 和 ffprobe，无需重复下载。需要切换版本时，请使用上方的本机路径选择。";
   return "";
@@ -120,7 +120,7 @@ export function FFmpegDownload({
       <div>
         <h3>一键补全</h3>
         <p className="field-hint">
-          安装到 kompeg 私有目录，无需管理员权限。保留现有系统 PATH。
+          安装到 菲比工具箱 私有目录，无需管理员权限。保留现有系统 PATH。
         </p>
       </div>
       {blockedReason && (

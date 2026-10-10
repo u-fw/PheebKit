@@ -146,7 +146,7 @@ export function OutputSummary({
       )}
       {!connected && (
         <p className="inline-error">
-          原生媒体处理服务未连接，请在 kompeg 应用中操作。
+          原生媒体处理服务未连接，请在 菲比工具箱 应用中操作。
         </p>
       )}
       {(previewLoading || !capabilitiesLoaded) &&

@@ -1,13 +1,8 @@
-import type { Media, Stream } from "../bridge";
+import type { Media } from "../bridge";
 import { formatBitrate, formatBytes, formatDuration } from "../format";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { Icon } from "./Icon";
-
-function streamLabel(stream: Stream): string {
-  return [stream.codecName.toUpperCase(), stream.language, stream.title]
-    .filter(Boolean)
-    .join(" · ");
-}
+import { streamLabel, videoLabel } from "../mediaLabels";
 
 export function MediaCard({
   media,
@@ -108,12 +103,14 @@ export function MediaCard({
             <div>
               <Icon name="video" />
               <span>视频 · {videos.length} 轨</span>
-              <span>
-                {video
-                  ? [video.pixelFormat, video.colorSpace, video.colorPrimaries]
-                      .filter(Boolean)
-                      .join(" · ") || "无色彩信息"
-                  : "无视频轨"}
+              <span
+                title={
+                  video
+                    ? `像素格式：${video.pixelFormat || "未标注"}；色彩矩阵：${video.colorSpace || "未标注"}；传递特性：${video.colorTransfer || "未标注"}；原色：${video.colorPrimaries || "未标注"}`
+                    : undefined
+                }
+              >
+                {video ? videoLabel(video) : "无视频轨"}
               </span>
             </div>
             <div>
@@ -129,7 +126,7 @@ export function MediaCard({
               <span>
                 {subtitles.length
                   ? subtitles.map(streamLabel).join(" / ")
-                  : "无字幕轨"}
+                  : "未检测到内嵌字幕"}
               </span>
             </div>
           </div>

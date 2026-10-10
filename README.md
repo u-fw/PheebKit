@@ -1,4 +1,4 @@
-# kompeg
+# 菲比工具箱 · PheebKit
 
 A Windows 10/11 x64 video-processing experimental application using Go Core, Wails v3, React and strict TypeScript. Windows uses real installed FFmpeg binaries. Android work is deferred; its unsupported mock/native-shell research remains in source and no APK is released.
 
@@ -32,11 +32,11 @@ FFmpeg discovery prefers `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE`, then `FFMPEG_PATH` 
 
 One-click setup offers Gyan 9.0.2 full stable builds and the older npmmirror 6.1.1 domestic fallback. The default tries gyan.dev first, then the matching GitHub release. Domestic fallback must be selected manually after a failure; it never silently downgrades. Versions, transfer progress, cancellation and retry are visible. Downloads use fixed SHA-256 digests, preserve upstream notices, and install privately under `%LOCALAPPDATA%/kompeg/tools`. See [download policy and verification](docs/ffmpeg-downloads.md).
 
-Settings also accepts a custom HTTPS archive download link. Mirrors of the exact built-in Gyan full ZIP retain its pinned digest. Other Windows x64 builds require a publisher-provided SHA-256 and explicit source trust; kompeg automatically finds a single FFmpeg/ffprobe pair, preserves sidecar DLLs, validates and configures it. ZIP, 7z, RAR, tar, tar.gz/tgz, tar.xz and tar.bz2/tbz2 are detected by file contents without requiring an external extractor. Download pages, source-only/Linux builds, encrypted or split archives and self-extracting executables are unsupported.
+Settings also accepts a custom HTTPS archive download link. Mirrors of the exact built-in Gyan full ZIP retain its pinned digest. Other Windows x64 builds require a publisher-provided SHA-256 and explicit source trust; PheebKit automatically finds a single FFmpeg/ffprobe pair, preserves sidecar DLLs, validates and configures it. ZIP, 7z, RAR, tar, tar.gz/tgz, tar.xz and tar.bz2/tbz2 are detected by file contents without requiring an external extractor. Download pages, source-only/Linux builds, encrypted or split archives and self-extracting executables are unsupported.
 
 New compression settings default to GPU preference. NVENC, QSV and AMF are offered only after bounded real encoding trials; unavailable combinations fall back to CPU with a visible reason. Source artwork prefers Windows thumbnail providers and falls back to FFmpeg cover/frame extraction.
 
-Compression defaults to the complete source duration. Select **剪辑并压缩** to retain one start/end range using timecode inputs or keyboard-accessible sliders. The same FFmpeg invocation trims and encodes once; progress, speed and size-mode bitrate budget use the selected duration. Audio uses AAC/Opus for accurate boundaries (Copy changes to AAC when enabling trim). See [trimming behavior and verification](docs/trimming.md).
+Compression defaults to the complete source duration. Select **剪辑并压缩** to retain one start/end range using Material hour/minute/second selectors, 0.1-second adjustment buttons or keyboard-accessible sliders. The same FFmpeg invocation trims and encodes once; progress, speed and size-mode bitrate budget use the selected duration. Audio uses AAC/Opus for accurate boundaries (Copy changes to AAC when enabling trim). See [trimming behavior and verification](docs/trimming.md).
 
 Windows packaging produces an installer, a standalone ZIP and SHA-256 checksums from the same build. `VERSION` is the version source; Settings, EXE resources and package metadata stay synchronized. See [Windows distribution and verification](docs/windows-distribution.md) for packaging commands, local lifecycle checks and remaining clean-machine/signing checks. Publication remains a separate owner action.
 
@@ -85,10 +85,12 @@ The [open-source readiness review](docs/open-source-readiness.md) records repair
 
 ## License
 
-kompeg's original code is licensed under the GNU General Public License version 3 only (`GPL-3.0-only`). See [LICENSE](LICENSE) for the full terms. Third-party dependencies and assets retain their respective licenses. FFmpeg is currently discovered locally rather than bundled; packaging or downloading FFmpeg does not replace its own license or distribution obligations.
+PheebKit's original code is licensed under the GNU General Public License version 3 only (`GPL-3.0-only`). See [LICENSE](LICENSE) for the full terms. Third-party dependencies and assets retain their respective licenses. FFmpeg is currently discovered locally rather than bundled; packaging or downloading FFmpeg does not replace its own license or distribution obligations.
 
 ## Current scope
 
 Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression with optional single-range trimming, limited advanced argv, command preview, queue, real cancel and result metrics form the first vertical slice. Remux/extract, multi-clip editing, HDR encoding, unrestricted Raw Command, all component scanners, process pause/resume and project/preset management UI are later milestones. Windows FFmpeg is discovered rather than bundled; third-party redistribution needs its own source/notice review.
 
 Android SDK/NDK/emulator and a connected device are absent on the audited machine. The pinned Android task assets also require a POSIX build host. APK build, Android Go binding and native FFmpeg execution are therefore not verified; responsive UI reuse alone does not satisfy those criteria.
+
+The current brand is 菲比工具箱 / PheebKit. Settings in the legacy kompeg AppData directory, KOMPEG_* environment overrides, project schema and installer AppId remain compatible. Release files use PheebKit; earlier kompeg packages are historical candidates. The supplied brand image is preserved in frontend/public/pheebkit.png and converted to Windows icons with the pinned Wails CLI.

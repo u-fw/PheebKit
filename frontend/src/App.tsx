@@ -7,6 +7,8 @@ import { Queue } from "./components/Queue";
 import { SettingsPage } from "./components/SettingsPage";
 import { WindowControls } from "./components/WindowControls";
 import { useStudio } from "./hooks/useStudio";
+import { BRAND_NAME, BRAND_ENGLISH } from "./brand";
+import { BrandLogo } from "./components/BrandLogo";
 
 type Page = "home" | "compress" | "queue" | "settings";
 const navigation: {
@@ -66,14 +68,14 @@ export default function App() {
             event.preventDefault();
             navigate("home");
           }}
-          aria-label="kompeg 工作台"
+          aria-label={`${BRAND_NAME} 工作台`}
         >
           <span className="brand-mark">
-            <Icon name="studio" />
+            <BrandLogo />
           </span>
           <span>
-            <strong>kompeg</strong>
-            <small>本地媒体工作台</small>
+            <strong>{BRAND_NAME}</strong>
+            <small>{BRAND_ENGLISH}</small>
           </span>
         </a>
         <div className="sidebar-label">工作空间</div>
@@ -104,14 +106,14 @@ export default function App() {
             离线工作空间
           </div>
           <div className="build-tag">
-            kompeg <span>0.1</span>
+            {BRAND_ENGLISH} <span>{__KOMPEG_VERSION__}</span>
           </div>
         </div>
       </aside>
       <div className="workspace-shell">
         <header className="topbar glass">
           <div className="workspace-title">
-            <Icon name={currentNav?.icon || "home"} />
+            <BrandLogo />
             <strong>{currentNav?.label}</strong>
           </div>
           <div className="topbar-actions">

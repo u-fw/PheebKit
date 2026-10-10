@@ -12,6 +12,7 @@ export function MaterialSelect({
   disabled = false,
   describedBy,
   invalid = false,
+  accessibleLabel,
 }: {
   label: string;
   value: string;
@@ -20,6 +21,7 @@ export function MaterialSelect({
   disabled?: boolean;
   describedBy?: string;
   invalid?: boolean;
+  accessibleLabel?: string;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -146,7 +148,10 @@ export function MaterialSelect({
         aria-invalid={invalid || undefined}
         aria-expanded={open}
         aria-controls={open ? `${id}-listbox` : undefined}
-        aria-labelledby={`${id}-label ${id}-value`}
+        aria-label={accessibleLabel}
+        aria-labelledby={
+          accessibleLabel ? undefined : `${id}-label ${id}-value`
+        }
         aria-activedescendant={
           open && active >= 0 ? `${id}-option-${active}` : undefined
         }
@@ -169,7 +174,7 @@ export function MaterialSelect({
         <div
           role="listbox"
           id={`${id}-listbox`}
-          aria-label={label}
+          aria-label={accessibleLabel || label}
           className={`material-select-menu ${above ? "above" : ""}`}
           style={{ maxHeight: menuHeight }}
         >

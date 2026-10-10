@@ -33,7 +33,7 @@ function BinaryDetails({
           <dt>来源</dt>
           <dd>
             {binary?.source === "config"
-              ? "kompeg 本机配置"
+              ? "菲比工具箱 本机配置"
               : binary?.source === "PATH"
                 ? "PATH 环境变量"
                 : binary?.source
@@ -201,8 +201,8 @@ export function SettingsPage({
               />
             </label>
             <p className="field-hint">
-              仅保存到 kompeg 本机配置。环境变量仍具有更高优先级。留空 ffprobe
-              时查找 FFmpeg 同目录下的 ffprobe。
+              仅保存到 菲比工具箱 本机配置。环境变量仍具有更高优先级。留空
+              ffprobe 时查找 FFmpeg 同目录下的 ffprobe。
             </p>
             <button
               className="button outlined"
@@ -352,7 +352,8 @@ export function SettingsPage({
         </div>
       )}
       <p className="field-hint">
-        kompeg {__KOMPEG_VERSION__} · Windows 测试版 · Android 暂缓
+        菲比工具箱 · PheebKit {__KOMPEG_VERSION__} · Windows 测试版 · Android
+        暂缓
       </p>
     </div>
   );

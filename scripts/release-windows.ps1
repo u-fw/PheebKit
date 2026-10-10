@@ -41,16 +41,16 @@ try {
     Invoke-Checked go @('vet', './...')
     foreach ($check in @('test', 'typecheck', 'lint', 'format:check')) { Invoke-Checked npm @('--prefix', 'frontend', 'run', $check) }
     Invoke-Checked wails3 @('build')
-    $application = Join-Path $workspace 'bin/kompeg.exe'
+    $application = Join-Path $workspace 'bin/PheebKit.exe'
     $metadata = (Get-Item -LiteralPath $application).VersionInfo
     if ($metadata.ProductVersion -ne $version.version) { throw 'Executable version does not match VERSION' }
-    Copy-Item -LiteralPath $application -Destination (Join-Path $payload 'kompeg.exe')
+    Copy-Item -LiteralPath $application -Destination (Join-Path $payload 'PheebKit.exe')
     Copy-Item -LiteralPath (Join-Path $workspace 'LICENSE') -Destination (Join-Path $payload 'LICENSE.txt')
     Invoke-Checked node @('scripts/dependency-notices.mjs', (Join-Path $payload 'THIRD_PARTY_NOTICES.txt'))
     @"
-kompeg $($version.version) - Windows x64 experimental release
+PheebKit $($version.version) - Windows x64 experimental release
 
-Extract the entire ZIP, then run kompeg.exe. This is a no-install application;
+Extract the entire ZIP, then run PheebKit.exe. This is a no-install application;
 settings and downloaded FFmpeg are stored in AppData, not beside this executable.
 Windows 10/11 x64 and Microsoft WebView2 Runtime are required.
 WebView2: https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section
@@ -62,10 +62,10 @@ are separate release acceptance steps; a successful build is not evidence of the
 Project license: GPL-3.0-only. See LICENSE.txt and THIRD_PARTY_NOTICES.txt.
 Corresponding source: the repository's matching v$($version.version) tag.
 "@ | Set-Content -LiteralPath (Join-Path $payload 'README.txt') -Encoding utf8
-    $zip = Join-Path $output "kompeg-$($version.version)-windows-x64-standalone.zip"
+    $zip = Join-Path $output "PheebKit-$($version.version)-windows-x64-standalone.zip"
     Compress-Archive -Path (Join-Path $payload '*') -DestinationPath $zip -CompressionLevel Optimal
     Invoke-Checked $InnoCompiler @('--quiet', "--define=AppVersion=$($version.version)", "--define=WindowsVersion=$($version.windowsVersion)", "--define=PayloadDir=$payload", "--define=ReleaseDir=$output", (Join-Path $workspace 'build/windows/installer.iss'))
-    $setup = Join-Path $output "kompeg-$($version.version)-windows-x64-setup.exe"
+    $setup = Join-Path $output "PheebKit-$($version.version)-windows-x64-setup.exe"
     if (-not (Test-Path -LiteralPath $setup)) { throw 'Installer compiler did not produce the expected file' }
     git diff --exit-code
     if ($LASTEXITCODE -ne 0) { throw 'Build changed tracked sources; commit generated files and rebuild.' }

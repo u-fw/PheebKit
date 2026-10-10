@@ -32,8 +32,8 @@ func main() {
 	defer releaseGuard()
 	service := app.NewService()
 	a := application.New(application.Options{
-		Name:        "kompeg",
-		Description: "Local video processing workspace",
+		Name:        "PheebKit",
+		Description: "菲比工具箱 · 本地媒体处理工具",
 		Services:    []application.Service{application.NewService(service)},
 		Assets:      application.AssetOptions{Handler: application.AssetFileServerFS(assets)},
 		Windows:     windowsDebugOptions(),
@@ -41,7 +41,7 @@ func main() {
 	service.Attach(a)
 	a.OnShutdown(service.Close)
 	window := a.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title: "kompeg",
+		Title: "菲比工具箱 · PheebKit",
 		Width: 1280, Height: 860, MinWidth: 360, MinHeight: 620,
 		Frameless:        runtime.GOOS == "windows",
 		EnableFileDrop:   true,

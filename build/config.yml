@@ -1,9 +1,9 @@
 version: '3'
 info:
-  companyName: kompeg
-  productName: kompeg
+  companyName: PheebKit
+  productName: PheebKit
   productIdentifier: studio.kompeg.app
-  description: Local video processing workspace
+  description: 菲比工具箱 · 本地媒体处理工具
   version: '0.1.0'
 dev_mode:
   root_path: .

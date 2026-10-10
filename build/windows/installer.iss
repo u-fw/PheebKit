@@ -14,22 +14,22 @@
 
 [Setup]
 AppId={{9D8FAD06-8029-4A58-9497-96C7DA878C63}
-AppName=kompeg
+AppName=菲比工具箱 (PheebKit)
 AppVersion={#AppVersion}
-AppVerName=kompeg {#AppVersion}
+AppVerName=菲比工具箱 (PheebKit) {#AppVersion}
 VersionInfoVersion={#WindowsVersion}
 VersionInfoTextVersion={#AppVersion}
 VersionInfoProductTextVersion={#AppVersion}
-DefaultDirName={localappdata}\Programs\kompeg
-DefaultGroupName=kompeg
+DefaultDirName={localappdata}\Programs\PheebKit
+DefaultGroupName=菲比工具箱 (PheebKit)
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64os
 ArchitecturesInstallIn64BitMode=x64os
 MinVersion=10.0
 OutputDir={#ReleaseDir}
-OutputBaseFilename=kompeg-{#AppVersion}-windows-x64-setup
+OutputBaseFilename=PheebKit-{#AppVersion}-windows-x64-setup
 SetupIconFile=icon.ico
-UninstallDisplayIcon={app}\kompeg.exe
+UninstallDisplayIcon={app}\PheebKit.exe
 LicenseFile={#PayloadDir}\LICENSE.txt
 Compression=lzma2
 SolidCompression=yes
@@ -48,27 +48,27 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
 
 [Files]
-Source: "{#PayloadDir}\kompeg.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#PayloadDir}\PheebKit.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\kompeg"; Filename: "{app}\kompeg.exe"
-Name: "{group}\Uninstall kompeg"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\kompeg"; Filename: "{app}\kompeg.exe"; Tasks: desktopicon
+Name: "{group}\菲比工具箱 (PheebKit)"; Filename: "{app}\PheebKit.exe"
+Name: "{group}\Uninstall PheebKit"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\菲比工具箱 (PheebKit)"; Filename: "{app}\PheebKit.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\kompeg.exe"; Description: "{cm:LaunchProgram,kompeg}"; Flags: nowait postinstall skipifsilent; Check: HasWebView2
+Filename: "{app}\PheebKit.exe"; Description: "{cm:LaunchProgram,PheebKit}"; Flags: nowait postinstall skipifsilent; Check: HasWebView2
 Filename: "https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section"; Description: "{cm:GetWebView2}"; Flags: shellexec postinstall skipifsilent unchecked; Check: NeedsWebView2
 
 [CustomMessages]
 english.GetWebView2=Get Microsoft WebView2 Runtime
 chinesesimplified.GetWebView2=获取 Microsoft WebView2 运行时
-english.UninstallBlocked=Please close kompeg before uninstalling. Active media jobs will not be interrupted.
-chinesesimplified.UninstallBlocked=请先关闭 kompeg，再进行卸载。正在处理的媒体任务不会被强制中断。
-english.WebView2Missing=kompeg is installed. Install Microsoft WebView2 Runtime from the official download page before launching. FFmpeg can be configured inside kompeg.
-chinesesimplified.WebView2Missing=kompeg 已安装。启动前请从微软官方下载页面安装 WebView2 运行时。FFmpeg 可在 kompeg 设置中补全。
+english.UninstallBlocked=Please close PheebKit before uninstalling. Active media jobs will not be interrupted.
+chinesesimplified.UninstallBlocked=请先关闭菲比工具箱，再进行卸载。正在处理的媒体任务不会被强制中断。
+english.WebView2Missing=PheebKit is installed. Install Microsoft WebView2 Runtime from the official download page before launching. FFmpeg can be configured inside PheebKit.
+chinesesimplified.WebView2Missing=菲比工具箱已安装。启动前请从微软官方下载页面安装 WebView2 运行时。FFmpeg 可在 菲比工具箱设置中补全。
 
 [Code]
 function InitializeUninstall: Boolean;

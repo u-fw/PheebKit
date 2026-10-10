@@ -26,4 +26,4 @@ update("build/windows/info.json", "\t", (value) => {
     info.Comments = "Windows experimental release; Android deferred";
   }
 });
-console.log(`kompeg ${version} (Windows ${windowsVersion})`);
+console.log(`PheebKit ${version} (Windows ${windowsVersion})`);

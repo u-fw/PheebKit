@@ -6,11 +6,11 @@ Windows x64 is the active release target. Android work is deferred: its source i
 
 Each version produces exactly three local files under `release/<version>/`:
 
-- `kompeg-<version>-windows-x64-setup.exe`
-- `kompeg-<version>-windows-x64-standalone.zip`
+- `PheebKit-<version>-windows-x64-setup.exe`
+- `PheebKit-<version>-windows-x64-standalone.zip`
 - `SHA256SUMS.txt`
 
-The installer and ZIP contain identical `kompeg.exe`, project license, generated third-party notices and usage instructions. There is no separate bare-EXE release. The ZIP is named standalone because settings/cache/downloaded FFmpeg remain in AppData rather than following the executable directory. FFmpeg and WebView2 are external, not bundled.
+The installer and ZIP contain identical `PheebKit.exe`, project license, generated third-party notices and usage instructions. There is no separate bare-EXE release. The ZIP is named standalone because settings/cache/downloaded FFmpeg remain in AppData rather than following the executable directory. FFmpeg and WebView2 are external, not bundled.
 
 ## Version source and upgrade identity
 
@@ -38,7 +38,7 @@ Compiler provisioning downloads the versioned [official Inno release](https://gi
 
 Packaging requires clean committed sources, runs Go tests/vet, frontend tests/typecheck/lint/format and version tests, then performs one production Wails build. It checks the EXE version, generates notices for actual Go/production frontend dependencies, packages both deliverables and computes SHA-256. Existing version output directories are never overwritten. Generated packages and tools are ignored by Git. No credentials, repository URL or publishing identity is invented.
 
-The installer installs per user to `%LOCALAPPDATA%/Programs/kompeg`, supports Simplified Chinese and English, creates Start Menu entries and offers an optional desktop shortcut. It detects Microsoft's documented WebView2 registry values. If missing, the finish page explains the requirement and offers the official download page; it does not silently install a runtime. Silent installation never launches the app or a browser. FFmpeg remains an explicit in-app setup operation and system PATH is unchanged.
+The installer installs per user to `%LOCALAPPDATA%/Programs/PheebKit`, supports Simplified Chinese and English, creates Start Menu entries and offers an optional desktop shortcut. It detects Microsoft's documented WebView2 registry values. If missing, the finish page explains the requirement and offers the official download page; it does not silently install a runtime. Silent installation never launches the app or a browser. FFmpeg remains an explicit in-app setup operation and system PATH is unchanged.
 
 ## CI and publication
 

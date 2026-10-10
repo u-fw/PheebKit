@@ -31,7 +31,7 @@ for (const name of ["react", "react-dom", "scheduler"]) {
   modules.set(`npm:${name}`, { version: metadata.version, directory });
 }
 let result =
-  "kompeg third-party distribution notices\n\nFFmpeg and WebView2 are external; their distribution terms remain separate.\n";
+  "PheebKit third-party distribution notices\n\nFFmpeg and WebView2 are external; their distribution terms remain separate.\n";
 function append(name, version, directory) {
   const files = readdirSync(directory).filter((file) =>
     /^(LICENSE|COPYING|NOTICE)(\.|$)/i.test(file),

@@ -88,8 +88,8 @@ describe("optional trim range", () => {
         onChange={() => undefined}
       />,
     );
-    expect(markup).toContain('for="trim-startSeconds"');
-    expect(markup).toContain('for="trim-endSeconds"');
+    expect(markup).toContain('aria-label="开始时间 · 秒"');
+    expect(markup).toContain('aria-label="结束时间 · 分"');
     expect(markup).toContain('aria-label="开始时间滑块"');
     expect(markup).toContain('aria-invalid="true"');
     expect(markup).toContain('id="trim-error"');
@@ -102,6 +102,6 @@ describe("optional trim range", () => {
       />,
     );
     expect(unknown).toContain('disabled=""');
-    expect(unknown).not.toContain('id="trim-startSeconds"');
+    expect(unknown).not.toContain('aria-label="开始时间 · 秒"');
   });
 });
