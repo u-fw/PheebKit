@@ -6,7 +6,7 @@ export function customDownloadError(
   otherBuild: boolean,
   trusted: boolean,
 ): string {
-  if (!link.trim()) return "请填写 ZIP 文件的完整下载链接。";
+  if (!link.trim()) return "请填写压缩包文件的完整下载链接。";
   try {
     const url = new URL(link.trim());
     if (
@@ -17,13 +17,11 @@ export function customDownloadError(
       /\s/.test(link.trim())
     )
       return "请使用不含账号密码或 URL 片段的完整 HTTPS 链接。";
-    if (/\.(7z|rar|tar|gz|xz|bz2)$/i.test(url.pathname))
-      return "目前仅支持 ZIP，请选择 Windows x64 ZIP 包。";
   } catch {
     return "请填写有效的 HTTPS 文件下载链接。";
   }
   if (otherBuild && !/^[a-f\d]{64}$/i.test(sha256.trim()))
-    return "其他 ZIP 构建需要提供完整的 64 位 SHA-256。";
+    return "其他构建需要提供完整的 64 位 SHA-256。";
   if (otherBuild && !trusted)
     return "请确认信任此来源，并允许运行包中的 FFmpeg 和 ffprobe。";
   return "";
@@ -59,11 +57,11 @@ export function CustomDownloadFields({
         onChange={(value) => onOtherBuild(value === "other")}
         options={[
           { value: "mirror", label: "内置 Gyan 9.0.2 完整版的 ZIP 镜像" },
-          { value: "other", label: "其他 Windows x64 ZIP 构建" },
+          { value: "other", label: "其他 Windows x64 构建" },
         ]}
       />
       <label className="field-label">
-        ZIP 下载链接
+        压缩包下载链接
         <input
           type="url"
           value={link}
@@ -76,8 +74,10 @@ export function CustomDownloadFields({
         />
       </label>
       <p id="custom-download-help" className="field-hint">
-        填写文件直链。ZIP 内需有同目录的 ffmpeg.exe 和 ffprobe.exe；顶层文件夹和
-        bin 子目录会自动识别。7z、RAR、源码包和下载页面暂不支持。
+        支持 ZIP、7z、RAR、tar、tar.gz / tgz、tar.xz、tar.bz2 /
+        tbz2，按文件内容自动识别。 包内需有同目录的 ffmpeg.exe 和
+        ffprobe.exe；顶层文件夹和 bin 子目录会自动识别。 源码、Linux
+        构建、加密、分卷、自解压包和下载页面不适用。
       </p>
       {otherBuild ? (
         <>
@@ -111,7 +111,7 @@ export function CustomDownloadFields({
       ) : (
         <p className="field-hint">
           无需填写校验值，但文件必须与内置 Gyan 9.0.2 完整版 ZIP
-          完全一致。其他版本或构建请选择“其他 Windows x64 ZIP 构建”。
+          完全一致。其他版本或构建请选择“其他 Windows x64 构建”。
         </p>
       )}
     </div>

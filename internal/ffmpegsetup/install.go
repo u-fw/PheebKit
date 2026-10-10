@@ -1,8 +1,6 @@
 package ffmpegsetup
 
 import (
-	"archive/zip"
-	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 )
@@ -66,54 +63,6 @@ func (i *Installer) report(p Progress) {
 	if i.Report != nil {
 		i.Report(p)
 	}
-}
-
-// Rank uses a bounded 64 KiB sample, so it compares transfer latency as well as
-// connectivity. Failure does not exclude a source from the actual retry list.
-func (i *Installer) rank(ctx context.Context, urls []string) []string {
-	type sample struct {
-		url     string
-		elapsed time.Duration
-	}
-	results := make(chan sample, len(urls))
-	for _, raw := range urls {
-		go func(raw string) {
-			probeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			started := time.Now()
-			elapsed := time.Duration(1<<63 - 1)
-			req, err := http.NewRequestWithContext(probeCtx, http.MethodGet, raw, nil)
-			if err == nil {
-				req.Header.Set("Range", "bytes=0-65535")
-				response, e := i.Client.Do(req)
-				if e == nil {
-					if response.StatusCode == 200 || response.StatusCode == 206 {
-						n, readErr := io.Copy(io.Discard, io.LimitReader(response.Body, 65536))
-						if readErr == nil && n > 0 {
-							elapsed = time.Since(started)
-						}
-					}
-					response.Body.Close()
-				}
-			}
-			results <- sample{raw, elapsed}
-		}(raw)
-	}
-	samples := make([]sample, 0, len(urls))
-	for range urls {
-		samples = append(samples, <-results)
-	}
-	sort.SliceStable(samples, func(a, b int) bool {
-		if samples[a].elapsed == samples[b].elapsed {
-			return samples[a].url < samples[b].url
-		}
-		return samples[a].elapsed < samples[b].elapsed
-	})
-	ordered := make([]string, 0, len(urls))
-	for _, s := range samples {
-		ordered = append(ordered, s.url)
-	}
-	return ordered
 }
 
 type progressWriter struct {
@@ -230,79 +179,6 @@ func (r *contextReader) Read(p []byte) (int, error) {
 	return r.reader.Read(p)
 }
 
-func extract(ctx context.Context, archive, destination string, artifact Artifact) error {
-	if artifact.Format != "zip" {
-		file, err := os.Open(archive)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		var reader io.Reader = file
-		if artifact.Format == "gzip" {
-			zipped, e := gzip.NewReader(file)
-			if e != nil {
-				return e
-			}
-			defer zipped.Close()
-			reader = zipped
-		} else if artifact.Format != "plain" {
-			return errors.New("未知压缩格式")
-		}
-		return copyBounded(ctx, filepath.Join(destination, artifact.Name), reader, maxExpanded)
-	}
-	reader, err := zip.OpenReader(archive)
-	if err != nil {
-		if errors.Is(err, zip.ErrFormat) {
-			return errors.New("下载内容不是有效的 ZIP 压缩包。请使用文件直链，不要填写下载页面或 Git 仓库地址。")
-		}
-		return err
-	}
-	defer reader.Close()
-	if len(reader.File) > 10000 {
-		return errors.New("ZIP 包中文件过多，请选择仅包含 FFmpeg 工具及依赖的发行包。")
-	}
-	var total uint64
-	for _, entry := range reader.File {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		name := entry.Name
-		if !filepath.IsLocal(filepath.FromSlash(name)) || strings.ContainsAny(name, "\\:") || entry.Mode()&os.ModeSymlink != 0 {
-			return errors.New("压缩包包含不安全路径")
-		}
-		if entry.UncompressedSize64 > uint64(maxExpanded) {
-			return errors.New("解压文件超出大小限制")
-		}
-		total += entry.UncompressedSize64
-		if total > uint64(maxExpanded) {
-			return errors.New("解压总大小超出限制")
-		}
-		target := filepath.Join(destination, filepath.FromSlash(name))
-		if entry.FileInfo().IsDir() {
-			if err := os.MkdirAll(target, 0700); err != nil {
-				return err
-			}
-			continue
-		}
-		if !entry.Mode().IsRegular() {
-			return errors.New("压缩包包含特殊文件")
-		}
-		if err := os.MkdirAll(filepath.Dir(target), 0700); err != nil {
-			return err
-		}
-		content, err := entry.Open()
-		if err != nil {
-			return err
-		}
-		err = copyBounded(ctx, target, content, int64(entry.UncompressedSize64))
-		content.Close()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func findBinaries(directory string) (string, string, error) {
 	var ffmpeg string
 	err := filepath.WalkDir(directory, func(path string, entry os.DirEntry, err error) error {
@@ -363,7 +239,7 @@ func (i *Installer) Install(ctx context.Context, root string, packages []Package
 		failures = append(failures, pkg.Label+"："+err.Error())
 		i.report(Progress{Stage: "retrying", Package: pkg.Label})
 	}
-	return Result{}, fmt.Errorf("下载未完成，可重试或选择本机文件。\n%s", strings.Join(failures, "\n"))
+	return Result{}, fmt.Errorf("下载未完成，可重试、手动选择备用来源或选择本机文件。\n%s", strings.Join(failures, "\n"))
 }
 
 func (i *Installer) installPackage(ctx context.Context, root string, pkg Package) (Result, error) {
@@ -380,7 +256,7 @@ func (i *Installer) installPackage(ctx context.Context, root string, pkg Package
 		archive := filepath.Join(stage, fmt.Sprintf("artifact-%d", index))
 		var failures []string
 		downloaded := false
-		for _, raw := range i.rank(ctx, artifact.URLs) {
+		for _, raw := range artifact.URLs {
 			if err := ctx.Err(); err != nil {
 				return Result{}, err
 			}

@@ -33,11 +33,14 @@ describe("FFmpeg download feedback", () => {
     const html = markup(null);
     expect(html).toContain("下载来源");
     expect(html).toContain("较旧");
+    expect(html).toContain("官网推荐 · Gyan");
+    expect(html).not.toContain("国内备用</span>");
     expect(html).toContain("下载并配置");
   });
   it("shows real transfer progress and offers cancellation", () => {
     const html = markup(status);
     expect(html).toContain('value="50"');
+    expect(html).toContain("50.0%");
     expect(html).toContain('aria-label="FFmpeg 下载进度"');
     expect(html).toContain("取消下载");
     expect(html).toContain("registry.npmmirror.com");

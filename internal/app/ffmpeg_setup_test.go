@@ -85,6 +85,53 @@ func TestRealCustomFFmpegSetup(t *testing.T) {
 	}
 }
 
+func TestRealCustom7zFFmpegSetup(t *testing.T) {
+	if os.Getenv("KOMPEG_SETUP_INTEGRATION") != "1" {
+		t.Skip("set KOMPEG_SETUP_INTEGRATION=1 for a real custom 7z download")
+	}
+	directory := t.TempDir()
+	t.Setenv("APPDATA", directory)
+	t.Setenv("LOCALAPPDATA", directory)
+	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+		t.Setenv(variable, "")
+	}
+	service := NewService()
+	defer service.Close()
+	const link = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-full_build.7z"
+	const digest = "f0e46253c70dfe902bac915dfb4224f0cf1b7c6eeab9da2ccc9a5581f9a71b13"
+	if _, err := service.StartCustomFFmpegSetup(link, digest, true); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(12 * time.Minute)
+	for {
+		status := service.GetFFmpegSetupStatus()
+		if !status.Active {
+			if status.Stage != "completed" || !strings.HasPrefix(status.Version, "9.0.2") {
+				t.Fatalf("custom download failed: %+v", status)
+			}
+			t.Logf("custom 7z completed: %s", status.Version)
+			break
+		}
+		if time.Now().After(deadline) {
+			service.CancelFFmpegSetup()
+			t.Fatal("custom download timed out")
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+	environment := service.GetEnvironment()
+	if !environment.Ready || !strings.HasPrefix(environment.FFmpeg.Path, directory) {
+		t.Fatalf("custom paths not configured: %+v", environment)
+	}
+	if _, err := service.Capabilities(); err != nil {
+		t.Fatal(err)
+	}
+	restarted := NewService()
+	defer restarted.Close()
+	if !restarted.GetEnvironment().Ready {
+		t.Fatal("custom configuration not persisted")
+	}
+}
+
 func TestRealFFmpegSetup(t *testing.T) {
 	if os.Getenv("KOMPEG_SETUP_INTEGRATION") != "1" {
 		t.Skip("set KOMPEG_SETUP_INTEGRATION=1 to download and verify both real packages")

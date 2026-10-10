@@ -16,7 +16,7 @@ describe("custom ZIP download setup", () => {
       ),
     ).toBe("");
   });
-  it("requires HTTPS, ZIP, a complete custom hash and explicit trust", () => {
+  it("requires HTTPS, a complete custom hash and explicit trust", () => {
     expect(
       customDownloadError(
         "https://example.com/file.zip",
@@ -29,7 +29,6 @@ describe("custom ZIP download setup", () => {
       "example.com/file.zip",
       "http://example.com/file.zip",
       "https://user:password@example.com/file.zip",
-      "https://example.com/file.7z",
     ])
       expect(customDownloadError(link, "", false, false)).not.toBe("");
     expect(
@@ -43,6 +42,27 @@ describe("custom ZIP download setup", () => {
         false,
       ),
     ).toContain("信任");
+  });
+  it("accepts other archive extensions with a hash and trust", () => {
+    for (const extension of [
+      "zip",
+      "7z",
+      "rar",
+      "tar",
+      "tar.gz",
+      "tgz",
+      "tar.xz",
+      "tar.bz2",
+      "tbz2",
+    ])
+      expect(
+        customDownloadError(
+          `https://example.com/file.${extension}`,
+          "a".repeat(64),
+          true,
+          true,
+        ),
+      ).toBe("");
   });
   it("explains automatic package detection and labels sensitive fields", () => {
     const action = () => undefined;
@@ -59,7 +79,7 @@ describe("custom ZIP download setup", () => {
         onTrusted={action}
       />,
     );
-    expect(html).toContain("ZIP 下载链接");
+    expect(html).toContain("压缩包下载链接");
     expect(html).toContain("SHA-256");
     expect(html).toContain("bin 子目录");
     expect(html).toContain("我信任此来源");

@@ -38,7 +38,7 @@ func (s *Service) StartFFmpegSetup(source string) (FFmpegSetupStatus, error) {
 }
 
 func (s *Service) StartCustomFFmpegSetup(link, sha256 string, trustBuild bool) (FFmpegSetupStatus, error) {
-	pkg, err := ffmpegsetup.CustomZIP(link, sha256, trustBuild)
+	pkg, err := ffmpegsetup.CustomArchive(link, sha256, trustBuild)
 	if err != nil {
 		return FFmpegSetupStatus{}, err
 	}

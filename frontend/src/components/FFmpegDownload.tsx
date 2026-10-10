@@ -39,7 +39,7 @@ export function FFmpegDownload({
   ) => Promise<void>;
   cancel: () => Promise<void>;
 }) {
-  const [source, setSource] = useState("auto");
+  const [source, setSource] = useState("stable");
   const [requestBusy, setRequestBusy] = useState(false);
   const [error, setError] = useState("");
   const [customLink, setCustomLink] = useState("");
@@ -94,10 +94,9 @@ export function FFmpegDownload({
         onChange={setSource}
         disabled={!enabled || busy || active || requestBusy}
         options={[
-          { value: "auto", label: "自动 · 稳定版优先，国内备用" },
-          { value: "stable", label: "Gyan 9.0.2 · 稳定版完整构建" },
+          { value: "stable", label: "官网推荐 · Gyan 9.0.2 完整构建" },
           { value: "cn", label: "国内镜像 6.1.1 · 较旧版本" },
-          { value: "custom", label: "自定义下载链接 · ZIP" },
+          { value: "custom", label: "自定义下载链接 · 多种压缩格式" },
         ]}
       />
       {source === "custom" ? (
@@ -124,7 +123,9 @@ export function FFmpegDownload({
       ) : (
         <p className="field-hint">
           稳定版约 246 MiB；国内备用约 56
-          MiB，版本较旧，部分编码器可能不可用。自动模式会先尝试稳定版，失败后切换国内备用；最终版本显示在下方。
+          MiB，版本较旧，部分编码器可能不可用。默认先从官网推荐的 Gyan
+          下载，再尝试同版本 GitHub
+          备用线路；失败后可手动选择国内镜像或自定义链接。
         </p>
       )}
       {status?.stage && (
@@ -139,6 +140,7 @@ export function FFmpegDownload({
           )}
           {status.stage === "downloading" && (
             <p className="field-hint">
+              {progress !== undefined ? `${progress.toFixed(1)}% · ` : ""}
               {formatBytes(status.received)} /{" "}
               {status.total > 0 ? formatBytes(status.total) : "未知大小"} ·{" "}
               {formatBytes(status.speed)}/s

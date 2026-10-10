@@ -14,8 +14,8 @@ import (
 	"testing"
 )
 
-func TestCustomZIPValidationAndPinnedMirror(t *testing.T) {
-	mirror, err := CustomZIP("https://downloads.example/file.zip?token=private", "", false)
+func TestCustomArchiveValidationAndPinnedMirror(t *testing.T) {
+	mirror, err := CustomArchive("https://downloads.example/file.zip?token=private", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,22 +23,22 @@ func TestCustomZIPValidationAndPinnedMirror(t *testing.T) {
 	if mirror.Artifacts[0].SHA256 != stable[0].Artifacts[0].SHA256 || mirror.Artifacts[0].URLs[0] != "https://downloads.example/file.zip?token=private" {
 		t.Fatal("mirror did not preserve pinned digest or signed URL")
 	}
-	for _, link := range []string{"a.com/file.zip", "http://example.com/file.zip", "file:///C:/file.zip", "https://user:password@example.com/file.zip", "https://example.com/file.zip#fragment", "https://example.com/file.7z", "https://example.com/file.rar"} {
-		if _, err := CustomZIP(link, "", false); err == nil {
+	for _, link := range []string{"a.com/file.zip", "http://example.com/file.zip", "file:///C:/file.zip", "https://user:password@example.com/file.zip", "https://example.com/file.zip#fragment"} {
+		if _, err := CustomArchive(link, "", false); err == nil {
 			t.Fatal("invalid custom link accepted", link)
 		}
 	}
 	for _, digest := range []string{"bad", strings.Repeat("g", 64)} {
-		if _, err := CustomZIP("https://example.com/file.zip", digest, true); err == nil {
+		if _, err := CustomArchive("https://example.com/file.zip", digest, true); err == nil {
 			t.Fatal("invalid digest accepted")
 		}
 	}
-	if _, err := CustomZIP("https://example.com/file.zip", strings.Repeat("a", 64), false); err == nil {
+	if _, err := CustomArchive("https://example.com/file.zip", strings.Repeat("a", 64), false); err == nil {
 		t.Fatal("custom binary trust was not required")
 	}
 }
 
-func TestCustomZIPRedirectExtractionAndSecretRedaction(t *testing.T) {
+func TestCustomArchiveRedirectExtractionAndSecretRedaction(t *testing.T) {
 	data := zipBytes(t, map[string]string{"release/BIN/FFMPEG.EXE": "binary", "release/BIN/FFPROBE.EXE": "probe", "release/BIN/avcodec.dll": "sidecar", "release/LICENSE": "license"})
 	target := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.RawQuery != "token=private" {
@@ -61,7 +61,7 @@ func TestCustomZIPRedirectExtractionAndSecretRedaction(t *testing.T) {
 	})
 	transport := installer.Client.Transport.(*http.Transport)
 	transport.TLSClientConfig = &tls.Config{RootCAs: certificates, MinVersion: tls.VersionTLS12}
-	pkg, err := CustomZIP(redirect.URL+"/download?token=private", fmt.Sprintf("%x", sha256.Sum256(data)), true)
+	pkg, err := CustomArchive(redirect.URL+"/download?token=private", fmt.Sprintf("%x", sha256.Sum256(data)), true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func TestCustomDownloadFailuresLeaveNoInstallation(t *testing.T) {
 		content []byte
 		message string
 	}{
-		{"page", []byte("<html>download page</html>"), "不是有效的 ZIP"},
+		{"page", []byte("<html>download page</html>"), "不是有效的压缩包"},
 		{"source", zipBytes(t, map[string]string{"src/ffmpeg.c": "source"}), "缺少 ffmpeg.exe"},
 		{"missing probe", zipBytes(t, map[string]string{"bin/ffmpeg.exe": "binary"}), "缺少同目录 ffprobe.exe"},
 		{"multiple", zipBytes(t, map[string]string{"a/ffmpeg.exe": "one", "b/ffmpeg.exe": "two"}), "多套 FFmpeg"},
@@ -100,7 +100,7 @@ func TestCustomDownloadFailuresLeaveNoInstallation(t *testing.T) {
 			defer server.Close()
 			installer := NewCustom(nil)
 			installer.Client.Transport = server.Client().Transport
-			pkg, err := CustomZIP(server.URL+"/download.zip", fmt.Sprintf("%x", sha256.Sum256(test.content)), true)
+			pkg, err := CustomArchive(server.URL+"/download.zip", fmt.Sprintf("%x", sha256.Sum256(test.content)), true)
 			if err != nil {
 				t.Fatal(err)
 			}

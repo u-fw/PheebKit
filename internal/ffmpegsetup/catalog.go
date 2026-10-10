@@ -25,9 +25,7 @@ func Catalog(source string) ([]Package, error) {
 		{Name: "README.txt", Format: "plain", SHA256: "a636a7183c58006351acbaf35303c0ed85c6e1320fd4e80de453ba6157de6311", URLs: []string{base + "win32-x64.README"}},
 	}}
 	switch source {
-	case "auto":
-		return []Package{stable, domestic}, nil
-	case "stable":
+	case "auto", "stable":
 		return []Package{stable}, nil
 	case "cn":
 		return []Package{domestic}, nil
