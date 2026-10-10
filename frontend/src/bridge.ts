@@ -128,6 +128,12 @@ export const API = {
     Service.GetFFmpegSetupStatus(),
   startFFmpegSetup: async (source: string): Promise<FFmpegSetupStatus> =>
     Service.StartFFmpegSetup(source),
+  startCustomFFmpegSetup: async (
+    link: string,
+    sha256: string,
+    trustBuild: boolean,
+  ): Promise<FFmpegSetupStatus> =>
+    Service.StartCustomFFmpegSetup(link, sha256, trustBuild),
   cancelFFmpegSetup: async (): Promise<void> => Service.CancelFFmpegSetup(),
   getPlatform: async (): Promise<string> => Service.GetPlatform(),
   getEnvironment: async (): Promise<EnvironmentStatus> =>

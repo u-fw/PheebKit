@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"debug/pe"
 	"errors"
 	"os"
 	"path/filepath"
@@ -33,6 +34,21 @@ func (s *Service) StartFFmpegSetup(source string) (FFmpegSetupStatus, error) {
 	if err != nil {
 		return FFmpegSetupStatus{}, err
 	}
+	return s.startFFmpegSetup(packages, false)
+}
+
+func (s *Service) StartCustomFFmpegSetup(link, sha256 string, trustBuild bool) (FFmpegSetupStatus, error) {
+	pkg, err := ffmpegsetup.CustomZIP(link, sha256, trustBuild)
+	if err != nil {
+		return FFmpegSetupStatus{}, err
+	}
+	return s.startFFmpegSetup([]ffmpegsetup.Package{pkg}, true)
+}
+
+func (s *Service) startFFmpegSetup(packages []ffmpegsetup.Package, custom bool) (FFmpegSetupStatus, error) {
+	if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
+		return FFmpegSetupStatus{}, errors.New("自动下载目前仅支持 Windows x64；其他平台请选择适配的本机程序。")
+	}
 	s.setupMu.Lock()
 	defer s.setupMu.Unlock()
 	if s.setupStatus.Active {
@@ -56,7 +72,7 @@ func (s *Service) StartFFmpegSetup(source string) (FFmpegSetupStatus, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, 30*time.Minute)
 	s.setupCancel = cancel
 	s.setupStatus = FFmpegSetupStatus{Active: true, Progress: ffmpegsetup.Progress{Stage: "selecting"}}
-	go s.runFFmpegSetup(ctx, cancel, filepath.Join(cache, "kompeg", "tools"), packages)
+	go s.runFFmpegSetup(ctx, cancel, filepath.Join(cache, "kompeg", "tools"), packages, custom)
 	return s.setupStatus, nil
 }
 
@@ -74,15 +90,19 @@ func (s *Service) CancelFFmpegSetup() error {
 	return nil
 }
 
-func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc, root string, packages []ffmpegsetup.Package) {
+func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc, root string, packages []ffmpegsetup.Package, custom bool) {
 	defer cancel()
-	installer := ffmpegsetup.New(func(progress ffmpegsetup.Progress) {
+	report := func(progress ffmpegsetup.Progress) {
 		s.setupMu.Lock()
 		defer s.setupMu.Unlock()
 		if s.setupStatus.Stage != "cancelling" {
 			s.setupStatus.Progress = progress
 		}
-	})
+	}
+	installer := ffmpegsetup.New(report)
+	if custom {
+		installer = ffmpegsetup.NewCustom(report)
+	}
 	result, err := installer.Install(ctx, root, packages)
 	if err == nil {
 		s.setupMu.Lock()
@@ -93,7 +113,17 @@ func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc,
 		}
 		s.setupMu.Unlock()
 		if err == nil {
-			_, err = s.ConfigureFFmpeg(result.FFmpeg, result.FFprobe)
+			err = validateDownloadedArchitecture(result.FFmpeg, result.FFprobe)
+		}
+		if err == nil {
+			var environment Environment
+			environment, err = s.ConfigureFFmpeg(result.FFmpeg, result.FFprobe)
+			if err == nil && result.Version == "" {
+				fields := strings.Fields(environment.FFmpeg.Version)
+				if len(fields) >= 3 {
+					result.Version = fields[2]
+				}
+			}
 		}
 		if err != nil {
 			os.RemoveAll(result.Directory)
@@ -113,4 +143,19 @@ func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc,
 		s.setupStatus.Stage = "completed"
 		s.setupStatus.Version = result.Version
 	}
+}
+
+func validateDownloadedArchitecture(paths ...string) error {
+	for _, path := range paths {
+		file, err := pe.Open(path)
+		if err != nil {
+			return errors.New("下载包中的 " + filepath.Base(path) + " 不是有效的 Windows 可执行程序。")
+		}
+		machine := file.Machine
+		file.Close()
+		if machine != pe.IMAGE_FILE_MACHINE_AMD64 {
+			return errors.New("下载包中的 " + filepath.Base(path) + " 不是 Windows x64 构建，请选择 amd64 / x86_64 版本。")
+		}
+	}
+	return nil
 }

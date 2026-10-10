@@ -151,6 +151,10 @@ func (i *Installer) download(ctx context.Context, raw, target string, artifact A
 	}
 	resp, err := i.Client.Do(req)
 	if err != nil {
+		var urlError *url.Error
+		if errors.As(err, &urlError) {
+			return urlError.Err
+		}
 		return err
 	}
 	defer resp.Body.Close()
@@ -168,7 +172,7 @@ func (i *Installer) download(ctx context.Context, raw, target string, artifact A
 	started := time.Now()
 	idle := time.AfterFunc(25*time.Second, cancel)
 	defer idle.Stop()
-	writer := &progressWriter{file: file, hash: digest, installer: i, started: started, progress: Progress{Stage: "downloading", Package: label, Source: raw, File: artifact.Name, Total: resp.ContentLength}}
+	writer := &progressWriter{file: file, hash: digest, installer: i, started: started, progress: Progress{Stage: "downloading", Package: label, Source: safeDownloadURL(raw), File: artifact.Name, Total: resp.ContentLength}}
 	writer.idle = idle
 	i.report(writer.progress)
 	n, copyErr := io.Copy(writer, io.LimitReader(resp.Body, maxDownload+1))
@@ -185,7 +189,7 @@ func (i *Installer) download(ctx context.Context, raw, target string, artifact A
 	if resp.ContentLength >= 0 && n != resp.ContentLength {
 		return errors.New("下载文件不完整")
 	}
-	i.report(Progress{Stage: "verifying", Package: label, Source: raw, File: artifact.Name, Received: n, Total: n})
+	i.report(Progress{Stage: "verifying", Package: label, Source: safeDownloadURL(raw), File: artifact.Name, Received: n, Total: n})
 	if hex.EncodeToString(digest.Sum(nil)) != artifact.SHA256 {
 		return errors.New("SHA-256 校验失败，未执行下载文件")
 	}
@@ -248,9 +252,15 @@ func extract(ctx context.Context, archive, destination string, artifact Artifact
 	}
 	reader, err := zip.OpenReader(archive)
 	if err != nil {
+		if errors.Is(err, zip.ErrFormat) {
+			return errors.New("下载内容不是有效的 ZIP 压缩包。请使用文件直链，不要填写下载页面或 Git 仓库地址。")
+		}
 		return err
 	}
 	defer reader.Close()
+	if len(reader.File) > 10000 {
+		return errors.New("ZIP 包中文件过多，请选择仅包含 FFmpeg 工具及依赖的发行包。")
+	}
 	var total uint64
 	for _, entry := range reader.File {
 		if err := ctx.Err(); err != nil {
@@ -299,7 +309,7 @@ func findBinaries(directory string) (string, string, error) {
 		if err != nil {
 			return err
 		}
-		if entry.IsDir() || entry.Name() != "ffmpeg.exe" {
+		if entry.IsDir() || !strings.EqualFold(entry.Name(), "ffmpeg.exe") {
 			return nil
 		}
 		if ffmpeg != "" {
@@ -314,9 +324,17 @@ func findBinaries(directory string) (string, string, error) {
 	if ffmpeg == "" {
 		return "", "", errors.New("下载包缺少 ffmpeg.exe")
 	}
-	ffprobe := filepath.Join(filepath.Dir(ffmpeg), "ffprobe.exe")
-	info, err := os.Stat(ffprobe)
-	if err != nil || !info.Mode().IsRegular() {
+	var ffprobe string
+	entries, err := os.ReadDir(filepath.Dir(ffmpeg))
+	if err != nil {
+		return "", "", err
+	}
+	for _, entry := range entries {
+		if strings.EqualFold(entry.Name(), "ffprobe.exe") && entry.Type().IsRegular() {
+			ffprobe = filepath.Join(filepath.Dir(ffmpeg), entry.Name())
+		}
+	}
+	if ffprobe == "" {
 		return "", "", errors.New("下载包缺少同目录 ffprobe.exe")
 	}
 	return ffmpeg, ffprobe, nil
@@ -368,7 +386,7 @@ func (i *Installer) installPackage(ctx context.Context, root string, pkg Package
 			}
 			if err := i.download(ctx, raw, archive, artifact, pkg.Label); err != nil {
 				failures = append(failures, err.Error())
-				i.report(Progress{Stage: "retrying", Package: pkg.Label, Source: raw})
+				i.report(Progress{Stage: "retrying", Package: pkg.Label, Source: safeDownloadURL(raw)})
 				continue
 			}
 			downloaded = true
@@ -391,7 +409,11 @@ func (i *Installer) installPackage(ctx context.Context, root string, pkg Package
 	}
 	provenance := fmt.Sprintf("Downloaded by kompeg. Package: %s\nVersion: %s\nKeep this directory's upstream license and build/source notices when redistributing.\n", pkg.ID, pkg.Version)
 	for _, artifact := range pkg.Artifacts {
-		provenance += fmt.Sprintf("%s SHA256 %s\n%s\n", artifact.Name, artifact.SHA256, strings.Join(artifact.URLs, "\n"))
+		urls := make([]string, len(artifact.URLs))
+		for index, raw := range artifact.URLs {
+			urls[index] = safeDownloadURL(raw)
+		}
+		provenance += fmt.Sprintf("%s SHA256 %s\n%s\n", artifact.Name, artifact.SHA256, strings.Join(urls, "\n"))
 	}
 	if err := os.WriteFile(filepath.Join(payload, "kompeg-download.txt"), []byte(provenance), 0600); err != nil {
 		return Result{}, err

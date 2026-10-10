@@ -32,6 +32,8 @@ FFmpeg discovery prefers `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE`, then `FFMPEG_PATH` 
 
 One-click setup offers Gyan 9.0.2 full stable builds and the older npmmirror 6.1.1 domestic fallback. Automatic mode samples the two stable-package sources first and falls back to the domestic package on failure. Versions, transfer progress, cancellation and retry are visible. Downloads use fixed SHA-256 digests, preserve upstream notices, and install privately under `%LOCALAPPDATA%/kompeg/tools`. See [download policy and verification](docs/ffmpeg-downloads.md).
 
+Settings also accepts a custom HTTPS ZIP download link. Mirrors of the exact built-in Gyan full ZIP retain its pinned digest. Other Windows x64 ZIP builds require a publisher-provided SHA-256 and explicit source trust; kompeg automatically finds a single FFmpeg/ffprobe pair, preserves sidecar DLLs, validates and configures it. Download pages, source archives, 7z and RAR are unsupported.
+
 New compression settings default to GPU preference. NVENC, QSV and AMF are offered only after bounded real encoding trials; unavailable combinations fall back to CPU with a visible reason. Source artwork prefers Windows thumbnail providers and falls back to FFmpeg cover/frame extraction.
 
 ## Verification commands

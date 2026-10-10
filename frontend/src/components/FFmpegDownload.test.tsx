@@ -23,6 +23,7 @@ function markup(value: FFmpegSetupStatus | null, enabled = true) {
       enabled={enabled}
       busy={false}
       start={action}
+      startCustom={action}
       cancel={action}
     />,
   );

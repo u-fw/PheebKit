@@ -134,6 +134,14 @@ export function useStudio() {
   const startFFmpegSetup = useCallback(async (source: string) => {
     setFFmpegSetup(await API.startFFmpegSetup(source));
   }, []);
+  const startCustomFFmpegSetup = useCallback(
+    async (link: string, sha256: string, trustBuild: boolean) => {
+      setFFmpegSetup(
+        await API.startCustomFFmpegSetup(link, sha256, trustBuild),
+      );
+    },
+    [],
+  );
   const cancelFFmpegSetup = useCallback(async () => {
     await API.cancelFFmpegSetup();
   }, []);
@@ -306,6 +314,7 @@ export function useStudio() {
     environmentBusy,
     ffmpegSetup,
     startFFmpegSetup,
+    startCustomFFmpegSetup,
     cancelFFmpegSetup,
     refreshEnvironment,
     chooseFFmpeg,

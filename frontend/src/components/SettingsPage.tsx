@@ -63,6 +63,7 @@ export function SettingsPage({
   configureFFmpeg,
   ffmpegSetup,
   startFFmpegSetup,
+  startCustomFFmpegSetup,
   cancelFFmpegSetup,
   theme,
   toggleTheme,
@@ -78,6 +79,11 @@ export function SettingsPage({
   configureFFmpeg: (ffmpegPath: string, ffprobePath: string) => Promise<void>;
   ffmpegSetup: FFmpegSetupStatus | null;
   startFFmpegSetup: (source: string) => Promise<void>;
+  startCustomFFmpegSetup: (
+    link: string,
+    sha256: string,
+    trustBuild: boolean,
+  ) => Promise<void>;
   cancelFFmpegSetup: () => Promise<void>;
   theme: "light" | "dark";
   toggleTheme: () => void;
@@ -164,6 +170,7 @@ export function SettingsPage({
           enabled={configurable && platform === "windows"}
           busy={environmentBusy}
           start={startFFmpegSetup}
+          startCustom={startCustomFFmpegSetup}
           cancel={cancelFFmpegSetup}
         />
         <details className="manual-environment">

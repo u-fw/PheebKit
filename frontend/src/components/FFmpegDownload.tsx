@@ -2,6 +2,10 @@ import { useState } from "react";
 import type { FFmpegSetupStatus } from "../bridge";
 import { errorMessage, formatBytes } from "../format";
 import { MaterialSelect } from "./MaterialSelect";
+import {
+  CustomDownloadFields,
+  customDownloadError,
+} from "./CustomDownloadFields";
 
 const stages: Record<string, string> = {
   selecting: "正在选择下载线路…",
@@ -21,17 +25,27 @@ export function FFmpegDownload({
   enabled,
   busy,
   start,
+  startCustom,
   cancel,
 }: {
   status: FFmpegSetupStatus | null;
   enabled: boolean;
   busy: boolean;
   start: (source: string) => Promise<void>;
+  startCustom: (
+    link: string,
+    sha256: string,
+    trustBuild: boolean,
+  ) => Promise<void>;
   cancel: () => Promise<void>;
 }) {
   const [source, setSource] = useState("auto");
   const [requestBusy, setRequestBusy] = useState(false);
   const [error, setError] = useState("");
+  const [customLink, setCustomLink] = useState("");
+  const [customHash, setCustomHash] = useState("");
+  const [otherBuild, setOtherBuild] = useState(false);
+  const [trusted, setTrusted] = useState(false);
   const active = Boolean(status?.active);
   async function perform(action: () => Promise<void>) {
     setError("");
@@ -48,6 +62,24 @@ export function FFmpegDownload({
     status?.stage === "downloading" && status.total > 0
       ? Math.min(100, Math.max(0, (status.received / status.total) * 100))
       : undefined;
+  async function startDownload() {
+    if (source !== "custom") {
+      await start(source);
+      return;
+    }
+    const validation = customDownloadError(
+      customLink,
+      customHash,
+      otherBuild,
+      trusted,
+    );
+    if (validation) throw new Error(validation);
+    await startCustom(
+      customLink.trim(),
+      otherBuild ? customHash.trim() : "",
+      otherBuild && trusted,
+    );
+  }
   return (
     <div className="ffmpeg-download">
       <div>
@@ -65,12 +97,36 @@ export function FFmpegDownload({
           { value: "auto", label: "自动 · 稳定版优先，国内备用" },
           { value: "stable", label: "Gyan 9.0.2 · 稳定版完整构建" },
           { value: "cn", label: "国内镜像 6.1.1 · 较旧版本" },
+          { value: "custom", label: "自定义下载链接 · ZIP" },
         ]}
       />
-      <p className="field-hint">
-        稳定版约 246 MiB；国内备用约 56
-        MiB，版本较旧，部分编码器可能不可用。自动模式会先尝试稳定版，失败后切换国内备用；最终版本显示在下方。
-      </p>
+      {source === "custom" ? (
+        <CustomDownloadFields
+          link={customLink}
+          sha256={customHash}
+          otherBuild={otherBuild}
+          trusted={trusted}
+          disabled={!enabled || busy || active || requestBusy}
+          onLink={(value) => {
+            setCustomLink(value);
+            setTrusted(false);
+          }}
+          onSHA256={(value) => {
+            setCustomHash(value);
+            setTrusted(false);
+          }}
+          onOtherBuild={(value) => {
+            setOtherBuild(value);
+            setTrusted(false);
+          }}
+          onTrusted={setTrusted}
+        />
+      ) : (
+        <p className="field-hint">
+          稳定版约 246 MiB；国内备用约 56
+          MiB，版本较旧，部分编码器可能不可用。自动模式会先尝试稳定版，失败后切换国内备用；最终版本显示在下方。
+        </p>
+      )}
       {status?.stage && (
         <div className="download-status">
           <p role="status" aria-live="polite">
@@ -117,7 +173,7 @@ export function FFmpegDownload({
           <button
             className="button primary"
             disabled={!enabled || busy || requestBusy}
-            onClick={() => void perform(() => start(source))}
+            onClick={() => void perform(startDownload)}
           >
             {requestBusy
               ? "正在开始…"

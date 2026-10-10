@@ -250,3 +250,23 @@
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+.custom-download-fields {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.custom-download-trust {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.custom-download-trust input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--primary);
+}

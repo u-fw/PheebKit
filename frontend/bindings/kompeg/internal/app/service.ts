@@ -85,6 +85,10 @@ export function Start(p: core$0.Project): $CancellablePromise<core$0.Job> {
     return $Call.ByID(2610696273, p);
 }
 
+export function StartCustomFFmpegSetup(link: string, sha256: string, trustBuild: boolean): $CancellablePromise<$models.FFmpegSetupStatus> {
+    return $Call.ByID(542702944, link, sha256, trustBuild);
+}
+
 export function StartFFmpegSetup(source: string): $CancellablePromise<$models.FFmpegSetupStatus> {
     return $Call.ByID(514916809, source);
 }

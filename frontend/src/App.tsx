@@ -211,6 +211,7 @@ export default function App() {
               }
               ffmpegSetup={studio.ffmpegSetup}
               startFFmpegSetup={studio.startFFmpegSetup}
+              startCustomFFmpegSetup={studio.startCustomFFmpegSetup}
               cancelFFmpegSetup={studio.cancelFFmpegSetup}
               refreshEnvironment={studio.refreshEnvironment}
               chooseFFmpeg={studio.chooseFFmpeg}

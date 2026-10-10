@@ -12,21 +12,38 @@ The application downloads only on an explicit click in Settings. It never instal
 
 The domestic package is intentionally labeled older. It is not treated as a byte-identical mirror of 9.0.2. Capabilities are rediscovered after installation; a missing software AV1 encoder or unusable GPU encoder is not fabricated. The installer retains upstream license/build/source notices and records download provenance. Downloading a package does not relicense it under kompeg's license.
 
-Pinned SHA-256 values live in `internal/ffmpegsetup/catalog.go`. The three executable-archive digests were compared against GitHub release asset metadata; domestic README/LICENSE digests were recorded separately. Runtime downloads cannot override trusted digests or provide arbitrary URLs. Catalog updates require a reviewed code change.
+Pinned SHA-256 values live in `internal/ffmpegsetup/catalog.go`. The three executable-archive digests were compared against GitHub release asset metadata; domestic README/LICENSE digests were recorded separately. Built-in downloads cannot override trusted digests or provide arbitrary URLs. Catalog updates require a reviewed code change. Custom links have a separate explicit entry point and policy below.
 
 Upstream references: [Gyan builds](https://www.gyan.dev/ffmpeg/builds/), [Gyan 9.0.2 release](https://github.com/GyanD/codexffmpeg/releases/tag/9.0.2), [ffmpeg-static b6.1.1](https://github.com/eugeneware/ffmpeg-static/releases/tag/b6.1.1), [npmmirror files](https://registry.npmmirror.com/-/binary/ffmpeg-static/b6.1.1/).
 
 ## Behavior and boundaries
 
 - Stable-source ranking downloads at most 64 KiB per candidate under a five-second probe deadline. Actual transfer failure tries the remaining source; automatic mode then tries the domestic package. It does not claim that one source is fastest for every mainland ISP.
-- HTTPS and an explicit redirect-host allowlist are used in production. Transfers have bounded header, inactivity and total deadlines. A SHA-256 mismatch fails before decompression or execution.
+- Built-in downloads use HTTPS and an explicit redirect-host allowlist. Custom links may redirect to other HTTPS CDN hosts, with no credentials, HTTP downgrade or more than five redirects. Transfers have bounded header, inactivity and total deadlines. A SHA-256 mismatch fails before decompression or execution.
 - Downloads are bounded to 400 MiB per archive; ZIP expansion is bounded to 1 GiB. Traversal, symlinks, special files, multiple FFmpeg copies and missing sibling ffprobe are rejected.
 - Files are staged under the application's private cache directory. Cancellation and failure remove staging. A successful installation gets a unique directory; existing installs are never overwritten or automatically removed.
-- Configuration is switched only after actual `-version` validation of both binaries and the existing idle-job guard. Higher-priority explicit environment overrides must be corrected before automatic setup. Cancellation stops before the configuration commit; the final validation/save step is not cancellable.
+- Configuration is switched only after Windows AMD64 PE-header checks, actual `-version` validation of both binaries and the existing idle-job guard. Higher-priority explicit environment overrides must be corrected before automatic setup. Cancellation stops before the configuration commit; the final validation/save step is not cancellable.
 - Progress is queried from the Go service, so navigating away from Settings does not lose the download. Closing the application cancels the transfer. On success, the UI reloads the environment and runs actual CPU/GPU qualification.
 - The app downloads directly from upstream/mirror endpoints. Any future project-hosted domestic replica or offline installer still needs its own complete third-party distribution/source-notice review.
 
-## Verification on 2026-10-10
+## Custom ZIP download links
+
+Settings → Download source → Custom download link offers two package types:
+
+- **Mirror of the built-in Gyan 9.0.2 full ZIP:** paste a complete HTTPS file link. kompeg continues checking the embedded upstream SHA-256; no user-entered hash is necessary. A repackaged ZIP or a different version fails that check.
+- **Other Windows x64 ZIP build:** paste the HTTPS file link, provide the publisher's complete 64-character SHA-256 and confirm trust in the source before running its FFmpeg/ffprobe. This hash establishes file consistency, not publisher authenticity.
+
+No URL directory convention is required. Signed query parameters are supported for the request and omitted from displayed progress/provenance. Direct file URLs need not end in `.zip`, but the payload must actually be ZIP. Download pages, source-only archives, 7z/RAR/tar/gzip files and standalone executables are not supported by this entry point.
+
+Extraction preserves the archive's directory layout, DLLs and notices. It recursively locates a single `ffmpeg.exe` (case-insensitive), and requires `ffprobe.exe` beside it; a top-level version directory or nested `bin` directory works automatically. Invalid/missing/ambiguous binaries are rejected without switching the active configuration. Detected FFmpeg version is displayed for other custom builds. Private installation, progress, cancellation, retry and GPU/CPU capability refresh reuse the existing setup flow.
+
+## Custom-link verification
+
+`KOMPEG_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealCustomFFmpegSetup$' -count=1 -v` passed with the real Gyan 9.0.2 essentials ZIP as an other-build input. It downloaded, verified the publisher SHA-256, extracted, checked architecture, ran both programs, detected the actual version, persisted private paths, scanned capabilities and confirmed readiness in a new service instance.
+
+TLS integration tests also cover cross-host HTTPS redirects, signed queries, redacted notices, mixed-case filenames and DLL preservation. Negative cases cover page/source/missing-probe/multiple-copy archives and unsafe redirects. Go tests/vet and 45 frontend tests/typecheck/lint/format passed. Native click-through remains unverified as described below.
+
+## Built-in verification on 2026-10-10
 
 `KOMPEG_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealFFmpegSetup$' -count=1 -v` completed real downloads of both packages in isolated temporary Windows profiles. SHA verification, extraction, actual FFmpeg/ffprobe execution, saved private paths, encoder scanning, duplicate-start rejection and configuration reuse by a new service instance passed.
 
