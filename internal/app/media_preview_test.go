@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"math"
 	"net/http"
@@ -64,6 +65,60 @@ func TestMediaPreviewRangeAndAccessBoundary(t *testing.T) {
 		if err := service.OpenJobOutput(id, false); err == nil {
 			t.Fatal("unsafe/missing output accepted")
 		}
+	}
+}
+
+func TestVideoRangesStayBoundedForWindowsResponseBuffer(t *testing.T) {
+	if _, err := boundedMediaRange("", 10*previewChunkBytes); err == nil {
+		t.Fatal("unbounded large GET allowed")
+	}
+	for _, header := range []string{"bytes=0-", "bytes=0-99999999999", "bytes=-99999999999"} {
+		got, err := boundedMediaRange(header, 10*previewChunkBytes)
+		if err != nil || got != "bytes=0-2097151" {
+			t.Fatalf("unbounded range %q: %s %v", header, got, err)
+		}
+	}
+	for _, header := range []string{"bytes=1-2,4-6", "bytes=-0", "bytes=9-2", "bytes=99999999999999999999-", "bytes=99999999-"} {
+		if _, err := boundedMediaRange(header, 10*previewChunkBytes); err == nil {
+			t.Fatalf("invalid range accepted: %q", header)
+		}
+	}
+	if got, err := boundedMediaRange("bytes=-10", 100); err != nil || got != "bytes=90-99" {
+		t.Fatal("suffix range changed", got, err)
+	}
+	service := NewService()
+	defer service.Close()
+	path := filepath.Join(t.TempDir(), "large.mp4")
+	if err := os.WriteFile(path, bytes.Repeat([]byte{1}, int(previewChunkBytes+32)), 0600); err != nil {
+		t.Fatal(err)
+	}
+	fingerprint, err := sourcefile.Fingerprint(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service.media[path] = core.Media{Source: source(path), SourceFingerprint: fingerprint}
+	url, err := service.GetMediaPreviewURL(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := service.AssetHandler(http.NotFoundHandler())
+	request := httptest.NewRequest("GET", url, nil)
+	request.Header.Set("Range", "bytes=0-")
+	request.Header.Set("If-Range", "an-old-etag")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != 206 || int64(response.Body.Len()) != previewChunkBytes {
+		t.Fatal("large response or If-Range bypassed bound", response.Code, response.Body.Len())
+	}
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest("GET", url, nil))
+	if response.Code != 416 {
+		t.Fatal("unbounded large GET accepted")
+	}
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest("HEAD", url, nil))
+	if response.Code != 200 || response.Body.Len() != 0 {
+		t.Fatal("HEAD read the video body")
 	}
 }
 

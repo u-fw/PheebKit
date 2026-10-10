@@ -9,6 +9,8 @@
 
 ## Storage
 
+The pinned Wails Windows asset writer buffers each response. Video GET ranges are therefore capped to 2MiB per response, single ranges only; large unbounded GETs are refused and playback can fall back to position frames. Small sources may be served in full. HEAD responses do not read the body. Range limiting/overflow/suffix handling has dedicated regressions, and native WebView2's subsequent-range behavior remains part of the manual playback check.
+
 `%APPDATA%/kompeg/preferences.json` and `history.json` use version 1 and retain compatibility with existing FFmpeg configuration. Updates hold an OS file lock across read/merge/write, write a temporary file, flush it and atomically replace the owned JSON file. Reads/writes have a 24MiB bound. Malformed/unknown-version files are preserved, with a visible error rather than silent resetting. Local history contains file paths and diagnostics; it is not uploaded. Uninstall keeps AppData.
 
 History is persisted at state transitions, including queued/running/completed/failed/cancelled. Progress is live in memory; an interrupted record can therefore show only the last persisted transition's progress. PID liveness conservatively excludes another running process's tasks from the current instance; PID reuse can delay classification until that process exits. This is restartable task history, not process pause/resume.

@@ -89,6 +89,21 @@ func (s *Service) AssetHandler(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
+		// The pinned Windows WebView response writer buffers each response.
+		// Never feed a multi-gigabyte source to it as an unbounded GET.
+		if r.Method == http.MethodGet {
+			rangeHeader, err := boundedMediaRange(r.Header.Get("Range"), info.Size())
+			if err != nil {
+				w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", info.Size()))
+				http.Error(w, "请使用分段读取预览视频", http.StatusRequestedRangeNotSatisfiable)
+				return
+			}
+			if rangeHeader != "" {
+				r = r.Clone(r.Context())
+				r.Header.Set("Range", rangeHeader)
+				r.Header.Del("If-Range")
+			}
+		}
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		switch strings.ToLower(filepath.Ext(media.Source.URI)) {
@@ -101,6 +116,47 @@ func (s *Service) AssetHandler(next http.Handler) http.Handler {
 		}
 		http.ServeContent(w, r, filepath.Base(media.Source.URI), info.ModTime(), file)
 	})
+}
+
+const previewChunkBytes int64 = 2 * 1024 * 1024
+
+func boundedMediaRange(header string, size int64) (string, error) {
+	if header == "" {
+		if size > previewChunkBytes {
+			return "", errors.New("unbounded video response")
+		}
+		return "", nil
+	}
+	if !strings.HasPrefix(header, "bytes=") || strings.Contains(header, ",") {
+		return "", errors.New("unsupported range")
+	}
+	parts := strings.Split(strings.TrimPrefix(header, "bytes="), "-")
+	if len(parts) != 2 || size <= 0 {
+		return "", errors.New("invalid range")
+	}
+	start, end := int64(0), size-1
+	if parts[0] == "" {
+		suffix, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil || suffix <= 0 {
+			return "", errors.New("invalid suffix")
+		}
+		start = max(0, size-suffix)
+	} else {
+		var err error
+		start, err = strconv.ParseInt(parts[0], 10, 64)
+		if err != nil || start < 0 || start >= size {
+			return "", errors.New("invalid start")
+		}
+		if parts[1] != "" {
+			end, err = strconv.ParseInt(parts[1], 10, 64)
+			if err != nil || end < start {
+				return "", errors.New("invalid end")
+			}
+			end = min(end, size-1)
+		}
+	}
+	end = min(end, start+min(previewChunkBytes-1, size-1-start))
+	return fmt.Sprintf("bytes=%d-%d", start, end), nil
 }
 
 func (s *Service) GetVideoFrame(uri string, seconds float64) (Thumbnail, error) {
