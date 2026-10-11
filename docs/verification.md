@@ -1,6 +1,6 @@
 # PheebKit technical spike verification
 
-Current beta.4 workflow evidence and remaining native checks are in [workflows](workflows.md). Entries below are dated historical evidence; earlier kompeg branding, binaries, screenshot filenames and test counts describe those earlier builds.
+Current 0.2.0-beta.1 feature evidence/limits are in [media tools](media-tools.md); beta.4 workflows remain in [workflows](workflows.md). Entries below are dated historical evidence; earlier kompeg branding, binaries, screenshots and test counts describe earlier builds.
 
 Recorded on 2026-10-09, native Windows 11 build 26200, PowerShell 7.6.5. Wails v3.0.0-beta.27 and experimental Android were explicitly approved for this spike. Windows 10 is a target, but the actual runtime evidence below was collected on Windows 11.
 

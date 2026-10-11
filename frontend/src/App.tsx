@@ -11,6 +11,9 @@ import { BRAND_NAME, BRAND_ENGLISH } from "./brand";
 import { BrandLogo } from "./components/BrandLogo";
 import { API } from "./bridge";
 import { ExitDialog } from "./components/ExitDialog";
+import { BatchPanel } from "./components/BatchPanel";
+import { ProjectActions } from "./components/ProjectActions";
+import { SampleComparison } from "./components/SampleComparison";
 
 type Page = "home" | "compress" | "queue" | "settings";
 const navigation: {
@@ -20,7 +23,7 @@ const navigation: {
   icon: IconName;
 }[] = [
   { id: "home", label: "工作台", english: "Workspace", icon: "home" },
-  { id: "compress", label: "压缩", english: "Compress", icon: "compress" },
+  { id: "compress", label: "媒体处理", english: "Process", icon: "compress" },
   { id: "queue", label: "任务队列", english: "Queue", icon: "queue" },
   { id: "settings", label: "设置", english: "Settings", icon: "settings" },
 ];
@@ -36,6 +39,7 @@ export default function App() {
   const [compressVisited, setCompressVisited] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(initialTheme);
   const studio = useStudio();
+  const [comparisonID, setComparisonID] = useState<string | null>(null);
   const [closeRequest, setCloseRequest] = useState<{
     jobs: number;
     downloading: boolean;
@@ -61,6 +65,9 @@ export default function App() {
     setPage(nextPage);
     if (nextPage === "compress") setCompressVisited(true);
     document.documentElement.scrollTop = 0;
+  }
+  async function loadProject() {
+    if (await studio.loadProject()) navigate("compress");
   }
 
   return (
@@ -177,6 +184,77 @@ export default function App() {
               </button>
             </div>
           )}
+          {studio.busy && studio.importProgress.total > 0 && (
+            <div className="surface import-progress" role="status">
+              <span>
+                分析媒体 {studio.importProgress.completed} /{" "}
+                {studio.importProgress.total}
+              </span>
+              <progress
+                value={studio.importProgress.completed}
+                max={studio.importProgress.total}
+                aria-label="媒体分析进度"
+              />
+              <button className="button text" onClick={studio.stopImport}>
+                停止后续分析
+              </button>
+            </div>
+          )}
+          {(page === "home" || page === "compress") && (
+            <section
+              className="surface media-collection"
+              aria-label="已导入媒体与项目"
+            >
+              <div className="section-title">
+                <h2>
+                  {studio.mediaList.length > 1
+                    ? `已导入 ${studio.mediaList.length} 个文件`
+                    : "媒体与项目"}
+                </h2>
+                <div className="action-row">
+                  <button
+                    className="button outlined"
+                    disabled={studio.busy || !studio.connected}
+                    onClick={() =>
+                      void studio.chooseMedia(studio.mediaList.length > 0)
+                    }
+                  >
+                    添加媒体
+                  </button>
+                  <button
+                    className="button text"
+                    disabled={studio.busy || !studio.connected}
+                    onClick={() => void loadProject()}
+                  >
+                    打开项目
+                  </button>
+                </div>
+              </div>
+              {studio.mediaList.length > 1 && (
+                <div className="media-collection-list">
+                  {studio.mediaList.map((item) => (
+                    <button
+                      className={`button ${studio.media?.source.uri === item.source.uri ? "tonal" : "text"}`}
+                      key={item.source.uri}
+                      disabled={studio.busy}
+                      aria-pressed={
+                        studio.media?.source.uri === item.source.uri
+                      }
+                      onClick={() => studio.selectMedia(item)}
+                    >
+                      {item.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {studio.mediaList.length > 1 && (
+                <p className="field-hint">
+                  选择一个文件查看和单独处理；媒体处理页下方可整批提交，最多 32
+                  个文件。
+                </p>
+              )}
+            </section>
+          )}
           {page === "home" && (
             <Home
               media={studio.media}
@@ -196,6 +274,28 @@ export default function App() {
                 }
                 media={studio.media}
                 initialSettings={studio.reuse?.settings ?? studio.savedSettings}
+                initialOutput={studio.reuse?.output}
+                renderBatch={(settings) =>
+                  studio.mediaList.length > 1 ? (
+                    <BatchPanel
+                      key={settings.operation || "compress"}
+                      files={studio.mediaList}
+                      settings={settings}
+                      connected={studio.connected}
+                      onJobs={studio.addJobs}
+                      showQueue={() => navigate("queue")}
+                    />
+                  ) : null
+                }
+                projectActions={(project) => (
+                  <ProjectActions
+                    project={project}
+                    connected={studio.connected}
+                    load={loadProject}
+                    onJob={studio.addJob}
+                    showQueue={() => navigate("queue")}
+                  />
+                )}
                 onSaved={studio.setSavedSettings}
                 reused={Boolean(studio.reuse)}
                 visible={page === "compress"}
@@ -208,17 +308,39 @@ export default function App() {
             </div>
           )}
           {page === "queue" && (
-            <Queue
-              jobs={studio.jobs}
-              cancel={(id) => void studio.cancelJob(id)}
-              refresh={() => void studio.refreshJobs()}
-              compress={() => navigate("compress")}
-              reuse={(id) =>
-                studio.reuseJob(id).then((success) => {
-                  if (success) navigate("compress");
-                })
-              }
-            />
+            <>
+              <Queue
+                jobs={studio.jobs}
+                cancel={(id) => void studio.cancelJob(id)}
+                refresh={() => void studio.refreshJobs()}
+                compress={() => navigate("compress")}
+                queueStatus={studio.queueStatus}
+                onPauseQueue={studio.pauseQueue}
+                onMoveQueued={studio.moveQueued}
+                compareSample={(id) => {
+                  setComparisonID(id);
+                  requestAnimationFrame(() =>
+                    document
+                      .getElementById("sample-comparison")
+                      ?.scrollIntoView({ block: "start" }),
+                  );
+                }}
+                reuse={(id) =>
+                  studio.reuseJob(id).then((success) => {
+                    if (success) navigate("compress");
+                  })
+                }
+              />
+              {comparisonID && (
+                <div id="sample-comparison" className="page">
+                  <SampleComparison
+                    key={comparisonID}
+                    id={comparisonID}
+                    close={() => setComparisonID(null)}
+                  />
+                </div>
+              )}
+            </>
           )}
           {page === "settings" && (
             <SettingsPage

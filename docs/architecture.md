@@ -18,11 +18,11 @@ flowchart TD
 - `internal/core` owns the shared models and runner interface. It imports neither Wails nor platform process APIs.
 - `internal/probe` parses ffprobe JSON. `internal/capabilities` parses actual FFmpeg encoder capabilities.
 - `internal/compiler` validates Project IR and produces argv. Command preview is display-only and is never executed through a shell.
-- `internal/jobs` owns a queue of independent job records, cancellation, bounded logs and throttled progress events.
+- `internal/jobs` owns independent job records, atomic batch admission, output reservations, serial scheduling pause/reorder, cancellation, bounded logs and throttled progress events.
 - `internal/runner/windows` owns process execution, stdout progress, stderr logs and Windows process options.
 - `internal/runner/android` is an explicitly unsupported adapter during the first spike. No fabricated compression results are returned.
 - `internal/app` connects services and events to Wails; platform factories use Go build constraints.
-- `frontend` contains the shared Media Card, compression form and queue. The bridge converts generated bindings into the UI API.
+- `frontend` contains the shared Media Card, processing form, batch controls, samples and queue. The bridge converts generated bindings into the UI API.
 - `platform/android` documents the native JNI/SAF boundary. It may replace the shell without rewriting Core.
 
 ## Media and execution
@@ -39,7 +39,7 @@ Local media and execution plans carry an optional source fingerprint. It combine
 
 ## Verification limits
 
-`internal/localstore` supplies bounded atomic JSON updates and cross-process OS file locks. The app merges history by job ID, retaining live jobs from other processes. On startup, active records from dead owners become interrupted display records; no persisted argv is executed. Job snapshots retain a deep copy of the editable Project for reuse. Preferences contain only encoding settings and omit trim and file paths. Storage failures preserve the original file and surface in the UI.
+`internal/localstore` supplies bounded atomic JSON updates and cross-process OS file locks. The app merges history by job ID, retaining live jobs from other processes. On startup, active records from dead owners become interrupted display records; no persisted argv is executed. Job snapshots retain deep copies of editable Project and source fingerprints. Preferences retain general processing settings, omitting trim, selected indexes, crop and paths. Project/preset file operations validate editable intent, never start commands. Storage failures preserve original files and surface in the UI. See [media tools](media-tools.md) for operation/compatibility policies.
 
 Preview assets are served by an app handler using opaque session tokens issued only for imported media. Every GET/HEAD checks the source fingerprint and supports byte ranges; arbitrary path query parameters are not accepted. FFmpeg frame extraction shares the bounded thumbnail worker gate. The native close hook and application quit hook consult backend work state; confirmed exit cancels the job engine.
 

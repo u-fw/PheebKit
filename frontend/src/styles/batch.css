@@ -1,0 +1,70 @@
+.media-collection {
+  padding: var(--space-5);
+  margin-block: var(--space-5);
+}
+.media-collection-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.media-collection-list .button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.import-progress {
+  padding: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.import-progress progress {
+  flex: 1;
+  min-width: 80px;
+  accent-color: var(--primary);
+}
+.batch-files {
+  margin-block: var(--space-5);
+  display: grid;
+  gap: var(--space-3);
+}
+.batch-file {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  min-width: 0;
+}
+.batch-file-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  margin-bottom: var(--space-3);
+  overflow-wrap: anywhere;
+}
+.batch-file-name input {
+  width: 22px;
+  min-height: 22px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+.batch-output,
+.project-actions [role="status"] {
+  overflow-wrap: anywhere;
+}
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-block: var(--space-5);
+}
+.sample-comparison input[type="range"] {
+  accent-color: var(--primary);
+}
+@media (max-width: 560px) {
+  .comparison-grid,
+  .batch-panel .field-grid {
+    grid-template-columns: 1fr;
+  }
+}

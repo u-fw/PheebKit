@@ -3,6 +3,7 @@ import { formatBitrate, formatBytes, formatDuration } from "../format";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { Icon } from "./Icon";
 import { streamLabel, videoLabel } from "../mediaLabels";
+import { videoDisplaySize } from "../project";
 
 export function MediaCard({
   media,
@@ -63,7 +64,7 @@ export function MediaCard({
         <div className="media-tags">
           {video && (
             <span className="chip">
-              {video.width} × {video.height}
+              {videoDisplaySize(video).width} × {videoDisplaySize(video).height}
             </span>
           )}
           {video && (

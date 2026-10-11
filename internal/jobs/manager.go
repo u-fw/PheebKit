@@ -7,6 +7,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,7 +40,10 @@ type Manager struct {
 	mu               sync.Mutex
 	records          map[string]*record
 	order            []string
-	queue            chan string
+	pending          []string
+	wake             chan struct{}
+	paused           bool
+	queueRevision    uint64
 	events           chan core.Job
 	done             chan struct{}
 	eventDone        chan struct{}
@@ -77,7 +84,7 @@ func (m *Manager) EnqueueProject(plan core.ExecutionPlan, project core.Project) 
 func New(runner core.Runner, emit func(core.Job)) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	m := &Manager{runner: runner, ctx: ctx, cancel: cancel, records: make(map[string]*record),
-		queue: make(chan string, queueLimit), events: make(chan core.Job, 64),
+		wake: make(chan struct{}, 1), events: make(chan core.Job, 64),
 		done: make(chan struct{}), eventDone: make(chan struct{})}
 	go func() {
 		defer close(m.eventDone)
@@ -96,44 +103,126 @@ func (m *Manager) Enqueue(plan core.ExecutionPlan) (core.Job, error) {
 }
 
 func (m *Manager) enqueue(plan core.ExecutionPlan, project *core.Project) (core.Job, error) {
-	id := plan.JobID
-	if id == "" {
-		var bytes [16]byte
-		if _, err := rand.Read(bytes[:]); err != nil {
-			return core.Job{}, fmt.Errorf("generate job ID: %w", err)
+	var projects []core.Project
+	if project != nil {
+		projects = []core.Project{*project}
+	}
+	queued, err := m.EnqueueBatch([]core.ExecutionPlan{plan}, projects)
+	if err != nil {
+		return core.Job{}, err
+	}
+	return queued[0], nil
+}
+
+// EnqueueBatch reserves the entire batch before publishing any jobs. A rejected
+// request cannot leave an unexpected partially queued batch behind.
+func (m *Manager) EnqueueBatch(plans []core.ExecutionPlan, projects []core.Project) ([]core.Job, error) {
+	if len(plans) == 0 || len(plans) > queueLimit || (projects != nil && len(projects) != len(plans)) {
+		return nil, fmt.Errorf("batch requires 1–%d plans and matching projects", queueLimit)
+	}
+	plans = append([]core.ExecutionPlan(nil), plans...)
+	for i := range plans {
+		if plans[i].JobID == "" {
+			var bytes [16]byte
+			if _, err := rand.Read(bytes[:]); err != nil {
+				return nil, fmt.Errorf("generate job ID: %w", err)
+			}
+			plans[i].JobID = hex.EncodeToString(bytes[:])
 		}
-		id = hex.EncodeToString(bytes[:])
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.closed {
-		return core.Job{}, fmt.Errorf("job manager is closed")
+		return nil, fmt.Errorf("job manager is closed")
 	}
-	if _, exists := m.records[id]; exists {
-		return core.Job{}, fmt.Errorf("duplicate job ID %s", id)
+	if len(m.pending)+len(plans) > queueLimit {
+		return nil, fmt.Errorf("queue is full (%d pending jobs maximum)", queueLimit)
 	}
-	if len(m.queue) == cap(m.queue) {
-		return core.Job{}, fmt.Errorf("queue is full (%d pending jobs)", queueLimit)
+	ids := make(map[string]bool, len(plans))
+	outputs := make(map[string]bool)
+	for _, rec := range m.records {
+		if !terminal(rec.job.State) && rec.plan.Output.URI != "" {
+			key, err := outputKey(rec.plan.Output.URI)
+			if err != nil {
+				return nil, err
+			}
+			outputs[key] = true
+		}
 	}
-	m.pruneHistory()
-	if len(m.records) >= historyLimit {
-		return core.Job{}, fmt.Errorf("job history is full")
+	for _, plan := range plans {
+		if ids[plan.JobID] || m.records[plan.JobID] != nil {
+			return nil, fmt.Errorf("duplicate job ID %s", plan.JobID)
+		}
+		ids[plan.JobID] = true
+		if plan.Output.URI == "" {
+			continue
+		}
+		key, err := outputKey(plan.Output.URI)
+		if err != nil {
+			return nil, err
+		}
+		if outputs[key] {
+			return nil, fmt.Errorf("output path is already reserved by an active job: %s", plan.Output.URI)
+		}
+		outputs[key] = true
+		if _, err := os.Stat(plan.Output.URI); err == nil {
+			return nil, fmt.Errorf("output already exists; choose a new output path: %s", plan.Output.URI)
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("check output: %w", err)
+		}
 	}
-	plan.JobID = id
-	plan.Args = append([]string(nil), plan.Args...)
-	if plan.Trim != nil {
-		copy := *plan.Trim
-		plan.Trim = &copy
+	active := 0
+	for _, rec := range m.records {
+		if !terminal(rec.job.State) {
+			active++
+		}
 	}
-	job := core.Job{ID: id, ProjectID: plan.ProjectID, Input: plan.Input, Output: plan.Output,
-		State: core.JobQueued, QueuedAt: time.Now(), Logs: []string{},
-		Progress: core.Progress{TotalTimeSeconds: plan.DurationSeconds}, Trim: plan.Trim, Project: project}
-	job = snapshot(job)
-	m.records[id] = &record{job: job, plan: plan}
-	m.order = append(m.order, id)
-	m.publishLocked(job)
-	m.queue <- id
-	return snapshot(job), nil
+	if active+len(plans) > historyLimit {
+		return nil, fmt.Errorf("job history is full")
+	}
+	for len(m.records)+len(plans) > historyLimit {
+		m.pruneHistory()
+	}
+	queued := make([]core.Job, len(plans))
+	for i, plan := range plans {
+		plan.Args = append([]string(nil), plan.Args...)
+		if plan.Trim != nil {
+			copy := *plan.Trim
+			plan.Trim = &copy
+		}
+		var project *core.Project
+		if projects != nil {
+			project = &projects[i]
+		}
+		job := snapshot(core.Job{ID: plan.JobID, ProjectID: plan.ProjectID, Input: plan.Input, Output: plan.Output, SourceFingerprint: plan.SourceFingerprint,
+			State: core.JobQueued, QueuedAt: time.Now(), Logs: []string{},
+			Progress: core.Progress{TotalTimeSeconds: plan.DurationSeconds}, Trim: plan.Trim, Project: project})
+		m.records[job.ID] = &record{job: job, plan: plan}
+		m.order = append(m.order, job.ID)
+		m.pending = append(m.pending, job.ID)
+		queued[i] = snapshot(job)
+	}
+	m.queueRevision++
+	for _, job := range queued {
+		m.publishLocked(job)
+	}
+	m.wakeLocked()
+	return queued, nil
+}
+
+// Existing parent symlinks and Windows casing share the same reservation key.
+func outputKey(path string) (string, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("resolve output: %w", err)
+	}
+	if parent, err := filepath.EvalSymlinks(filepath.Dir(abs)); err == nil {
+		abs = filepath.Join(parent, filepath.Base(abs))
+	}
+	if runtime.GOOS == "windows" {
+		abs = strings.ToLower(abs)
+	}
+	return filepath.Clean(abs), nil
 }
 
 func (m *Manager) Cancel(id string) error {
@@ -150,6 +239,13 @@ func (m *Manager) Cancel(id string) error {
 		return fmt.Errorf("job %s has already finished", id)
 	}
 	if rec.job.State == core.JobQueued {
+		for i, pendingID := range m.pending {
+			if pendingID == id {
+				m.pending = append(m.pending[:i], m.pending[i+1:]...)
+				m.queueRevision++
+				break
+			}
+		}
 		rec.job.State = core.JobCancelled
 		rec.job.CompletedAt = time.Now()
 	} else {
@@ -186,6 +282,8 @@ func (m *Manager) Close() {
 	m.closeOnce.Do(func() {
 		m.mu.Lock()
 		m.closed = true
+		m.pending = nil
+		m.queueRevision++
 		for _, rec := range m.records {
 			if !terminal(rec.job.State) {
 				rec.job.State = core.JobCancelled
@@ -207,8 +305,23 @@ func (m *Manager) work() {
 		select {
 		case <-m.ctx.Done():
 			return
-		case id := <-m.queue:
-			m.run(id)
+		case <-m.wake:
+			for {
+				m.mu.Lock()
+				if m.closed || m.paused || len(m.pending) == 0 {
+					m.mu.Unlock()
+					break
+				}
+				id := m.pending[0]
+				m.pending = m.pending[1:]
+				m.queueRevision++
+				rec := m.records[id]
+				rec.job.State = core.JobPreparing
+				rec.job.StartedAt = time.Now()
+				m.publishLocked(rec.job)
+				m.mu.Unlock()
+				m.run(id)
+			}
 		}
 	}
 }
@@ -216,15 +329,21 @@ func (m *Manager) work() {
 func (m *Manager) run(id string) {
 	m.mu.Lock()
 	rec := m.records[id]
-	if rec == nil || rec.job.State != core.JobQueued || m.closed {
+	// A cancel may arrive after the scheduler claims a job, before the runner
+	// receives its cancellation context. Complete that cancellation here.
+	if rec != nil && rec.job.State == core.JobCancelling && !m.closed {
+		rec.job.State = core.JobCancelled
+		rec.job.CompletedAt = time.Now()
+		m.publishLocked(rec.job)
+		m.mu.Unlock()
+		return
+	}
+	if rec == nil || rec.job.State != core.JobPreparing || m.closed {
 		m.mu.Unlock()
 		return
 	}
 	ctx, cancel := context.WithCancel(m.ctx)
 	rec.cancel = cancel
-	rec.job.State = core.JobPreparing
-	rec.job.StartedAt = time.Now()
-	m.publishLocked(rec.job)
 	plan := rec.plan
 	rec.job.State = core.JobRunning
 	m.publishLocked(rec.job)
@@ -321,9 +440,6 @@ func (m *Manager) publishLocked(job core.Job) {
 }
 
 func (m *Manager) pruneHistory() {
-	if len(m.records) < historyLimit {
-		return
-	}
 	for i, id := range m.order {
 		if terminal(m.records[id].job.State) {
 			delete(m.records, id)
@@ -338,11 +454,7 @@ func snapshot(job core.Job) core.Job {
 	if job.Project != nil {
 		p := *job.Project
 		p.Inputs = append([]core.Source(nil), p.Inputs...)
-		p.Settings.RawArguments = append([]string(nil), p.Settings.RawArguments...)
-		if p.Settings.Trim != nil {
-			trim := *p.Settings.Trim
-			p.Settings.Trim = &trim
-		}
+		p.Settings = core.CloneSettings(p.Settings)
 		job.Project = &p
 	}
 	job.Logs = append([]string{}, job.Logs...)

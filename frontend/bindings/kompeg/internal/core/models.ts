@@ -22,6 +22,13 @@ export interface Codec {
     "available": boolean;
 }
 
+export interface CropMargins {
+    "top": number;
+    "bottom": number;
+    "left": number;
+    "right": number;
+}
+
 export interface Encoder {
     "name": string;
     "description": string;
@@ -54,6 +61,7 @@ export interface Job {
     "id": string;
     "projectID": string;
     "input": Source;
+    "sourceFingerprint"?: string;
     "output": Source;
     "state": string;
     "queuedAt": string;
@@ -117,6 +125,7 @@ export interface Result {
 }
 
 export interface Settings {
+    "operation"?: string;
     "codec": string;
     "encoder": string;
     "quality": number;
@@ -128,6 +137,10 @@ export interface Settings {
     "targetSizeMB": number;
     "rawArguments": string[] | null;
     "trim"?: TimeRange | null;
+    "audioSelection"?: TrackSelection | null;
+    "subtitleSelection"?: TrackSelection | null;
+    "transform"?: VideoTransform | null;
+    "volumeDB"?: number;
 }
 
 export interface Source {
@@ -142,6 +155,12 @@ export interface Stream {
     "codecName": string;
     "width": number;
     "height": number;
+
+    /**
+     * DisplayRotation is normalized metadata rotation in counter-clockwise
+     * degrees. Raw width/height remain unchanged; quarter turns swap preview axes.
+     */
+    "displayRotation"?: number;
     "frameRate": number;
     "pixelFormat": string;
     "bitDepth": number;
@@ -164,6 +183,15 @@ export interface TimeRange {
 }
 
 /**
+ * TrackSelection uses global input stream indexes from ffprobe, not an index
+ * relative to audio/subtitle streams. Nil preserves the original defaults.
+ */
+export interface TrackSelection {
+    "mode": string;
+    "indices"?: number[] | null;
+}
+
+/**
  * VideoEncoder reports runtime-qualified hardware encoders, rather than merely
  * the wrappers included in the FFmpeg build. PixelFormats contains tested input
  * formats for GPU encoders; CPU entries retain the established software policy.
@@ -176,4 +204,14 @@ export interface VideoEncoder {
     "available": boolean;
     "reason": string;
     "pixelFormats": string[] | null;
+}
+
+/**
+ * VideoTransform applies crop, clockwise rotation, then horizontal/vertical flips.
+ */
+export interface VideoTransform {
+    "rotation": number;
+    "flipHorizontal": boolean;
+    "flipVertical": boolean;
+    "crop"?: CropMargins | null;
 }

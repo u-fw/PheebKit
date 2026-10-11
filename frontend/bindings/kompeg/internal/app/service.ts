@@ -38,8 +38,16 @@ export function ChooseMedia(): $CancellablePromise<core$0.Media | null> {
     return $Call.ByID(641020694);
 }
 
+export function ChooseMediaPaths(): $CancellablePromise<string[] | null> {
+    return $Call.ByID(3474944042);
+}
+
 export function ChooseOutput(suggested: string): $CancellablePromise<string> {
     return $Call.ByID(3414295343, suggested);
+}
+
+export function ChooseOutputDirectory(suggested: string): $CancellablePromise<string> {
+    return $Call.ByID(1097593766, suggested);
 }
 
 export function ConfigureFFmpeg(ffmpegPath: string, ffprobePath: string): $CancellablePromise<$models.Environment> {
@@ -52,6 +60,10 @@ export function ConfirmQuit(): $CancellablePromise<void> {
 
 export function DeletePreset(id: string): $CancellablePromise<$models.WorkspacePreferences> {
     return $Call.ByID(2362883055, id);
+}
+
+export function ExportPreset(id: string): $CancellablePromise<string> {
+    return $Call.ByID(603229530, id);
 }
 
 export function GetEnvironment(): $CancellablePromise<$models.Environment> {
@@ -70,6 +82,10 @@ export function GetPlatform(): $CancellablePromise<string> {
     return $Call.ByID(1948034858);
 }
 
+export function GetSampleComparison(id: string): $CancellablePromise<$models.SampleComparison> {
+    return $Call.ByID(512441438, id);
+}
+
 export function GetThumbnail(uri: string): $CancellablePromise<$models.Thumbnail> {
     return $Call.ByID(1060548783, uri);
 }
@@ -82,8 +98,20 @@ export function GetWorkspace(): $CancellablePromise<$models.WorkspaceStatus> {
     return $Call.ByID(4050524942);
 }
 
+export function ImportPreset(): $CancellablePromise<$models.WorkspacePreferences | null> {
+    return $Call.ByID(3600368145);
+}
+
 export function Jobs(): $CancellablePromise<core$0.Job[] | null> {
     return $Call.ByID(1920824859);
+}
+
+export function LoadProject(): $CancellablePromise<$models.JobReuse | null> {
+    return $Call.ByID(3373872672);
+}
+
+export function MoveQueued(id: string, direction: number): $CancellablePromise<$models.QueueStatus> {
+    return $Call.ByID(560104603, id, direction);
 }
 
 export function OpenJobOutput(id: string, folder: boolean): $CancellablePromise<void> {
@@ -98,6 +126,10 @@ export function Probe(uri: string): $CancellablePromise<core$0.Media> {
     return $Call.ByID(3925590791, uri);
 }
 
+export function QueueStatus(): $CancellablePromise<$models.QueueStatus> {
+    return $Call.ByID(448766924);
+}
+
 /**
  * RefreshCapabilities reruns real encoder/device qualification after a rescan.
  */
@@ -109,6 +141,10 @@ export function ReuseJob(id: string): $CancellablePromise<$models.JobReuse> {
     return $Call.ByID(3841018108, id);
 }
 
+export function SaveProject(p: core$0.Project): $CancellablePromise<string> {
+    return $Call.ByID(250069823, p);
+}
+
 /**
  * Saves encoding preferences only: source/output paths and trim are media-specific.
  */
@@ -116,8 +152,20 @@ export function SaveSettings(settings: core$0.Settings, name: string): $Cancella
     return $Call.ByID(375230187, settings, name);
 }
 
+export function SetQueuePaused(paused: boolean): $CancellablePromise<$models.QueueStatus> {
+    return $Call.ByID(3319394886, paused);
+}
+
 export function Start(p: core$0.Project): $CancellablePromise<core$0.Job> {
     return $Call.ByID(2610696273, p);
+}
+
+/**
+ * StartBatch compiles every project before the manager reserves the whole batch.
+ * A validation or capacity failure never queues only a subset of the selection.
+ */
+export function StartBatch(projects: core$0.Project[] | null): $CancellablePromise<core$0.Job[] | null> {
+    return $Call.ByID(2627668023, projects);
 }
 
 export function StartCustomFFmpegSetup(link: string, sha256: string, trustBuild: boolean): $CancellablePromise<$models.FFmpegSetupStatus> {
@@ -126,4 +174,12 @@ export function StartCustomFFmpegSetup(link: string, sha256: string, trustBuild:
 
 export function StartFFmpegSetup(source: string): $CancellablePromise<$models.FFmpegSetupStatus> {
     return $Call.ByID(514916809, source);
+}
+
+/**
+ * StartSample creates a regular cancellable job with a distinct output beside
+ * the proposed result. The UI declares the bounded range and audio re-encode.
+ */
+export function StartSample(p: core$0.Project, seconds: number): $CancellablePromise<core$0.Job> {
+    return $Call.ByID(3194665595, p, seconds);
 }

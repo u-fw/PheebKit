@@ -46,3 +46,19 @@ func TestProbePreservesNonMovieVideoDispositions(t *testing.T) {
 		t.Fatalf("lost stream dispositions: %+v", media.Streams)
 	}
 }
+
+func TestDisplayRotationAndMP4TrackName(t *testing.T) {
+	media, err := Parse([]byte(`{"streams":[{"index":0,"codec_type":"video","width":1920,"height":1080,"tags":{"rotate":"180"},"side_data_list":[{"side_data_type":"Display Matrix","rotation":-90}]},{"index":1,"codec_type":"audio","tags":{"handler_name":"Main audio"}},{"index":2,"codec_type":"subtitle","tags":{"title":"preferred","handler_name":"fallback"}}]}`), core.Source{})
+	if err != nil || media.Streams[0].DisplayRotation != 270 || media.Streams[0].Width != 1920 || media.Streams[1].Title != "Main audio" || media.Streams[2].Title != "preferred" {
+		t.Fatalf("lost normalized rotation or MP4 track name: %+v %v", media, err)
+	}
+	for _, test := range []struct {
+		input string
+		want  float64
+	}{{"-450", 270}, {"720", 0}, {"89.999999", 90}, {"45", 45}, {"NaN", 0}, {"Inf", 0}, {"invalid", 0}} {
+		media, err := Parse([]byte(`{"streams":[{"codec_type":"video","tags":{"rotate":"`+test.input+`"}}]}`), core.Source{})
+		if err != nil || media.Streams[0].DisplayRotation != test.want {
+			t.Fatalf("rotation %q => %+v %v", test.input, media, err)
+		}
+	}
+}

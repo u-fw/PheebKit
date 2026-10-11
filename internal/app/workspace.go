@@ -2,12 +2,12 @@ package app
 
 import (
 	"errors"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
 
+	"kompeg/internal/compiler"
 	"kompeg/internal/core"
 	"kompeg/internal/localstore"
 )
@@ -177,25 +177,12 @@ func (s *Service) ensureWorkspace() {
 
 // Saves encoding preferences only: source/output paths and trim are media-specific.
 func (s *Service) SaveSettings(settings core.Settings, name string) (WorkspacePreferences, error) {
-	settings.Trim = nil
+	settings = portableSettings(settings)
 	if len(name) > 160 || len(settings.RawArguments) > 64 {
 		return WorkspacePreferences{}, errors.New("设置名称或高级参数过长")
 	}
-	if settings.Codec != "h264" && settings.Codec != "hevc" && settings.Codec != "av1" {
-		return WorkspacePreferences{}, errors.New("不支持的编码格式")
-	}
-	if settings.Mode != "quality" && settings.Mode != "bitrate" && settings.Mode != "size" {
-		return WorkspacePreferences{}, errors.New("不支持的压缩模式")
-	}
-	if settings.Audio != "copy" && settings.Audio != "aac" && settings.Audio != "opus" {
-		return WorkspacePreferences{}, errors.New("不支持的音频设置")
-	}
-	maxQuality := 51
-	if settings.Codec == "av1" {
-		maxQuality = 63
-	}
-	if settings.Mode == "quality" && (settings.Quality < 0 || settings.Quality > maxQuality) || settings.Resolution < 0 || settings.Resolution > 16384 || settings.Resolution%2 != 0 || settings.Mode == "bitrate" && settings.BitrateKbps <= 0 || settings.Mode == "size" && (settings.TargetSizeMB <= 0 || math.IsNaN(settings.TargetSizeMB) || math.IsInf(settings.TargetSizeMB, 0)) {
-		return WorkspacePreferences{}, errors.New("请修正无效的编码设置后再保存")
+	if err := compiler.ValidateSettings(settings); err != nil {
+		return WorkspacePreferences{}, err
 	}
 	for _, argument := range settings.RawArguments {
 		if len(argument) > 4096 {

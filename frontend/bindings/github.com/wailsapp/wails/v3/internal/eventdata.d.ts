@@ -20,6 +20,7 @@ declare module "@wailsio/runtime" {
             "job:updated": core$0.Job;
             "media:drop": string[] | null;
             "media:probed": core$0.Media;
+            "queue:updated": app$0.QueueStatus;
             "window:maximised": boolean;
         }
     }

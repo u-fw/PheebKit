@@ -30,7 +30,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		return core.ExecutionPlan{}, fmt.Errorf("unsupported project schema version %d", project.SchemaVersion)
 	}
 	if len(project.Inputs) != 1 {
-		return core.ExecutionPlan{}, fmt.Errorf("compression spike requires exactly one input")
+		return core.ExecutionPlan{}, fmt.Errorf("each processing task requires exactly one input")
 	}
 	input, output := project.Inputs[0], project.Output
 	if err := validatePaths(input, output); err != nil {
@@ -39,20 +39,34 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if !samePath(input.URI, media.Source.URI) {
 		return core.ExecutionPlan{}, fmt.Errorf("media probe does not belong to the selected input")
 	}
+	settings := project.Settings
+	if err := ValidateSettings(settings); err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	audioStreams, err := selectTracks(media, settings.AudioSelection, "audio", true)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	subtitleStreams, err := selectTracks(media, settings.SubtitleSelection, "subtitle", false)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	if settings.Audio == "none" {
+		audioStreams = nil
+	}
+	if settings.Operation != "" && settings.Operation != "compress" {
+		return compileUtility(project, media, caps, audioStreams, subtitleStreams)
+	}
 	var video *core.Stream
-	audio := false
+	audio := len(audioStreams) > 0
 	for i := range media.Streams {
 		if media.Streams[i].CodecType == "video" && !media.Streams[i].AttachedPicture && !media.Streams[i].TimedThumbnails && video == nil {
 			video = &media.Streams[i]
-		}
-		if media.Streams[i].CodecType == "audio" {
-			audio = true
 		}
 	}
 	if video == nil {
 		return core.ExecutionPlan{}, fmt.Errorf("selected media has no motion video stream (cover art and thumbnails cannot be compressed as a movie)")
 	}
-	settings := project.Settings
 	duration, err := outputDuration(settings.Trim, media.DurationSeconds)
 	if err != nil {
 		return core.ExecutionPlan{}, err
@@ -78,12 +92,19 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if ext != ".mp4" && ext != ".mkv" && ext != ".webm" {
 		return core.ExecutionPlan{}, fmt.Errorf("output must use .mp4, .mkv or .webm")
 	}
-	if ext == ".webm" && (settings.Codec != "av1" || (audio && settings.Audio != "opus")) {
-		return core.ExecutionPlan{}, fmt.Errorf("WebM compression requires AV1 and Opus in this spike")
+	if ext == ".webm" && (settings.Codec != "av1" || (audio && settings.Audio != "opus" && settings.Audio != "copy")) {
+		return core.ExecutionPlan{}, fmt.Errorf("WebM compression requires AV1 and encoded Opus or compatible copied audio")
 	}
-	audioArgs, audioKbps, err := compileAudio(settings.Audio, audio, media, ext, caps.Encoders)
+	audioArgs, audioKbps, err := compileAudio(settings.Audio, audioStreams, ext, caps.Encoders)
 	if err != nil {
 		return core.ExecutionPlan{}, err
+	}
+	subtitleArgs, err := compileSubtitles(subtitleStreams, ext, false, caps.Encoders)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	if settings.VolumeDB != 0 && (!audio || settings.Audio == "copy") {
+		return core.ExecutionPlan{}, fmt.Errorf("volume changes require a selected audio track and AAC/Opus encoding")
 	}
 	args := []string{"-hide_banner", "-nostdin", "-n", "-progress", "pipe:1", "-nostats"}
 	if settings.Trim != nil {
@@ -95,7 +116,17 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if settings.Trim != nil {
 		args = append(args, "-t", strconv.FormatFloat(duration, 'f', -1, 64), "-map_chapters", "-1")
 	}
-	args = append(args, "-map", "0:"+strconv.Itoa(video.Index), "-map", "0:a?", "-sn", "-dn")
+	args = append(args, "-map", "0:"+strconv.Itoa(video.Index))
+	if settings.AudioSelection == nil && settings.Audio != "none" {
+		args = append(args, "-map", "0:a?")
+	} else {
+		args = append(args, trackMaps(audioStreams)...)
+	}
+	args = append(args, trackMaps(subtitleStreams)...)
+	if len(subtitleStreams) == 0 {
+		args = append(args, "-sn")
+	}
+	args = append(args, "-dn")
 	bitrate := settings.BitrateKbps
 	switch settings.Mode {
 	case "quality":
@@ -121,17 +152,24 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		return core.ExecutionPlan{}, err
 	}
 	args = append(args, videoArgs...)
-	filter := "scale=iw:ih"
-	if settings.Resolution > 0 && settings.Resolution != video.Height {
-		filter = "scale=-2:" + strconv.Itoa(settings.Resolution)
+	filter, err := videoFilter(settings, *video, pixelFormat)
+	if err != nil {
+		return core.ExecutionPlan{}, err
 	}
 	// Require the requested depth on software encoders too. Custom FFmpeg
 	// builds can have an 8-bit-only libx265/libx264; silently choosing another
 	// format would otherwise discard depth when auto falls back to CPU.
-	filter += ",format=" + pixelFormat
 	args = append(args, "-vf", filter, "-pix_fmt", "+"+pixelFormat)
+	if hasTransform(settings.Transform) {
+		args = append(args, "-metadata:s:v:0", "rotate=0")
+	}
 	args = append(args, audioArgs...)
+	args = append(args, subtitleArgs...)
+	if settings.VolumeDB != 0 {
+		args = append(args, "-af", "volume="+strconv.FormatFloat(settings.VolumeDB, 'f', -1, 64)+"dB")
+	}
 	if ext == ".mp4" {
+		args = append(args, mp4TrackTitles(audioStreams, subtitleStreams)...)
 		args = append(args, "-movflags", "+faststart")
 		if settings.Codec == "hevc" {
 			args = append(args, "-tag:v", "hvc1")
@@ -157,20 +195,27 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		Encoder:           encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }
 
-func compileAudio(mode string, hasAudio bool, media core.Media, ext string, encoders []core.Encoder) ([]string, int, error) {
-	if mode != "copy" && mode != "aac" && mode != "opus" {
+func compileAudio(mode string, streams []core.Stream, ext string, encoders []core.Encoder) ([]string, int, error) {
+	if mode != "copy" && mode != "aac" && mode != "opus" && mode != "none" {
 		return nil, 0, fmt.Errorf("unsupported audio mode %q", mode)
 	}
-	if !hasAudio {
+	if len(streams) == 0 || mode == "none" {
 		return []string{"-an"}, 0, nil
 	}
 	switch mode {
 	case "copy":
 		if ext == ".mp4" {
 			compatible := map[string]bool{"aac": true, "mp3": true, "ac3": true, "eac3": true, "alac": true}
-			for _, stream := range media.Streams {
-				if stream.CodecType == "audio" && !compatible[stream.CodecName] {
+			for _, stream := range streams {
+				if !compatible[stream.CodecName] {
 					return nil, 0, fmt.Errorf("audio codec %s cannot be copied to MP4 in this spike; select AAC or Matroska", stream.CodecName)
+				}
+			}
+		}
+		if ext == ".webm" {
+			for _, stream := range streams {
+				if stream.CodecName != "opus" && stream.CodecName != "vorbis" {
+					return nil, 0, fmt.Errorf("WebM audio copy requires Opus or Vorbis")
 				}
 			}
 		}
@@ -179,24 +224,14 @@ func compileAudio(mode string, hasAudio bool, media core.Media, ext string, enco
 		if !capabilities.HasEncoder(encoders, "aac") {
 			return nil, 0, fmt.Errorf("AAC encoder unavailable in this FFmpeg build")
 		}
-		return []string{"-c:a", "aac", "-b:a", "192k"}, 192 * countAudio(media), nil
+		return []string{"-c:a", "aac", "-b:a", "192k"}, 192 * len(streams), nil
 	case "opus":
 		if !capabilities.HasEncoder(encoders, "libopus") {
 			return nil, 0, fmt.Errorf("libopus encoder unavailable in this FFmpeg build")
 		}
-		return []string{"-c:a", "libopus", "-b:a", "128k"}, 128 * countAudio(media), nil
+		return []string{"-c:a", "libopus", "-b:a", "128k"}, 128 * len(streams), nil
 	}
 	return nil, 0, fmt.Errorf("unsupported audio mode")
-}
-
-func countAudio(media core.Media) int {
-	count := 0
-	for _, stream := range media.Streams {
-		if stream.CodecType == "audio" {
-			count++
-		}
-	}
-	return count
 }
 
 func validatePaths(input, output core.Source) error {
@@ -208,6 +243,13 @@ func validatePaths(input, output core.Source) error {
 	}
 	if samePath(input.URI, output.URI) {
 		return fmt.Errorf("input and output must be different files")
+	}
+	parent, err := os.Stat(filepath.Dir(output.URI))
+	if err != nil {
+		return fmt.Errorf("inspect output directory: %w", err)
+	}
+	if !parent.IsDir() {
+		return fmt.Errorf("output parent must be an existing directory")
 	}
 	if _, err := os.Stat(output.URI); err == nil {
 		return fmt.Errorf("output already exists; choose a new output path")

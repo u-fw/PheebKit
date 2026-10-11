@@ -6,6 +6,11 @@ import { formatTimecode } from "../trim";
 import { API } from "../bridge";
 import { errorMessage } from "../format";
 import { jobErrorHelp } from "../jobError";
+import {
+  estimatedRemainingSeconds,
+  orderQueueJobs,
+  type QueueScheduleStatus,
+} from "../queueSchedule";
 
 const stateNames: Record<string, string> = {
   queued: "等待中",
@@ -23,13 +28,35 @@ function JobCard({
   job,
   cancel,
   reuse,
+  rank,
+  pendingCount,
+  paused,
+  move,
+  compareSample,
 }: {
   job: Job;
   cancel: (id: string) => void;
   reuse: (id: string) => Promise<void>;
+  rank: number;
+  pendingCount: number;
+  paused: boolean;
+  move?: (id: string, direction: number) => Promise<unknown> | void;
+  compareSample?: (id: string) => void;
 }) {
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [moving, setMoving] = useState(false);
+  async function moveJob(direction: number) {
+    setMoving(true);
+    setActionError("");
+    try {
+      await move?.(job.id, direction);
+    } catch (cause) {
+      setActionError(errorMessage(cause));
+    } finally {
+      setMoving(false);
+    }
+  }
   async function action(kind: "file" | "folder" | "reuse") {
     setBusy(true);
     setActionError("");
@@ -46,6 +73,17 @@ function JobCard({
   const active = activeStates.has(state);
   const progress = Math.min(1, Math.max(0, job.progress || 0));
   const name = job.input.displayName || job.input.uri;
+  const remaining = estimatedRemainingSeconds(job);
+  const sample = job.projectID.startsWith("sample-");
+  const operation = job.project?.settings.operation;
+  const operationName =
+    operation === "remux"
+      ? "转封装"
+      : operation === "extract-audio"
+        ? "提取音频"
+        : operation === "extract-subtitle"
+          ? "提取字幕"
+          : "压缩";
   return (
     <article className="surface job-card">
       <div className="job-heading">
@@ -57,7 +95,7 @@ function JobCard({
         <div>
           <h2 title={name}>{name}</h2>
           <span className={`job-state state-${state}`}>
-            {stateNames[state] || job.state}
+            {stateNames[state] || job.state} · {operationName}
           </span>
         </div>
         {active && (
@@ -71,9 +109,37 @@ function JobCard({
           </button>
         )}
       </div>
+      {sample && <p className="field-hint">样片试压 · 用于检查画质和设置</p>}
+      {state === "queued" && rank >= 0 && (
+        <div className="queue-order-controls">
+          <span className="field-hint">
+            第 {rank + 1} 项{paused ? " · 已暂停启动" : " · 按顺序执行"}
+          </span>
+          {move && (
+            <div className="action-row">
+              <button
+                className="button outlined"
+                aria-label={`将 ${name} 上移一位`}
+                disabled={moving || rank === 0}
+                onClick={() => void moveJob(-1)}
+              >
+                上移
+              </button>
+              <button
+                className="button outlined"
+                aria-label={`将 ${name} 下移一位`}
+                disabled={moving || rank === pendingCount - 1}
+                onClick={() => void moveJob(1)}
+              >
+                下移
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       {job.trim && (
         <p className="field-hint">
-          剪辑并压缩 · {formatTimecode(job.trim.startSeconds)} →{" "}
+          剪辑并{operationName} · {formatTimecode(job.trim.startSeconds)} →{" "}
           {formatTimecode(job.trim.endSeconds)}
         </p>
       )}
@@ -82,10 +148,12 @@ function JobCard({
           <div className="progress-label">
             <span>
               {state === "queued"
-                ? "任务等待执行"
+                ? paused
+                  ? "已暂停启动后续任务"
+                  : "任务等待执行"
                 : state === "preparing"
                   ? "正在准备执行计划"
-                  : "编码进度"}
+                  : "处理进度"}
             </span>
             <strong>{Math.round(progress * 100)}%</strong>
           </div>
@@ -108,6 +176,15 @@ function JobCard({
               <dd>{formatDuration(job.totalTime)}</dd>
             </div>
           </dl>
+          {state === "running" && (
+            <p className="field-hint queue-eta">
+              预计剩余：
+              {remaining === null
+                ? "正在估算…"
+                : `约 ${formatDuration(remaining)}`}
+              <span>根据当前速度估算，实际耗时会变化。</span>
+            </p>
+          )}
         </>
       )}
       {state === "completed" && (
@@ -115,11 +192,19 @@ function JobCard({
           <div className="result-banner">
             <Icon name="check" />
             <span>处理完成</span>
-            <strong>{savedPercent(job.inputSize, job.outputSize)}</strong>
+            <strong>
+              {sample
+                ? `样片 ${formatDuration(job.totalTime)}`
+                : operation && operation !== "compress"
+                  ? operationName
+                  : savedPercent(job.inputSize, job.outputSize)}
+            </strong>
           </div>
           {job.trim && (
             <p className="field-hint">
-              体积减少包含剪掉的内容，比较基准为完整源文件。
+              {sample
+                ? "样片仅包含所选片段，体积不能直接与完整源文件比较。"
+                : "体积减少包含剪掉的内容，比较基准为完整源文件。"}
             </p>
           )}
           <dl className="job-metrics">
@@ -181,6 +266,15 @@ function JobCard({
               >
                 打开所在文件夹
               </button>
+              {sample && compareSample && (
+                <button
+                  className="button outlined"
+                  disabled={busy}
+                  onClick={() => compareSample(job.id)}
+                >
+                  比较样片
+                </button>
+              )}
             </>
           )}
           {job.project && (
@@ -223,12 +317,20 @@ export function Queue({
   refresh,
   compress,
   reuse,
+  queueStatus,
+  onPauseQueue,
+  onMoveQueued,
+  compareSample,
 }: {
   jobs: Job[];
   cancel: (id: string) => void;
   refresh: () => void;
   compress: () => void;
   reuse: (id: string) => Promise<void>;
+  queueStatus?: QueueScheduleStatus | null;
+  onPauseQueue?: (paused: boolean) => Promise<unknown> | void;
+  onMoveQueued?: (id: string, direction: number) => Promise<unknown> | void;
+  compareSample?: (id: string) => void;
 }) {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const active = jobs.filter((job) =>
@@ -240,6 +342,25 @@ export function Queue({
   const visible =
     filter === "active" ? active : filter === "completed" ? completed : jobs;
   const [storageError, setStorageError] = useState("");
+  const [scheduleError, setScheduleError] = useState("");
+  const [scheduling, setScheduling] = useState(false);
+  const pendingIDs =
+    queueStatus?.pendingIDs ??
+    jobs
+      .filter((job) => job.state.toLowerCase() === "queued")
+      .map((job) => job.id);
+  const paused = queueStatus?.paused ?? false;
+  async function pauseQueue() {
+    setScheduling(true);
+    setScheduleError("");
+    try {
+      await onPauseQueue?.(!paused);
+    } catch (cause) {
+      setScheduleError(errorMessage(cause));
+    } finally {
+      setScheduling(false);
+    }
+  }
   const terminalCount = jobs.length - active.length;
   useEffect(() => {
     let alive = true;
@@ -272,6 +393,30 @@ export function Queue({
           {storageError}
         </p>
       )}
+      {onPauseQueue && (
+        <div className="queue-scheduling surface" aria-busy={scheduling}>
+          <div>
+            <strong>
+              {paused ? "后续任务已暂停启动" : "按队列顺序自动处理"}
+            </strong>
+            <p className="field-hint">
+              当前正在处理的任务会继续完成。等待中的任务可调整顺序。
+            </p>
+          </div>
+          <button
+            className="button outlined"
+            disabled={scheduling || !queueStatus}
+            onClick={() => void pauseQueue()}
+          >
+            {scheduling ? "正在更新…" : paused ? "继续队列" : "暂停后续任务"}
+          </button>
+        </div>
+      )}
+      {scheduleError && (
+        <p className="inline-error" role="alert">
+          {scheduleError}
+        </p>
+      )}
       <div className="queue-toolbar">
         <div className="segmented">
           <button
@@ -302,8 +447,18 @@ export function Queue({
       </div>
       {visible.length ? (
         <div className="job-list">
-          {[...visible].reverse().map((job) => (
-            <JobCard key={job.id} job={job} cancel={cancel} reuse={reuse} />
+          {orderQueueJobs(visible, pendingIDs).map((job) => (
+            <JobCard
+              key={job.id}
+              job={job}
+              cancel={cancel}
+              reuse={reuse}
+              rank={pendingIDs.indexOf(job.id)}
+              pendingCount={pendingIDs.length}
+              paused={paused}
+              move={onMoveQueued}
+              compareSample={compareSample}
+            />
           ))}
         </div>
       ) : (

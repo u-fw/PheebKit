@@ -4,6 +4,7 @@
 export type {
     Capabilities,
     Codec,
+    CropMargins,
     Encoder,
     ExecutionPlan,
     GPU,
@@ -17,5 +18,7 @@ export type {
     Source,
     Stream,
     TimeRange,
-    VideoEncoder
+    TrackSelection,
+    VideoEncoder,
+    VideoTransform
 } from "./models.js";

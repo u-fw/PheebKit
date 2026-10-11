@@ -239,6 +239,55 @@ legend > span {
   padding: var(--space-2) var(--space-2) 0;
   font-size: 0.6875rem;
 }
+.track-list {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
+}
+.track-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-3);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  line-height: 1.5;
+}
+.track-choice input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  accent-color: var(--primary);
+}
+.track-choice span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.track-choice:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+.track-choice:hover {
+  border-color: var(--primary);
+}
+.track-choice:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.transform-settings .field-label,
+.transform-settings .field-grid {
+  margin-top: var(--space-4);
+}
+.output-card .material-select {
+  margin-top: var(--space-4);
+}
 .field-label {
   display: flex;
   flex-direction: column;

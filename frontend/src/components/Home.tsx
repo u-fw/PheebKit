@@ -33,7 +33,7 @@ export function Home({
             onClick={chooseMedia}
           >
             <Icon name="plus" />
-            更换媒体
+            重新选择媒体
           </button>
         )}
       </header>
@@ -43,10 +43,10 @@ export function Home({
           <div className="ready-row">
             <div>
               <h3>准备好处理了</h3>
-              <p>选择编码、调整质量，查看实际执行参数。</p>
+              <p>压缩、转换封装或提取轨道，查看实际执行参数。</p>
             </div>
             <button className="button primary" onClick={compress}>
-              压缩视频
+              处理媒体
               <Icon name="arrow" />
             </button>
           </div>
@@ -74,7 +74,7 @@ export function Home({
             <div className="section-eyebrow">导入媒体</div>
             <h2>{busy ? "正在分析媒体…" : "选择文件，开始处理"}</h2>
             <p>
-              将视频或音频拖入窗口，或从设备中选择。
+              将视频或音频整批拖入窗口，或从设备中多选。
               <br />
               媒体始终在本地处理。
             </p>

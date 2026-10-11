@@ -58,6 +58,7 @@ func NewService() *Service {
 	s.jobs = jobs.New(s.runner, func(job core.Job) {
 		if s.app != nil {
 			s.app.Event.Emit("job:updated", job)
+			s.emitQueueStatus()
 		}
 	})
 	return s
@@ -139,7 +140,7 @@ func (s *Service) ChooseOutput(suggested string) (string, error) {
 	if s.app == nil {
 		return "", errors.New("native file dialog is unavailable")
 	}
-	return s.app.Dialog.SaveFile().SetDirectory(filepath.Dir(suggested)).SetFilename(filepath.Base(suggested)).AddFilter("视频输出", "*.mp4;*.mkv;*.webm").PromptForSingleSelection()
+	return s.app.Dialog.SaveFile().SetDirectory(filepath.Dir(suggested)).SetFilename(filepath.Base(suggested)).AddFilter("媒体输出", "*.mp4;*.mkv;*.webm;*.m4a;*.mka;*.mp3;*.flac;*.wav;*.opus;*.srt;*.vtt;*.ass").PromptForSingleSelection()
 }
 
 func (s *Service) Capabilities() (core.Capabilities, error) {
@@ -234,8 +235,18 @@ func (s *Service) Start(p core.Project) (core.Job, error) {
 	if s.exiting {
 		return core.Job{}, errors.New("应用正在退出，无法创建任务")
 	}
-	return s.jobs.EnqueueProject(plan, p)
+	job, err := s.jobs.EnqueueProject(plan, p)
+	if err == nil {
+		s.emitQueueStatus()
+	}
+	return job, err
 }
 
-func (s *Service) Cancel(id string) error { return s.jobs.Cancel(id) }
-func (s *Service) Jobs() []core.Job       { s.ensureWorkspace(); return s.jobs.List() }
+func (s *Service) Cancel(id string) error {
+	err := s.jobs.Cancel(id)
+	if err == nil {
+		s.emitQueueStatus()
+	}
+	return err
+}
+func (s *Service) Jobs() []core.Job { s.ensureWorkspace(); return s.jobs.List() }

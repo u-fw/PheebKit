@@ -1,16 +1,36 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { API } from "../bridge";
-import type { Capabilities, Job, Media, Settings } from "../bridge";
-import { errorMessage, suggestedOutput } from "../format";
-import { defaultSettings, makeProject, validateSettings } from "../project";
+import type { Capabilities, Job, Media, Project, Settings } from "../bridge";
+import { errorMessage } from "../format";
+import {
+  changeOperation,
+  applyPresetSettings,
+  defaultSettings,
+  makeProject,
+  operationExtensions,
+  operationLabels,
+  operationOf,
+  outputExtension,
+  suggestedOperationOutput,
+  settingsForMedia,
+  validateSettings,
+} from "../project";
 import { useExecutionPlan } from "../hooks/useExecutionPlan";
 import { CommandPreview } from "./CommandPreview";
-import { EncodingSettings, AdvancedSettings } from "./EncodingSettings";
+import {
+  EncodingSettings,
+  AdvancedSettings,
+  AudioEncodingSettings,
+} from "./EncodingSettings";
 import { Icon } from "./Icon";
 import { MediaCard } from "./MediaCard";
 import { OutputSummary } from "./OutputSummary";
 import { TrimSettings } from "./TrimSettings";
 import { SavedSettings } from "./SavedSettings";
+import { OperationSettings } from "./OperationSettings";
+import { TrackSettings } from "./TrackSettings";
+import { TransformSettings } from "./TransformSettings";
+import { MaterialSelect } from "./MaterialSelect";
 
 type Props = {
   media: Media | null;
@@ -23,6 +43,9 @@ type Props = {
   reused?: boolean;
   visible?: boolean;
   onSaved?: (value: Settings) => void;
+  initialOutput?: string;
+  renderBatch?: (settings: Settings) => ReactNode;
+  projectActions?: (project: Project) => ReactNode;
 };
 
 export function Compress({
@@ -36,18 +59,24 @@ export function Compress({
   reused = false,
   visible = true,
   onSaved,
+  initialOutput,
+  renderBatch,
+  projectActions,
 }: Props) {
-  const [settings, setSettings] = useState<Settings>(
-    () => initialSettings ?? defaultSettings,
-  );
-  const [output, setOutput] = useState(() =>
+  const [settings, setSettings] = useState<Settings>(() =>
     media
-      ? suggestedOutput(
-          media.source.uri,
-          (initialSettings ?? defaultSettings).codec,
-          (initialSettings ?? defaultSettings).audio,
-        ).replace(/(\.[^.]+)$/, reused ? `-${Date.now()}$1` : "$1")
-      : "",
+      ? settingsForMedia(initialSettings ?? defaultSettings, media)
+      : (initialSettings ?? defaultSettings),
+  );
+  const [output, setOutput] = useState(
+    () =>
+      initialOutput ??
+      (media
+        ? suggestedOperationOutput(
+            media.source.uri,
+            initialSettings ?? defaultSettings,
+          ).replace(/(\.[^.]+)$/, reused ? `-${Date.now()}$1` : "$1")
+        : ""),
   );
   const [customResolution, setCustomResolution] = useState(
     () =>
@@ -58,7 +87,11 @@ export function Compress({
   const [actionError, setActionError] = useState("");
   const [starting, setStarting] = useState(false);
   const [choosingOutput, setChoosingOutput] = useState(false);
+  const [advancedRevision, setAdvancedRevision] = useState(0);
+  const [settingsNotice, setSettingsNotice] = useState("");
   const [projectID] = useState(() => crypto.randomUUID());
+  const operation = operationOf(settings);
+  const compress = operation === "compress";
   const preview = useExecutionPlan(
     media,
     settings,
@@ -70,16 +103,18 @@ export function Compress({
   const validation = media
     ? validateSettings(settings, output, media.source.uri, media)
     : [];
-  const encoderAvailable = Boolean(
-    capabilities?.videoEncoders.some(
-      (encoder) =>
-        encoder.codec === settings.codec &&
-        encoder.available &&
-        (settings.encoder === "auto" ||
-          (settings.encoder === "cpu" && encoder.kind === "cpu") ||
-          settings.encoder === encoder.name),
-    ),
-  );
+  const encoderAvailable =
+    !compress ||
+    Boolean(
+      capabilities?.videoEncoders.some(
+        (encoder) =>
+          encoder.codec === settings.codec &&
+          encoder.available &&
+          (settings.encoder === "auto" ||
+            (settings.encoder === "cpu" && encoder.kind === "cpu") ||
+            settings.encoder === encoder.name),
+      ),
+    );
   const hasVideo = Boolean(
     media?.streams.some(
       (stream) =>
@@ -90,6 +125,13 @@ export function Compress({
   );
 
   function update<K extends keyof Settings>(key: K, value: Settings[K]) {
+    const next = {
+      ...settings,
+      [key]: value,
+      ...(key === "codec" && settings.encoder !== "cpu"
+        ? { encoder: "auto" }
+        : {}),
+    };
     setSettings((current) => ({
       ...current,
       [key]: value,
@@ -97,6 +139,15 @@ export function Compress({
         ? { encoder: "auto" }
         : {}),
     }));
+    if (key === "audio" || key === "codec")
+      setOutput((current) =>
+        current
+          ? current.replace(
+              /\.[^./\\]+$/,
+              `.${outputExtension(next, current.split(".").pop())}`,
+            )
+          : current,
+      );
     setActionError("");
   }
 
@@ -119,7 +170,7 @@ export function Compress({
       starting ||
       validation.length ||
       !encoderAvailable ||
-      !hasVideo ||
+      (compress && !hasVideo) ||
       !preview.plan ||
       preview.loading
     )
@@ -144,14 +195,14 @@ export function Compress({
       <div className="page">
         <header className="page-heading">
           <div>
-            <h1>压缩视频</h1>
-            <p>导入一个视频，开始配置压缩任务。</p>
+            <h1>媒体处理</h1>
+            <p>导入媒体，选择压缩、转封装或提取轨道。</p>
           </div>
         </header>
         <section className="empty-state surface">
           <Icon name="compress" />
           <h2>先选择源媒体</h2>
-          <p>压缩设置与执行参数会根据媒体信息生成。</p>
+          <p>处理设置与执行参数会根据媒体信息生成。</p>
           <button
             className="button primary"
             disabled={!connected}
@@ -168,8 +219,8 @@ export function Compress({
     <div className="page compress-page">
       <header className="page-heading">
         <div>
-          <h1>压缩视频</h1>
-          <p>选择完整视频或片段，调整输出格式和文件大小。</p>
+          <h1>{operationLabels[operation] ?? "媒体处理"}</h1>
+          <p>本地处理媒体，选择需要保留的内容与输出格式。</p>
         </div>
         <span className="chip accent-chip">
           <Icon name="video" />
@@ -183,37 +234,122 @@ export function Compress({
             onSaved={onSaved}
             settings={settings}
             apply={(value) => {
-              setSettings({ ...value, trim: settings.trim });
+              const next = applyPresetSettings(settings, value, media);
+              setAdvancedRevision((current) => current + 1);
+              setSettingsNotice(
+                operationOf(settings) === operationOf(value)
+                  ? "配置已应用；当前剪辑范围保持原样，请检查轨道与输出设置。"
+                  : "配置已应用，并切换任务；旧的剪辑范围和画面裁剪已清除。请检查输出设置。",
+              );
+              setSettings(next);
+              setOutput((current) =>
+                current
+                  ? current.replace(
+                      /\.[^./\\]+$/,
+                      `.${outputExtension(next, current.split(".").pop())}`,
+                    )
+                  : current,
+              );
               setCustomResolution(
                 ![0, 720, 1080, 1440, 2160].includes(value.resolution),
               );
               setActionError("");
             }}
           />
-          <TrimSettings
-            visible={visible}
+          {settingsNotice && (
+            <p className="field-hint" role="status">
+              {settingsNotice}
+            </p>
+          )}
+          {projectActions?.(makeProject(media, settings, output, projectID))}
+          <OperationSettings
             media={media}
             settings={settings}
-            onChange={(next) => {
+            onChange={(value) => {
+              const next = changeOperation(settings, value, media);
+              setSettingsNotice("");
+              setAdvancedRevision((current) => current + 1);
               setSettings(next);
+              const suffix = {
+                compress: "compressed",
+                remux: "remux",
+                "extract-audio": "audio",
+                "extract-subtitle": "subtitle",
+              }[value];
+              setOutput((current) =>
+                current
+                  ? current
+                      .replace(
+                        /-(compressed|remux|audio|subtitle)(?=\.[^./\\]+$)/,
+                        `-${suffix}`,
+                      )
+                      .replace(/\.[^./\\]+$/, `.${outputExtension(next)}`)
+                  : suggestedOperationOutput(media.source.uri, next),
+              );
               setActionError("");
             }}
           />
-          <EncodingSettings
-            media={media}
-            settings={settings}
-            update={update}
-            capabilities={capabilities}
-            customResolution={customResolution}
-            setCustomResolution={setCustomResolution}
-            plan={preview.plan}
-          />
-          <AdvancedSettings settings={settings} update={update} />
+          {compress && (
+            <TrimSettings
+              visible={visible}
+              media={media}
+              settings={settings}
+              onChange={(next) => {
+                setSettings(next);
+                setActionError("");
+              }}
+            />
+          )}
+          {compress && (
+            <EncodingSettings
+              media={media}
+              settings={settings}
+              update={update}
+              capabilities={capabilities}
+              customResolution={customResolution}
+              setCustomResolution={setCustomResolution}
+              plan={preview.plan}
+            />
+          )}
+          {operation === "extract-audio" && (
+            <AudioEncodingSettings settings={settings} update={update} />
+          )}
+          <TrackSettings media={media} settings={settings} update={update} />
+          {(compress || operation === "extract-audio") && (
+            <TransformSettings
+              media={media}
+              settings={settings}
+              update={update}
+            />
+          )}
+          {compress && (
+            <AdvancedSettings
+              key={advancedRevision}
+              settings={settings}
+              update={update}
+            />
+          )}
           <section className="surface output-card">
             <div className="section-title">
               <h2>保存到</h2>
               <Icon name="folder" />
             </div>
+            <MaterialSelect
+              label="输出文件格式"
+              value={output.split(".").pop()?.toLowerCase() ?? ""}
+              options={operationExtensions(settings).map((extension) => ({
+                value: extension,
+                label: extension.toUpperCase(),
+              }))}
+              onChange={(extension) => {
+                setOutput((current) =>
+                  /\.[^./\\]+$/.test(current)
+                    ? current.replace(/\.[^./\\]+$/, `.${extension}`)
+                    : `${current}.${extension}`,
+                );
+                setActionError("");
+              }}
+            />
             <label className="field-label" htmlFor="output-path">
               输出文件
             </label>
@@ -237,6 +373,7 @@ export function Compress({
             </div>
             <span className="field-hint">使用新的输出文件名，保留源媒体。</span>
           </section>
+          {renderBatch?.(settings)}
         </div>
         <aside className="preview-column">
           <OutputSummary
@@ -258,7 +395,7 @@ export function Compress({
               !preview.loading &&
               !starting &&
               encoderAvailable &&
-              hasVideo &&
+              (!compress || hasVideo) &&
               validation.length === 0
             }
             start={() => void start()}

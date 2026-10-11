@@ -33,10 +33,50 @@ const resolutions = [
   { value: "custom", label: "自定义高度", description: "保持宽高比" },
 ];
 const audioOptions = [
-  { value: "copy", label: "Copy", description: "保留原始音频" },
+  { value: "copy", label: "Copy · 保留原音频", description: "不重新编码音频" },
   { value: "aac", label: "AAC", description: "通用兼容" },
   { value: "opus", label: "Opus", description: "高效编码" },
+  { value: "none", label: "不保留音频 · 静音", description: "输出静音视频" },
 ];
+
+export function AudioEncodingSettings({
+  settings,
+  update,
+}: {
+  settings: Settings;
+  update: UpdateSettings;
+}) {
+  return (
+    <section className="surface settings-card">
+      <div className="section-title">
+        <h2>音频输出设置</h2>
+      </div>
+      <MaterialSelect
+        label="音频格式"
+        value={settings.audio}
+        options={[
+          ...audioOptions.filter((option) => option.value !== "none"),
+          { value: "mp3", label: "MP3", description: "常用音乐格式" },
+          {
+            value: "flac",
+            label: "FLAC",
+            description: "无损编码；不恢复源文件已损失的细节",
+          },
+          {
+            value: "wav",
+            label: "WAV",
+            description: "未压缩音频，文件可能较大",
+          },
+        ]}
+        onChange={(value) => update("audio", value)}
+      />
+      <p className="field-hint">
+        保留原音频保存为 MKA；其他格式会重新编码。格式支持以当前 FFmpeg
+        检查结果为准。
+      </p>
+    </section>
+  );
+}
 const presets = [
   { value: "fast", label: "快速", description: "Fast · 优先处理速度" },
   { value: "medium", label: "均衡", description: "Medium · 速度与压缩兼顾" },

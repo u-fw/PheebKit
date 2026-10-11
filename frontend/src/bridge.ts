@@ -7,9 +7,27 @@ export type { FFmpegSetupStatus };
 export type Source = Core.Source;
 export type Stream = Core.Stream;
 export type Media = Omit<Core.Media, "streams"> & { streams: Stream[] };
-export type Settings = Omit<Core.Settings, "rawArguments"> & {
+export interface TrackSelection {
+  mode: string;
+  indices?: number[];
+}
+export interface VideoTransform {
+  rotation: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+  crop?: { top: number; bottom: number; left: number; right: number } | null;
+}
+export type Settings = Omit<
+  Core.Settings,
+  "rawArguments" | "audioSelection" | "subtitleSelection" | "transform"
+> & {
   rawArguments: string[];
   encoder: string;
+  operation?: string;
+  audioSelection?: TrackSelection | null;
+  subtitleSelection?: TrackSelection | null;
+  transform?: VideoTransform | null;
+  volumeDB?: number;
 };
 export type Project = Omit<Core.Project, "inputs" | "settings"> & {
   inputs: Source[];
@@ -83,6 +101,29 @@ export interface Job {
   averageSpeed?: number;
 }
 
+export interface QueueStatus {
+  paused: boolean;
+  pendingIDs: string[];
+  revision: number;
+}
+export interface SampleComparison {
+  original: Media;
+  output: Media;
+  startSeconds: number;
+  durationSeconds: number;
+}
+export interface LoadedProject {
+  media: Media;
+  project: Project;
+}
+function projectView(project: Core.Project): Project {
+  return {
+    ...project,
+    inputs: project.inputs ?? [],
+    settings: settingsView(project.settings),
+  };
+}
+
 function jobView(job: Core.Job): Job {
   return {
     project: job.project
@@ -125,6 +166,18 @@ function settingsView(settings: Core.Settings): Settings {
     ...settings,
     rawArguments: settings.rawArguments ?? [],
     encoder: settings.encoder || "auto",
+    audioSelection: settings.audioSelection
+      ? {
+          ...settings.audioSelection,
+          indices: settings.audioSelection.indices ?? [],
+        }
+      : null,
+    subtitleSelection: settings.subtitleSelection
+      ? {
+          ...settings.subtitleSelection,
+          indices: settings.subtitleSelection.indices ?? [],
+        }
+      : null,
   };
 }
 export interface WorkspacePreferences {
@@ -159,6 +212,51 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  chooseMediaPaths: async (): Promise<string[]> =>
+    (await Service.ChooseMediaPaths()) ?? [],
+  chooseOutputDirectory: async (suggested: string): Promise<string> =>
+    Service.ChooseOutputDirectory(suggested),
+  startBatch: async (projects: Project[]): Promise<Job[]> =>
+    ((await Service.StartBatch(projects)) ?? []).map(jobView),
+  queueStatus: async (): Promise<QueueStatus> => {
+    const status = await Service.QueueStatus();
+    return { ...status, pendingIDs: status.pendingIDs ?? [] };
+  },
+  setQueuePaused: async (paused: boolean): Promise<QueueStatus> => {
+    const status = await Service.SetQueuePaused(paused);
+    return { ...status, pendingIDs: status.pendingIDs ?? [] };
+  },
+  moveQueued: async (id: string, direction: number): Promise<QueueStatus> => {
+    const status = await Service.MoveQueued(id, direction);
+    return { ...status, pendingIDs: status.pendingIDs ?? [] };
+  },
+  subscribeQueue: (callback: (status: QueueStatus) => void): (() => void) =>
+    Events.On("queue:updated", (event) =>
+      callback({ ...event.data, pendingIDs: event.data.pendingIDs ?? [] }),
+    ),
+  saveProject: async (project: Project): Promise<string> =>
+    Service.SaveProject(project),
+  loadProject: async (): Promise<LoadedProject | null> => {
+    const value = await Service.LoadProject();
+    return value
+      ? { media: mediaView(value.media), project: projectView(value.project) }
+      : null;
+  },
+  importPreset: async (): Promise<WorkspacePreferences | null> => {
+    const value = await Service.ImportPreset();
+    return value ? preferencesView(value) : null;
+  },
+  exportPreset: async (id: string): Promise<string> => Service.ExportPreset(id),
+  startSample: async (project: Project, seconds: number): Promise<Job> =>
+    jobView(await Service.StartSample(project, seconds)),
+  getSampleComparison: async (id: string): Promise<SampleComparison> => {
+    const value = await Service.GetSampleComparison(id);
+    return {
+      ...value,
+      original: mediaView(value.original),
+      output: mediaView(value.output),
+    };
+  },
   deletePreset: async (id: string): Promise<WorkspacePreferences> =>
     preferencesView(await Service.DeletePreset(id)),
   confirmQuit: async (): Promise<void> => Service.ConfirmQuit(),

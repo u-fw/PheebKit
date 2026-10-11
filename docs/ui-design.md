@@ -1,6 +1,6 @@
 # Shared UI design
 
-The technical spike implements Home, Compress, Queue and Settings. Other PheebKit tools are future scope. The UI uses shared React components, TypeScript models generated from Go and a small binding adapter. Current task/preview/persistence behavior is documented in [workflows](workflows.md).
+The technical spike implements Home, Media Processing, Queue and Settings. Processing includes compression, remux, audio/text-subtitle extraction, basic transforms, batch controls, project/preset files and samples. The UI uses shared React components, TypeScript models generated from Go and a small binding adapter. Behavior is documented in [workflows](workflows.md) and [media tools](media-tools.md).
 
 Material Design 3 inspired tonal surfaces, teal accent and a consistent 4/8px spacing scale form the visual system. The supplied PheebKit artwork is shared by navigation and the favicon and converted to Windows icons; the Chinese brand is 菲比工具箱. A restrained mint/lilac canvas sits behind the glass navigation: sidebar opacity is 60% light / 62% dark, while chrome opacity is 80% light / 84% dark. Glass is limited to the sidebar, top app bar and mobile bottom navigation, with 26px backdrop blur and a subtle inset highlight. Cards use opaque tonal surfaces without repeated blur. All colors, spacing, radii, elevation and motion use semantic CSS tokens.
 

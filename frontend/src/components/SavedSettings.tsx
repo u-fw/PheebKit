@@ -69,6 +69,27 @@ export function SavedSettings({
       setBusy(false);
     }
   }
+  async function share(importing: boolean) {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      if (importing) {
+        const next = await API.importPreset();
+        if (next) {
+          setPreferences(next);
+          setMessage("配置已导入，请选择并应用。当前设置和默认值未更改。");
+        }
+      } else {
+        const path = await API.exportPreset(selected);
+        if (path) setMessage(`配置已导出：${path}`);
+      }
+    } catch (cause) {
+      setMessage(`${importing ? "导入" : "导出"}失败：${errorMessage(cause)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <section className="surface settings-card saved-settings">
       <div className="section-title">
@@ -141,8 +162,24 @@ export function SavedSettings({
         </button>
       </div>
       <p className="field-hint">
-        保存编码、质量、音频和高级参数。剪辑范围、源文件和输出路径不会保存到常用配置。
+        保存处理方式、编码、音量与旋转等通用设置。剪辑范围、轨道编号、裁剪边距及文件路径不保存到配置。
       </p>
+      <div className="action-row">
+        <button
+          className="button outlined"
+          disabled={busy}
+          onClick={() => void share(true)}
+        >
+          导入配置
+        </button>
+        <button
+          className="button text"
+          disabled={busy || !selected}
+          onClick={() => void share(false)}
+        >
+          导出所选配置
+        </button>
+      </div>
       {message && (
         <p role="status" className="field-hint">
           {message}

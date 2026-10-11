@@ -19,6 +19,7 @@ var assets embed.FS
 func init() {
 	application.RegisterEvent[core.Media]("media:probed")
 	application.RegisterEvent[core.Job]("job:updated")
+	application.RegisterEvent[app.QueueStatus]("queue:updated")
 	application.RegisterEvent[string]("bridge:ready")
 	application.RegisterEvent[[]string]("media:drop")
 	application.RegisterEvent[bool]("window:maximised")

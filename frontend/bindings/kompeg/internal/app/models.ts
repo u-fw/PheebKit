@@ -44,6 +44,19 @@ export interface JobReuse {
     "media": core$0.Media;
 }
 
+export interface QueueStatus {
+    "paused": boolean;
+    "pendingIDs": string[] | null;
+    "revision": number;
+}
+
+export interface SampleComparison {
+    "original": core$0.Media;
+    "output": core$0.Media;
+    "startSeconds": number;
+    "durationSeconds": number;
+}
+
 export interface Thumbnail {
     "dataUrl": string;
     "source": string;

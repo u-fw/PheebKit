@@ -24,11 +24,14 @@ type Media struct {
 }
 
 type Stream struct {
-	Index           int     `json:"index"`
-	CodecType       string  `json:"codecType"`
-	CodecName       string  `json:"codecName"`
-	Width           int     `json:"width"`
-	Height          int     `json:"height"`
+	Index     int    `json:"index"`
+	CodecType string `json:"codecType"`
+	CodecName string `json:"codecName"`
+	Width     int    `json:"width"`
+	Height    int    `json:"height"`
+	// DisplayRotation is normalized metadata rotation in counter-clockwise
+	// degrees. Raw width/height remain unchanged; quarter turns swap preview axes.
+	DisplayRotation float64 `json:"displayRotation,omitempty"`
 	FrameRate       float64 `json:"frameRate"`
 	PixelFormat     string  `json:"pixelFormat"`
 	BitDepth        int     `json:"bitDepth"`

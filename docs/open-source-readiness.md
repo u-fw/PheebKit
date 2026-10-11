@@ -1,6 +1,6 @@
-# Open-source readiness — 2026-10-10
+# Open-source readiness — baseline 2026-10-10, extension review 2026-10-11
 
-The Windows experimental slice has passed its current checks after the visual refinement and defect fixes. Current branding is 菲比工具箱 / PheebKit; beta.4 adds exit protection, result actions, clip preview, presets and persisted history. See [workflow evidence](workflows.md) for current verification limits. No remote repository, push, release or publication was performed. This review does not claim the absence of all bugs or production stability.
+Current branding is 菲比工具箱 / PheebKit. Version 0.2.0-beta.1 extends batch/scheduling, tracks, remux/extraction, transforms, samples and project/preset files; see [media-tool evidence](media-tools.md) for current checks/limits. The dated baseline below describes earlier visual/defect verification; beta.4 [workflows](workflows.md) remain. No remote push, hosted release or publication was performed. This review does not claim all bugs are absent or production stability.
 
 ## Repaired findings
 
@@ -28,6 +28,6 @@ The Windows experimental slice has passed its current checks after the visual re
 1. The owner selected `GPL-3.0-only`; the full license is in the repository's `LICENSE` and the scope is recorded in the README. FFmpeg is discovered locally or explicitly downloaded from upstream/mirror sources into a private directory; see [download policy](ffmpeg-downloads.md). It is not bundled in the executable. Distribution notices and corresponding-source policy must still be settled before distributing project-hosted copies or offline bundles of third-party binaries.
 2. Choose the remote repository and publication identity. No Git remote is configured. Review author/contact metadata and any machine-specific verification notes before making history public.
 3. Windows CI configuration now builds, checks and packages candidates, including installer lifecycle checks; hosted execution is still unverified. GPU/real-FFmpeg integration needs an appropriate test machine and cannot be inferred from a generic hosted runner.
-4. Keep the experimental scope clear: pinned Wails v3 Beta was approved only for this Technical Spike; Android is deferred. APK/device execution, HDR encoding, signing, clean-machine installation and later editing/project-management features remain unverified or unimplemented. Local installer lifecycle checks are recorded in [Windows distribution](windows-distribution.md). Windows 10 also needs a separate runtime smoke test before a broad binary-release claim.
+4. Keep the experimental scope clear: pinned Wails v3 Beta was approved only for this Technical Spike; Android is deferred. APK/device execution, HDR encoding, signing, clean-machine installation and multi-clip editing remain unverified or unimplemented. New native dialogs and sample comparison need native click-through. Local installer lifecycle checks are in [Windows distribution](windows-distribution.md). Windows 10 also needs a separate runtime smoke test before a broad binary-release claim.
 
 An Android shared-package cross-build verifies source portability only. The full cross-platform acceptance criteria remain open until an APK launches on a device or emulator and proves the Go bridge.

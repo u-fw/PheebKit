@@ -1,0 +1,102 @@
+import { useState } from "react";
+import { API } from "../bridge";
+import type { Job, Project } from "../bridge";
+import { errorMessage } from "../format";
+import { operationOf } from "../project";
+import { MaterialSelect } from "./MaterialSelect";
+
+export function ProjectActions({
+  project,
+  connected,
+  load,
+  onJob,
+  showQueue,
+}: {
+  project: Project;
+  connected: boolean;
+  load: () => Promise<void>;
+  onJob: (job: Job) => void;
+  showQueue: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [seconds, setSeconds] = useState("10");
+  const [message, setMessage] = useState("");
+  async function perform(action: "save" | "load" | "sample") {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      if (action === "load") await load();
+      else if (action === "save") {
+        const path = await API.saveProject(project);
+        if (path) setMessage(`项目已保存：${path}`);
+      } else {
+        onJob(await API.startSample(project, Number(seconds)));
+        showQueue();
+      }
+    } catch (cause) {
+      setMessage(`操作失败：${errorMessage(cause)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="surface settings-card project-actions">
+      <div className="section-title">
+        <h2>项目与试压</h2>
+        <span className="subtle-label">可继续编辑</span>
+      </div>
+      <div className="action-row">
+        <button
+          className="button outlined"
+          disabled={busy || !connected}
+          onClick={() => void perform("save")}
+        >
+          保存项目
+        </button>
+        <button
+          className="button text"
+          disabled={busy || !connected}
+          onClick={() => void perform("load")}
+        >
+          打开项目
+        </button>
+      </div>
+      <p className="field-hint">
+        项目保存当前文件、轨道、剪辑范围和全部设置，打开后重新检查源文件，由你确认执行。
+      </p>
+      {operationOf(project.settings) === "compress" && (
+        <>
+          <div className="saved-settings-row">
+            <MaterialSelect
+              label="样片时长"
+              value={seconds}
+              options={[
+                { value: "10", label: "10 秒" },
+                { value: "20", label: "20 秒" },
+                { value: "30", label: "30 秒" },
+              ]}
+              onChange={setSeconds}
+            />
+            <button
+              className="button outlined"
+              disabled={busy || !connected || !project.output.uri}
+              onClick={() => void perform("sample")}
+            >
+              {busy ? "处理中…" : "生成样片"}
+            </button>
+          </div>
+          <p className="field-hint">
+            从当前剪辑起点（默认开头）试压，最长不超过所选范围。样片保存在输出文件夹，完成后可在队列比较画面；为准确截取，Copy
+            音频会在样片中改为 AAC。样片体积和速度只供参考。
+          </p>
+        </>
+      )}
+      {message && (
+        <p className="field-hint" role="status">
+          {message}
+        </p>
+      )}
+    </section>
+  );
+}

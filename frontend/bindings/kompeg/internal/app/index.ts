@@ -12,6 +12,8 @@ export type {
     Environment,
     FFmpegSetupStatus,
     JobReuse,
+    QueueStatus,
+    SampleComparison,
     Thumbnail,
     WorkspacePreferences,
     WorkspaceStatus

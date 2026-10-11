@@ -41,7 +41,8 @@ type document struct {
 			TimedThumbnails int `json:"timed_thumbnails"`
 		} `json:"disposition"`
 		SideData []struct {
-			Type string `json:"side_data_type"`
+			Type     string   `json:"side_data_type"`
+			Rotation *float64 `json:"rotation"`
 		} `json:"side_data_list"`
 	} `json:"streams"`
 }
@@ -75,6 +76,7 @@ func Parse(data []byte, source core.Source) (core.Media, error) {
 			depth = pixelDepth(raw.PixelFormat)
 		}
 		hdr := ""
+		rotation := signedDecimal(raw.Tags["rotate"])
 		switch raw.ColorTransfer {
 		case "smpte2084":
 			hdr = "PQ / HDR10"
@@ -82,21 +84,57 @@ func Parse(data []byte, source core.Source) (core.Media, error) {
 			hdr = "HLG"
 		}
 		for _, side := range raw.SideData {
+			if strings.EqualFold(side.Type, "Display Matrix") && side.Rotation != nil {
+				rotation = normalizedRotation(*side.Rotation)
+			}
 			if strings.Contains(strings.ToLower(side.Type), "dovi") || strings.Contains(strings.ToLower(side.Type), "dolby vision") {
 				hdr = "Dolby Vision"
 			}
 		}
 		media.Streams = append(media.Streams, core.Stream{Index: raw.Index, CodecType: raw.CodecType,
-			CodecName: raw.CodecName, Width: raw.Width, Height: raw.Height, FrameRate: fps,
+			CodecName: raw.CodecName, Width: raw.Width, Height: raw.Height, DisplayRotation: rotation, FrameRate: fps,
 			PixelFormat: raw.PixelFormat, BitDepth: depth, ColorSpace: raw.ColorSpace,
 			ColorTransfer: raw.ColorTransfer, ColorPrimaries: raw.ColorPrimaries, HDR: hdr,
-			Language: raw.Tags["language"], Title: raw.Tags["title"],
+			Language: raw.Tags["language"], Title: trackTitle(raw.Tags),
 			AttachedPicture: raw.Disposition.AttachedPicture != 0, TimedThumbnails: raw.Disposition.TimedThumbnails != 0})
 		if !formatHasDuration {
 			media.DurationSeconds = math.Max(media.DurationSeconds, decimal(raw.Duration))
 		}
 	}
 	return media, nil
+}
+
+func trackTitle(tags map[string]string) string {
+	if title := tags["title"]; title != "" {
+		return title
+	}
+	return tags["handler_name"]
+}
+
+func signedDecimal(value string) float64 {
+	number, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0
+	}
+	return normalizedRotation(number)
+}
+
+func normalizedRotation(rotation float64) float64 {
+	if math.IsNaN(rotation) || math.IsInf(rotation, 0) {
+		return 0
+	}
+	rotation = math.Mod(rotation, 360)
+	if rotation < 0 {
+		rotation += 360
+	}
+	quarter := math.Round(rotation/90) * 90
+	if math.Abs(rotation-quarter) < 0.001 {
+		rotation = math.Mod(quarter, 360)
+	}
+	if rotation == 0 {
+		return 0
+	}
+	return rotation
 }
 
 func integer(s string) int64 { v, _ := strconv.ParseInt(s, 10, 64); return v }

@@ -101,20 +101,21 @@ type Result struct {
 }
 
 type Job struct {
-	ID          string     `json:"id"`
-	ProjectID   string     `json:"projectID"`
-	Input       Source     `json:"input"`
-	Output      Source     `json:"output"`
-	State       string     `json:"state"`
-	QueuedAt    time.Time  `json:"queuedAt"`
-	StartedAt   time.Time  `json:"startedAt"`
-	CompletedAt time.Time  `json:"completedAt"`
-	Progress    Progress   `json:"progress"`
-	Result      *Result    `json:"result,omitempty"`
-	Error       string     `json:"error"`
-	Logs        []string   `json:"logs"`
-	Trim        *TimeRange `json:"trim,omitempty"`
-	Project     *Project   `json:"project,omitempty"`
+	ID                string     `json:"id"`
+	ProjectID         string     `json:"projectID"`
+	Input             Source     `json:"input"`
+	SourceFingerprint string     `json:"sourceFingerprint,omitempty"`
+	Output            Source     `json:"output"`
+	State             string     `json:"state"`
+	QueuedAt          time.Time  `json:"queuedAt"`
+	StartedAt         time.Time  `json:"startedAt"`
+	CompletedAt       time.Time  `json:"completedAt"`
+	Progress          Progress   `json:"progress"`
+	Result            *Result    `json:"result,omitempty"`
+	Error             string     `json:"error"`
+	Logs              []string   `json:"logs"`
+	Trim              *TimeRange `json:"trim,omitempty"`
+	Project           *Project   `json:"project,omitempty"`
 }
 
 const (

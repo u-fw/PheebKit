@@ -216,7 +216,8 @@ func (s *Service) OpenJobOutput(id string, folder bool) error {
 		return errors.New("只能打开已完成任务的输出")
 	}
 	extension := strings.ToLower(filepath.Ext(job.Output.URI))
-	if extension != ".mp4" && extension != ".mkv" && extension != ".webm" {
+	allowed := map[string]bool{".mp4": true, ".mkv": true, ".webm": true, ".m4a": true, ".mka": true, ".opus": true, ".mp3": true, ".flac": true, ".wav": true, ".srt": true, ".ass": true, ".vtt": true}
+	if !allowed[extension] {
 		return errors.New("输出类型不允许打开")
 	}
 	info, err := os.Stat(job.Output.URI)
