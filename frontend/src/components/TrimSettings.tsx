@@ -121,7 +121,7 @@ export function TrimSettings({
             })}
           </div>
           <p className="field-hint" id="trim-format">
-            分别选择时、分、秒，使用 ±0.1
+            点击数字直接输入时、分、秒，右侧箭头打开候选列表。使用 ±0.1
             秒按钮微调，滑块保留毫秒精度。实际切点受视频帧和音频采样精度限制。
           </p>
           {error ? (

@@ -20,6 +20,14 @@ export function nextEnabled(
   return -1;
 }
 
+export function numericOption(options: readonly SelectOption[], text: string) {
+  return /^\d+$/.test(text)
+    ? options.find(
+        (option) => !option.disabled && Number(option.value) === Number(text),
+      )
+    : undefined;
+}
+
 export function findOptionByPrefix(
   options: readonly SelectOption[],
   prefix: string,

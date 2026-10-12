@@ -28,6 +28,7 @@ export function TimePicker({
         {(["hours", "minutes", "seconds"] as const).map((unit, index) => (
           <MaterialSelect
             key={unit}
+            editable
             label={["时", "分", "秒"][index]}
             accessibleLabel={`${label} · ${["时", "分", "秒"][index]}`}
             value={String(parts[unit])}

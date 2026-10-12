@@ -49,7 +49,7 @@ Optional schema-1 additions retain old defaults; older strict readers need updat
 | Batch/scheduling | Atomic capacity/ID/path failure, original output preservation, actual serial reorder/pause/current-task continuation, queued/preparing cancellation, history bounds and deep clones. |
 | Project/preset IO | Re-probe/no enqueue, intent restoration, existing-target reset, missing source, alias protection, unsafe argv and duplicate-name refusal, default preservation. |
 | Samples | Real service → queue → FFmpeg → output probe/frame comparison, proportional budget, distinct output, changed-source refusal. |
-| Frontend | 90 tests in 15 files, Typecheck/lint/format and production build. Test-only bridge browser fixtures verify keyboard operation switching, global track selection, Copy/volume prevention, sample and three-file batch payloads, and 375px dark/200% text component layout; not full App/native IPC evidence. |
+| Frontend | 92 tests in 15 files (beta.2), Typecheck/lint/format and production build. Test-only bridge browser fixtures verify keyboard operation switching, global track selection, Copy/volume prevention, sample and three-file batch payloads, and 375px dark/200% text component layout; not full App/native IPC evidence. Beta.2 time-input evidence is in [workflows](workflows.md). |
 
 Native multi-file/folder/save dialogs, Windows WebView2 comparison/default file associations and clean-machine acceptance remain manual checks. Prior native launching was rejected by automatic approval review and has not been retried through another mechanism. No Android package, signed binary or hosted release is claimed.
 

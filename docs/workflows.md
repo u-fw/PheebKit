@@ -1,6 +1,8 @@
-# PheebKit task workflows — 0.2.0-beta.1
+# PheebKit task workflows — 0.2.0-beta.2
 
 The beta.4 workflow foundation below remains in place. Current batch/scheduling, tracks, remux/extraction, transforms, sample comparison and project/preset sharing are documented in [media tools](media-tools.md). Presets now exclude selected track indexes and crop margins in addition to trim/paths, while retaining generic all/none track policies.
+
+Beta.2 (2026-10-12) separates time editing from list selection. Clicking hours/minutes/seconds selects the digits for direct entry; valid integer input updates immediately without opening or confirming a list. Only the arrow opens candidates (keyboard also supports Alt+Down). Invalid/empty drafts do not change the time, show a local range hint and restore the last valid value on blur/Enter/Escape. Entering the final hour/minute bounds smaller units to the actual duration; milliseconds and existing start/end range checks remain. Browser fixtures verified direct `1`, sequential `09`, out-of-range refusal, blur recovery, arrow/keyboard choices and external updates. Full native IPC remains a manual check.
 
 ## Behavior
 
