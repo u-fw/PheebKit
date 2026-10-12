@@ -87,6 +87,43 @@ export function TrimSettings({
       </p>
       {trim && (
         <>
+          <div className="action-row">
+            <strong>
+              保留{" "}
+              {formatTimecode(Math.max(0, trim.endSeconds - trim.startSeconds))}
+            </strong>
+            <span className="field-hint">
+              删除{" "}
+              {formatTimecode(
+                Math.max(
+                  0,
+                  total - Math.max(0, trim.endSeconds - trim.startSeconds),
+                ),
+              )}
+            </span>
+            <button
+              className="button text"
+              onClick={() => change("startSeconds", 0)}
+            >
+              起点归零
+            </button>
+            <button
+              className="button text"
+              onClick={() => change("endSeconds", max)}
+            >
+              终点归尾
+            </button>
+            <button
+              className="button text"
+              onClick={() => {
+                const next = { startSeconds: 0, endSeconds: max };
+                setRange(next);
+                onChange({ ...settings, trim: next });
+              }}
+            >
+              重置范围
+            </button>
+          </div>
           <div className="field-grid trim-fields">
             {(["startSeconds", "endSeconds"] as const).map((boundary) => {
               const label =

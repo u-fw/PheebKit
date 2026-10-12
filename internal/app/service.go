@@ -42,6 +42,8 @@ type Service struct {
 	workspaceError     string
 	lifecycleMu        sync.Mutex
 	exiting            bool
+	unsavedEdits       bool
+	draftRevision      uint64
 	previewMu          sync.Mutex
 	previewTokens      map[string]core.Media
 }

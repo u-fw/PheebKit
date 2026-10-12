@@ -16,9 +16,9 @@ func (s *Service) CanClose() bool {
 		}
 	}
 	downloading := s.setupBusy.Load()
-	if count > 0 || downloading {
+	if count > 0 || downloading || s.unsavedEdits {
 		if s.app != nil {
-			s.app.Event.Emit("app:close-requested", CloseRequest{Jobs: count, Downloading: downloading})
+			s.app.Event.Emit("app:close-requested", CloseRequest{Jobs: count, Downloading: downloading, Unsaved: s.unsavedEdits})
 		}
 		return false
 	}
@@ -29,6 +29,16 @@ func (s *Service) CanClose() bool {
 type CloseRequest struct {
 	Jobs        int  `json:"jobs"`
 	Downloading bool `json:"downloading"`
+	Unsaved     bool `json:"unsaved"`
+}
+
+func (s *Service) SetUnsavedEdits(unsaved bool, revision uint64) {
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+	if revision > s.draftRevision {
+		s.unsavedEdits = unsaved
+		s.draftRevision = revision
+	}
 }
 
 func (s *Service) ConfirmQuit() {

@@ -21,9 +21,10 @@ type historyFile struct {
 	Entries []historyEntry `json:"entries"`
 }
 type WorkspacePreferences struct {
-	Version      int            `json:"version"`
-	LastSettings *core.Settings `json:"lastSettings,omitempty"`
-	Presets      []core.Preset  `json:"presets"`
+	Version             int            `json:"version"`
+	LastSettings        *core.Settings `json:"lastSettings,omitempty"`
+	Presets             []core.Preset  `json:"presets"`
+	LastOutputDirectory string         `json:"lastOutputDirectory,omitempty"`
 }
 type WorkspaceStatus struct {
 	Error       string               `json:"error"`
@@ -121,6 +122,11 @@ func (s *Service) GetWorkspace() WorkspaceStatus {
 	}
 	if err == nil && status.Preferences.Version != 1 {
 		err = errors.New("常用设置版本不受支持")
+	}
+	if directory := status.Preferences.LastOutputDirectory; directory != "" {
+		if info, statErr := os.Stat(directory); statErr != nil || !info.IsDir() {
+			status.Preferences.LastOutputDirectory = ""
+		}
 	}
 	if err != nil {
 		status.Error = err.Error()

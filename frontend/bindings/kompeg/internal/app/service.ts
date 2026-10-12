@@ -137,6 +137,10 @@ export function RefreshCapabilities(): $CancellablePromise<core$0.Capabilities> 
     return $Call.ByID(1478811256);
 }
 
+export function RememberOutputDirectory(output: string): $CancellablePromise<void> {
+    return $Call.ByID(157952604, output);
+}
+
 export function ReuseJob(id: string): $CancellablePromise<$models.JobReuse> {
     return $Call.ByID(3841018108, id);
 }
@@ -154,6 +158,10 @@ export function SaveSettings(settings: core$0.Settings, name: string): $Cancella
 
 export function SetQueuePaused(paused: boolean): $CancellablePromise<$models.QueueStatus> {
     return $Call.ByID(3319394886, paused);
+}
+
+export function SetUnsavedEdits(unsaved: boolean, revision: number): $CancellablePromise<void> {
+    return $Call.ByID(2649157494, unsaved, revision);
 }
 
 export function Start(p: core$0.Project): $CancellablePromise<core$0.Job> {
@@ -182,4 +190,11 @@ export function StartFFmpegSetup(source: string): $CancellablePromise<$models.FF
  */
 export function StartSample(p: core$0.Project, seconds: number): $CancellablePromise<core$0.Job> {
     return $Call.ByID(3194665595, p, seconds);
+}
+
+/**
+ * A suggestion is not a reservation. Compile and final publication still refuse overwrite.
+ */
+export function SuggestOutputPath(output: string): $CancellablePromise<string> {
+    return $Call.ByID(2848742849, output);
 }

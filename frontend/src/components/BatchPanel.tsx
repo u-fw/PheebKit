@@ -13,16 +13,22 @@ export function BatchPanel({
   connected,
   onJobs,
   showQueue,
+  outputDirectory,
+  onOutputDirectory,
+  onNotice,
 }: {
   files: Media[];
   settings: Settings;
   connected: boolean;
   onJobs: (jobs: Job[]) => void;
   showQueue: () => void;
+  outputDirectory?: string;
+  onOutputDirectory?: (directory: string) => void;
+  onNotice?: (message: string) => void;
 }) {
   const [excluded, setExcluded] = useState<string[]>([]);
-  const [directory, setDirectory] = useState(() =>
-    directoryOf(files[0]?.source.uri ?? ""),
+  const [directory, setDirectory] = useState(
+    () => outputDirectory || directoryOf(files[0]?.source.uri ?? ""),
   );
   const [suffix, setSuffix] = useState(() => `pheeb-${Date.now()}`);
   const [overrides, setOverrides] = useState<
@@ -73,6 +79,11 @@ export function BatchPanel({
     try {
       const jobs = await API.startBatch(projects);
       onJobs(jobs);
+      void API.rememberOutputDirectory(projects[0].output.uri)
+        .then(() => onOutputDirectory?.(directory))
+        .catch((cause: unknown) =>
+          onNotice?.(`整批已提交，但输出目录未能记住：${errorMessage(cause)}`),
+        );
       showQueue();
     } catch (cause) {
       setMessage(`整批未提交：${errorMessage(cause)}`);

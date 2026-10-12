@@ -1,4 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { draftFingerprint, inOutputDirectory, type Draft } from "../draft";
+import { directoryOf } from "../batch";
 import { API } from "../bridge";
 import type { Capabilities, Job, Media, Project, Settings } from "../bridge";
 import { errorMessage } from "../format";
@@ -45,7 +47,14 @@ type Props = {
   onSaved?: (value: Settings) => void;
   initialOutput?: string;
   renderBatch?: (settings: Settings) => ReactNode;
-  projectActions?: (project: Project) => ReactNode;
+  projectActions?: (
+    project: Project,
+    markSaved: (project: Project) => void,
+  ) => ReactNode;
+  onDraft?: (draft: Draft) => void;
+  outputDirectory?: string;
+  onOutputDirectory?: (directory: string) => void;
+  onNotice?: (message: string) => void;
 };
 
 export function Compress({
@@ -62,6 +71,10 @@ export function Compress({
   initialOutput,
   renderBatch,
   projectActions,
+  onDraft,
+  outputDirectory,
+  onOutputDirectory,
+  onNotice,
 }: Props) {
   const [settings, setSettings] = useState<Settings>(() =>
     media
@@ -72,10 +85,13 @@ export function Compress({
     () =>
       initialOutput ??
       (media
-        ? suggestedOperationOutput(
-            media.source.uri,
-            initialSettings ?? defaultSettings,
-          ).replace(/(\.[^.]+)$/, reused ? `-${Date.now()}$1` : "$1")
+        ? inOutputDirectory(
+            suggestedOperationOutput(
+              media.source.uri,
+              initialSettings ?? defaultSettings,
+            ).replace(/(\.[^.]+)$/, reused ? `-${Date.now()}$1` : "$1"),
+            outputDirectory,
+          )
         : ""),
   );
   const [customResolution, setCustomResolution] = useState(
@@ -90,6 +106,24 @@ export function Compress({
   const [advancedRevision, setAdvancedRevision] = useState(0);
   const [settingsNotice, setSettingsNotice] = useState("");
   const [projectID] = useState(() => crypto.randomUUID());
+  const [baseline, setBaseline] = useState(() =>
+    media
+      ? draftFingerprint(makeProject(media, settings, output, projectID))
+      : "",
+  );
+  const markSaved = useCallback(
+    (project: Project) => setBaseline(draftFingerprint(project)),
+    [],
+  );
+  useEffect(() => {
+    if (!media || !onDraft) return;
+    const project = makeProject(media, settings, output, projectID);
+    onDraft({
+      project,
+      dirty: draftFingerprint(project) !== baseline,
+      markSaved,
+    });
+  }, [media, settings, output, projectID, baseline, markSaved, onDraft]);
   const operation = operationOf(settings);
   const compress = operation === "compress";
   const preview = useExecutionPlan(
@@ -156,7 +190,11 @@ export function Compress({
     setActionError("");
     try {
       const chosen = await API.chooseOutput(output);
-      if (chosen) setOutput(chosen);
+      if (chosen) {
+        setOutput(chosen);
+        await API.rememberOutputDirectory(chosen);
+        onOutputDirectory?.(directoryOf(chosen));
+      }
     } catch (cause) {
       setActionError(`选择输出文件失败：${errorMessage(cause)}`);
     } finally {
@@ -182,6 +220,13 @@ export function Compress({
         makeProject(media, settings, output, projectID),
       );
       onJob(job);
+      void API.rememberOutputDirectory(output)
+        .then(() => onOutputDirectory?.(directoryOf(output)))
+        .catch((cause: unknown) => {
+          const message = `任务已提交，但输出目录未能记住：${errorMessage(cause)}`;
+          setActionError(message);
+          onNotice?.(message);
+        });
       showQueue();
     } catch (cause) {
       setActionError(`启动失败：${errorMessage(cause)}`);
@@ -261,7 +306,10 @@ export function Compress({
               {settingsNotice}
             </p>
           )}
-          {projectActions?.(makeProject(media, settings, output, projectID))}
+          {projectActions?.(
+            makeProject(media, settings, output, projectID),
+            markSaved,
+          )}
           <OperationSettings
             media={media}
             settings={settings}
@@ -371,7 +419,31 @@ export function Compress({
                 {choosingOutput ? "选择中…" : "浏览"}
               </button>
             </div>
-            <span className="field-hint">使用新的输出文件名，保留源媒体。</span>
+            <p className="field-hint">
+              最终文件名：{output.split(/[\\/]/).pop() || "尚未设置"}
+            </p>
+            <div className="action-row">
+              <button
+                className="button text"
+                disabled={!connected || choosingOutput || !output}
+                onClick={async () => {
+                  setChoosingOutput(true);
+                  setActionError("");
+                  try {
+                    setOutput(await API.suggestOutputPath(output));
+                  } catch (cause) {
+                    setActionError(errorMessage(cause));
+                  } finally {
+                    setChoosingOutput(false);
+                  }
+                }}
+              >
+                自动避开重名
+              </button>
+              <span className="field-hint">
+                不会覆盖源文件或已有结果。上次选择的输出文件夹会用于下次导入。
+              </span>
+            </div>
           </section>
           {renderBatch?.(settings)}
         </div>

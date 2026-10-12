@@ -11,12 +11,16 @@ export function ProjectActions({
   load,
   onJob,
   showQueue,
+  onSaved,
+  dirty = false,
 }: {
   project: Project;
   connected: boolean;
   load: () => Promise<void>;
   onJob: (job: Job) => void;
   showQueue: () => void;
+  onSaved?: (project: Project) => void;
+  dirty?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [seconds, setSeconds] = useState("10");
@@ -29,7 +33,10 @@ export function ProjectActions({
       if (action === "load") await load();
       else if (action === "save") {
         const path = await API.saveProject(project);
-        if (path) setMessage(`项目已保存：${path}`);
+        if (path) {
+          setMessage(`项目已保存：${path}`);
+          onSaved?.(project);
+        }
       } else {
         onJob(await API.startSample(project, Number(seconds)));
         showQueue();
@@ -44,7 +51,9 @@ export function ProjectActions({
     <section className="surface settings-card project-actions">
       <div className="section-title">
         <h2>项目与试压</h2>
-        <span className="subtle-label">可继续编辑</span>
+        <span className="subtle-label" role="status">
+          {dirty ? "未保存修改" : "可继续编辑"}
+        </span>
       </div>
       <div className="action-row">
         <button

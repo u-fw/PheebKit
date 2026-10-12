@@ -181,6 +181,7 @@ function settingsView(settings: Core.Settings): Settings {
   };
 }
 export interface WorkspacePreferences {
+  lastOutputDirectory?: string;
   version: number;
   lastSettings?: Settings | null;
   presets: { id: string; name: string; settings: Settings }[];
@@ -212,6 +213,12 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  setUnsavedEdits: (value: boolean, revision: number): Promise<void> =>
+    Service.SetUnsavedEdits(value, revision),
+  rememberOutputDirectory: (path: string): Promise<void> =>
+    Service.RememberOutputDirectory(path),
+  suggestOutputPath: (path: string): Promise<string> =>
+    Service.SuggestOutputPath(path),
   chooseMediaPaths: async (): Promise<string[]> =>
     (await Service.ChooseMediaPaths()) ?? [],
   chooseOutputDirectory: async (suggested: string): Promise<string> =>
@@ -261,7 +268,11 @@ export const API = {
     preferencesView(await Service.DeletePreset(id)),
   confirmQuit: async (): Promise<void> => Service.ConfirmQuit(),
   onCloseRequested: (
-    callback: (request: { jobs: number; downloading: boolean }) => void,
+    callback: (request: {
+      jobs: number;
+      downloading: boolean;
+      unsaved?: boolean;
+    }) => void,
   ): (() => void) =>
     Events.On("app:close-requested", (event) => callback(event.data)),
   openJobOutput: async (id: string, folder: boolean): Promise<void> =>

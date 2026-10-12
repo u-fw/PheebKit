@@ -15,6 +15,7 @@ export interface BinaryStatus {
 export interface CloseRequest {
     "jobs": number;
     "downloading": boolean;
+    "unsaved": boolean;
 }
 
 export interface Environment {
@@ -68,6 +69,7 @@ export interface WorkspacePreferences {
     "version": number;
     "lastSettings"?: core$0.Settings | null;
     "presets": core$0.Preset[] | null;
+    "lastOutputDirectory"?: string;
 }
 
 export interface WorkspaceStatus {

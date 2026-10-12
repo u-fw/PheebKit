@@ -14,7 +14,8 @@ import { JobHistory } from "../jobHistory";
 import { refreshEnvironmentSnapshot } from "../environmentRefresh";
 import { latestQueueStatus } from "../queueSchedule";
 
-export function useStudio() {
+export function useStudio(protect?: (action: () => Promise<void>) => void) {
+  const [outputDirectory, setOutputDirectory] = useState<string>();
   const [platform, setPlatform] = useState("连接中");
   const [connected, setConnected] = useState(false);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
@@ -242,7 +243,13 @@ export function useStudio() {
       setError("");
       try {
         const paths = await API.chooseMediaPaths();
-        if (paths.length) await processImport(paths, append);
+        if (paths.length) {
+          const workspace = await API.getWorkspace();
+          setOutputDirectory(
+            workspace.preferences.lastOutputDirectory || undefined,
+          );
+          await processImport(paths, append);
+        }
       } catch (cause) {
         setError(`导入失败：${errorMessage(cause)}`);
       } finally {
@@ -312,8 +319,12 @@ export function useStudio() {
         alive &&
         result.status === "fulfilled" &&
         initialSavedRevision === savedSettingsRevision.current
-      )
+      ) {
         setSavedSettings(result.value.preferences.lastSettings ?? undefined);
+        setOutputDirectory(
+          result.value.preferences.lastOutputDirectory || undefined,
+        );
+      }
     });
     void environmentRequest
       .then((status) => {
@@ -409,7 +420,10 @@ export function useStudio() {
       );
       unsubscribe.push(
         API.onDrop((paths) => {
-          if (alive) void importPaths(paths);
+          if (alive) {
+            if (protect) protect(() => importPaths(paths));
+            else void importPaths(paths);
+          }
         }),
       );
     } catch (cause) {
@@ -421,7 +435,7 @@ export function useStudio() {
       if (timer) clearTimeout(timer);
       unsubscribe.forEach((off) => off());
     };
-  }, [importPaths]);
+  }, [importPaths, protect]);
 
   const addJob = useCallback((job: Job) => {
     setJobs(jobHistory.current.update([job]));
@@ -486,6 +500,8 @@ export function useStudio() {
   return {
     platform,
     savedSettings,
+    outputDirectory,
+    setOutputDirectory,
     setSavedSettings: updateSavedSettings,
     reuse,
     reuseJob,

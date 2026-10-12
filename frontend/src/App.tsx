@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { UnsavedDialog } from "./components/UnsavedDialog";
+import type { Draft } from "./draft";
 import { Compress } from "./components/Compress";
 import { Home } from "./components/Home";
 import { Icon } from "./components/Icon";
@@ -38,11 +40,43 @@ export default function App() {
   const [page, setPage] = useState<Page>("home");
   const [compressVisited, setCompressVisited] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(initialTheme);
-  const studio = useStudio();
+  const draft = useRef<Draft | null>(null);
+  const draftRevision = useRef(0);
+  const [guardError, setGuardError] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [pending, setPending] = useState<{
+    action: () => Promise<void>;
+  } | null>(null);
+  const protect = useCallback((action: () => Promise<void>) => {
+    if (draft.current?.dirty) setPending((current) => current ?? { action });
+    else void action().catch((cause: unknown) => setGuardError(String(cause)));
+  }, []);
+  const studio = useStudio(protect);
+  const { connected, setError } = studio;
+  const onDraft = useCallback((value: Draft) => {
+    draft.current = value;
+    setDirty(value.dirty);
+  }, []);
+  useEffect(() => {
+    if (!connected) return;
+    draftRevision.current = Math.max(Date.now(), draftRevision.current + 1);
+    void API.setUnsavedEdits(dirty, draftRevision.current).catch(
+      (cause: unknown) => setError(`未保存保护同步失败：${String(cause)}`),
+    );
+  }, [dirty, connected, setError]);
+  async function saveDraft(): Promise<boolean> {
+    const value = draft.current;
+    if (!value) return false;
+    const path = await API.saveProject(value.project);
+    if (!path) return false;
+    value.markSaved(value.project);
+    return true;
+  }
   const [comparisonID, setComparisonID] = useState<string | null>(null);
   const [closeRequest, setCloseRequest] = useState<{
     jobs: number;
     downloading: boolean;
+    unsaved?: boolean;
   } | null>(null);
   useEffect(() => {
     if (!studio.connected) return;
@@ -67,7 +101,9 @@ export default function App() {
     document.documentElement.scrollTop = 0;
   }
   async function loadProject() {
-    if (await studio.loadProject()) navigate("compress");
+    protect(async () => {
+      if (await studio.loadProject()) navigate("compress");
+    });
   }
 
   return (
@@ -171,14 +207,17 @@ export default function App() {
                 </button>
               </div>
             )}
-          {studio.error && (
+          {(studio.error || guardError) && (
             <div className="app-alert" role="alert">
               <Icon name="info" />
-              <span>{studio.error}</span>
+              <span>{studio.error || guardError}</span>
               <button
                 className="icon-button"
                 aria-label="关闭提示"
-                onClick={() => studio.setError("")}
+                onClick={() => {
+                  studio.setError("");
+                  setGuardError("");
+                }}
               >
                 <Icon name="close" />
               </button>
@@ -216,7 +255,9 @@ export default function App() {
                     className="button outlined"
                     disabled={studio.busy || !studio.connected}
                     onClick={() =>
-                      void studio.chooseMedia(studio.mediaList.length > 0)
+                      studio.mediaList.length > 0
+                        ? void studio.chooseMedia(true)
+                        : protect(() => studio.chooseMedia())
                     }
                   >
                     添加媒体
@@ -240,7 +281,12 @@ export default function App() {
                       aria-pressed={
                         studio.media?.source.uri === item.source.uri
                       }
-                      onClick={() => studio.selectMedia(item)}
+                      onClick={() => {
+                        if (studio.media?.source.uri !== item.source.uri)
+                          protect(async () => {
+                            studio.selectMedia(item);
+                          });
+                      }}
                     >
                       {item.name}
                     </button>
@@ -260,7 +306,7 @@ export default function App() {
               media={studio.media}
               busy={studio.busy}
               connected={studio.connected}
-              chooseMedia={() => void studio.chooseMedia()}
+              chooseMedia={() => protect(() => studio.chooseMedia())}
               compress={() => navigate("compress")}
             />
           )}
@@ -282,14 +328,23 @@ export default function App() {
                       files={studio.mediaList}
                       settings={settings}
                       connected={studio.connected}
+                      outputDirectory={studio.outputDirectory}
+                      onOutputDirectory={studio.setOutputDirectory}
+                      onNotice={studio.setError}
                       onJobs={studio.addJobs}
                       showQueue={() => navigate("queue")}
                     />
                   ) : null
                 }
-                projectActions={(project) => (
+                onDraft={onDraft}
+                outputDirectory={studio.outputDirectory}
+                onOutputDirectory={studio.setOutputDirectory}
+                onNotice={studio.setError}
+                projectActions={(project, markSaved) => (
                   <ProjectActions
                     project={project}
+                    onSaved={markSaved}
+                    dirty={dirty}
                     connected={studio.connected}
                     load={loadProject}
                     onJob={studio.addJob}
@@ -301,7 +356,7 @@ export default function App() {
                 visible={page === "compress"}
                 capabilities={studio.capabilities}
                 connected={studio.connected}
-                chooseMedia={() => void studio.chooseMedia()}
+                chooseMedia={() => protect(() => studio.chooseMedia())}
                 onJob={studio.addJob}
                 showQueue={() => navigate("queue")}
               />
@@ -325,8 +380,9 @@ export default function App() {
                       ?.scrollIntoView({ block: "start" }),
                   );
                 }}
-                reuse={(id) =>
-                  studio.reuseJob(id).then((success) => {
+                reuse={async (id) =>
+                  protect(async () => {
+                    const success = await studio.reuseJob(id);
                     if (success) navigate("compress");
                   })
                 }
@@ -385,8 +441,16 @@ export default function App() {
       </nav>
       {closeRequest && (
         <ExitDialog
-          request={closeRequest}
+          request={{ ...closeRequest, unsaved: closeRequest.unsaved || dirty }}
           dismiss={() => setCloseRequest(null)}
+          save={saveDraft}
+        />
+      )}
+      {pending && (
+        <UnsavedDialog
+          save={saveDraft}
+          discard={pending.action}
+          dismiss={() => setPending(null)}
         />
       )}
     </div>
