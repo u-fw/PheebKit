@@ -5,13 +5,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/bodgit/sevenzip"
 	"github.com/ulikunitz/xz/lzma"
 )
 
-const maxDictionary = 128 << 20
+// The verified Gyan full archive declares 192 MiB; keep a bounded 256 MiB ceiling.
+const maxDictionary = 256 << 20
 const maxSevenZipHeader = 16 << 20
 
 // This package is the application's only 7z consumer. Install bounded decoders
@@ -47,12 +49,20 @@ func boundedLZMA(properties []byte, size uint64, readers []io.ReadCloser) (io.Re
 }
 
 func boundedLZMA2(properties []byte, size uint64, readers []io.ReadCloser) (io.ReadCloser, error) {
-	if len(properties) != 1 || len(readers) != 1 || properties[0] > 30 || size > uint64(maxExpanded) {
-		return nil, errors.New("7z LZMA2 字典或数据大小超出限制")
+	if len(properties) != 1 || len(readers) != 1 {
+		return nil, errors.New("7z LZMA2 属性无效")
+	}
+	if properties[0] > 32 || size > uint64(maxExpanded) {
+		return nil, fmt.Errorf("7z LZMA2 字典或数据大小超出限制（属性 %d；声明大小 %d）", properties[0], size)
 	}
 	dictionary := (2 | (int(properties[0]) & 1)) << (properties[0]/2 + 11)
 	if dictionary > maxDictionary {
-		return nil, errors.New("7z LZMA2 字典超出 128 MiB")
+		return nil, errors.New("7z LZMA2 字典超出 256 MiB")
+	}
+	// A stream cannot reference more history than its complete unpacked size.
+	// Avoid reserving 192 MiB for the publisher's small metadata stream.
+	if size < uint64(dictionary) {
+		dictionary = max(lzma.MinDictCap, int(size))
 	}
 	reader, err := (lzma.Reader2Config{DictCap: dictionary}).NewReader2(readers[0])
 	if err != nil {

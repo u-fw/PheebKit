@@ -10,7 +10,7 @@ import (
 
 func TestSevenZipRejectsOversizedDictionaryBeforeDecode(t *testing.T) {
 	input := []io.ReadCloser{io.NopCloser(bytes.NewReader(nil))}
-	for _, property := range []byte{31, 40, 255} {
+	for _, property := range []byte{33, 40, 255} {
 		if _, err := boundedLZMA2([]byte{property}, 1, input); err == nil {
 			t.Fatal("unbounded LZMA2 dictionary accepted")
 		}

@@ -39,6 +39,13 @@ func (out *archiveOutput) write(name string, mode os.FileMode, size int64, reade
 	if !filepath.IsLocal(filepath.FromSlash(name)) || strings.ContainsAny(name, "\\:") {
 		return errors.New("压缩包包含不安全路径")
 	}
+	for _, component := range strings.Split(strings.TrimSuffix(name, "/"), "/") {
+		// Windows normalizes trailing dots/spaces. Reject ambiguous aliases
+		// before any filesystem calls, while preserving normal TAR ./ roots.
+		if component != "." && (component == ".." || strings.TrimRight(component, " .") != component) {
+			return errors.New("压缩包包含 Windows 路径别名（末尾点或空格）")
+		}
+	}
 	if mode.Type() != 0 && mode.Type() != os.ModeDir {
 		return errors.New("压缩包包含链接或特殊文件")
 	}
