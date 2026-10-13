@@ -116,6 +116,9 @@ func extract(ctx context.Context, archive, destination string, artifact Artifact
 		if err != nil {
 			return err
 		}
+		if err := checkSevenZipHeader(file, stat.Size()); err != nil {
+			return err
+		}
 		reader, err := sevenzip.NewReader(&contextReaderAt{ctx: ctx, reader: file}, stat.Size())
 		if err != nil {
 			return err

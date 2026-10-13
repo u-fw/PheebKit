@@ -15,6 +15,7 @@ import { refreshEnvironmentSnapshot } from "../environmentRefresh";
 import { latestQueueStatus } from "../queueSchedule";
 
 export function useStudio(protect?: (action: () => Promise<void>) => void) {
+  const mediaRevision = useRef(0);
   const [outputDirectory, setOutputDirectory] = useState<string>();
   const [platform, setPlatform] = useState("连接中");
   const [connected, setConnected] = useState(false);
@@ -39,6 +40,16 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!connected) return;
+    mediaRevision.current = Math.max(Date.now(), mediaRevision.current + 1);
+    void API.setActiveMedia(
+      mediaList.map((item) => item.source.uri),
+      mediaRevision.current,
+    ).catch((cause: unknown) =>
+      setError(`媒体集合保护失败：${errorMessage(cause)}`),
+    );
+  }, [connected, mediaList]);
   const [savedSettings, setSavedSettings] = useState<Settings | undefined>();
   const [reuse, setReuse] = useState<{
     settings: Settings;

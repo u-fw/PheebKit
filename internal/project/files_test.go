@@ -1,6 +1,7 @@
 package project
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,6 +9,29 @@ import (
 
 	"kompeg/internal/core"
 )
+
+func TestSaveSizeBoundaryIncludesNewlineAndPreservesOldFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "boundary.ffproject")
+	p := core.Project{SchemaVersion: 1, ID: "x"}
+	base, _ := json.MarshalIndent(p, "", "  ")
+	p.ID = strings.Repeat("x", maxProjectSize-len(base))
+	if err := Save(path, p); err != nil {
+		t.Fatal(err)
+	}
+	if info, _ := os.Stat(path); info.Size() != maxProjectSize {
+		t.Fatal("boundary fixture has wrong size")
+	}
+	if _, err := Load(path); err != nil {
+		t.Fatal(err)
+	}
+	p.ID += "x"
+	if err := Save(path, p); err == nil {
+		t.Fatal("save produced a file too large to reopen")
+	}
+	if _, err := Load(path); err != nil {
+		t.Fatal("rejected save damaged existing project", err)
+	}
+}
 
 func TestRoundTripAndFutureSchemaRejection(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "项目.ffproject")

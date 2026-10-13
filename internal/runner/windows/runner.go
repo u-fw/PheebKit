@@ -14,6 +14,7 @@ import (
 
 	"kompeg/internal/capabilities"
 	"kompeg/internal/core"
+	"kompeg/internal/ffmpegpolicy"
 	"kompeg/internal/probe"
 	"kompeg/internal/sourcefile"
 )
@@ -45,7 +46,7 @@ func (r *Runner) Probe(ctx context.Context, source core.Source) (core.Media, err
 	if err != nil {
 		return core.Media{}, err
 	}
-	args := []string{"-v", "error", "-show_format", "-show_streams", "-show_chapters", "-show_programs", "-of", "json", "-i", source.URI}
+	args := append([]string{"-v", "error", "-show_format", "-show_streams", "-show_chapters", "-show_programs", "-of", "json"}, ffmpegpolicy.LocalInput(source.URI)...)
 	data, err := capture(ctx, r.FFprobe, args, false)
 	if err != nil {
 		return core.Media{}, fmt.Errorf("probe media: %w", err)

@@ -16,7 +16,7 @@ func TestTrimRangeAndSizeBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.DurationSeconds != 5 || !strings.Contains(strings.Join(plan.Args, "|"), strings.Join([]string{"-ss", "2.5", "-accurate_seek", "-i", p.Inputs[0].URI, "-t", "5", "-map_chapters", "-1"}, "|")) || !contains(plan.Args, "7648k") {
+	if plan.DurationSeconds != 5 || !strings.Contains(strings.Join(plan.Args, "|"), strings.Join([]string{"-ss", "2.5", "-accurate_seek", "-protocol_whitelist", "file", "-i", p.Inputs[0].URI, "-t", "5", "-map_chapters", "-1"}, "|")) || !contains(plan.Args, "7648k") {
 		t.Fatalf("wrong seek, duration, or trimmed size budget: %+v", plan)
 	}
 	p.Settings.Trim = nil

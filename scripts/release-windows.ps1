@@ -7,6 +7,9 @@ if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne 'X64
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 Set-Location -LiteralPath $workspace
 
+$taskGoVersion = go env GOVERSION
+if ($LASTEXITCODE -ne 0 -or $taskGoVersion -notmatch '^go(\d+\.\d+\.\d+)$' -or [Version]$Matches[1] -lt [Version]'1.27.2') { throw 'Security release builds require stable Go 1.27.2 or newer; enable automatic toolchain selection.' }
+
 function Invoke-Checked([string]$Program, [string[]]$Arguments) {
     & $Program @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Program failed with exit code $LASTEXITCODE" }
@@ -39,6 +42,8 @@ try {
     Invoke-Checked node @('--test', 'scripts/version.test.mjs')
     Invoke-Checked go @('test', './...')
     Invoke-Checked go @('vet', './...')
+    Invoke-Checked go @('run', 'golang.org/x/vuln/cmd/govulncheck@v1.9.0', './...')
+    Invoke-Checked npm @('--prefix', 'frontend', 'audit', '--audit-level=low')
     foreach ($check in @('test', 'typecheck', 'lint', 'format:check')) { Invoke-Checked npm @('--prefix', 'frontend', 'run', $check) }
     Invoke-Checked wails3 @('build')
     $application = Join-Path $workspace 'bin/PheebKit.exe'

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"kompeg/internal/core"
+	"kompeg/internal/ffmpegpolicy"
 	"kompeg/internal/sourcefile"
 )
 
@@ -70,9 +71,7 @@ func thumbnailData(data []byte, source string) (Thumbnail, error) {
 func (s *Service) GetThumbnail(uri string) (Thumbnail, error) {
 	s.configMu.RLock()
 	defer s.configMu.RUnlock()
-	s.mediaMu.RLock()
-	media, found := s.media[uri]
-	s.mediaMu.RUnlock()
+	media, found := s.cachedMedia(uri)
 	if !found {
 		return Thumbnail{}, errors.New("请先导入并解析媒体，再读取封面。")
 	}
@@ -135,7 +134,8 @@ func ffmpegThumbnail(ctx context.Context, binary string, media core.Media) (Thum
 		position := min(media.DurationSeconds*0.1, 5)
 		args = append(args, "-ss", strconv.FormatFloat(position, 'f', 3, 64))
 	}
-	args = append(args, "-i", media.Source.URI, "-map", "0:"+strconv.Itoa(stream.Index), "-frames:v", "1", "-an", "-sn", "-vf", "scale=512:512:force_original_aspect_ratio=decrease", "-c:v", "mjpeg", "-q:v", "3", "-f", "image2pipe", "pipe:1")
+	args = append(args, ffmpegpolicy.LocalInput(media.Source.URI)...)
+	args = append(args, "-map", "0:"+strconv.Itoa(stream.Index), "-frames:v", "1", "-an", "-sn", "-vf", "scale=512:512:force_original_aspect_ratio=decrease", "-c:v", "mjpeg", "-q:v", "3", "-f", "image2pipe", "pipe:1")
 	command := exec.CommandContext(ctx, binary, args...)
 	hidePlatformProcess(command)
 	var output, stderr limitedBuffer

@@ -16,13 +16,12 @@ import (
 	"time"
 
 	"kompeg/internal/core"
+	"kompeg/internal/ffmpegpolicy"
 	"kompeg/internal/sourcefile"
 )
 
 func (s *Service) importedMedia(uri string) (core.Media, error) {
-	s.mediaMu.RLock()
-	media, found := s.media[uri]
-	s.mediaMu.RUnlock()
+	media, found := s.cachedMedia(uri)
 	if !found || media.Source.Kind != core.SourceLocalFile {
 		return core.Media{}, errors.New("请先导入本地媒体")
 	}
@@ -192,7 +191,9 @@ func (s *Service) GetVideoFrame(uri string, seconds float64) (Thumbnail, error) 
 		return Thumbnail{}, err
 	}
 	defer release()
-	args := []string{"-hide_banner", "-loglevel", "error", "-nostdin", "-ss", strconv.FormatFloat(seconds, 'f', 6, 64), "-i", uri, "-map", "0:" + strconv.Itoa(video.Index), "-frames:v", "1", "-an", "-sn", "-vf", "scale=512:512:force_original_aspect_ratio=decrease", "-c:v", "mjpeg", "-q:v", "3", "-f", "image2pipe", "pipe:1"}
+	args := []string{"-hide_banner", "-loglevel", "error", "-nostdin", "-ss", strconv.FormatFloat(seconds, 'f', 6, 64)}
+	args = append(args, ffmpegpolicy.LocalInput(uri)...)
+	args = append(args, "-map", "0:"+strconv.Itoa(video.Index), "-frames:v", "1", "-an", "-sn", "-vf", "scale=512:512:force_original_aspect_ratio=decrease", "-c:v", "mjpeg", "-q:v", "3", "-f", "image2pipe", "pipe:1")
 	command := exec.CommandContext(ctx, previewBinary(s.runner.snapshot()), args...)
 	hidePlatformProcess(command)
 	var output, stderr limitedBuffer

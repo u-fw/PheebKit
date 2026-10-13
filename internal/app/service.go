@@ -27,6 +27,10 @@ type Service struct {
 	cancel             context.CancelFunc
 	mediaMu            sync.RWMutex
 	media              map[string]core.Media
+	mediaUsed          map[string]uint64
+	mediaPinned        map[string]bool
+	mediaSequence      uint64
+	mediaRevision      uint64
 	capsMu             sync.Mutex
 	caps               *core.Capabilities
 	configMu           sync.RWMutex
@@ -114,9 +118,7 @@ func (s *Service) probe(uri string) (core.Media, error) {
 		return core.Media{}, err
 	}
 	m.SourceFingerprint = fingerprint
-	s.mediaMu.Lock()
-	s.media[m.Source.URI] = m
-	s.mediaMu.Unlock()
+	s.cacheMedia(m)
 	if s.app != nil {
 		s.app.Event.Emit("media:probed", m)
 	}
@@ -190,9 +192,7 @@ func (s *Service) preview(p core.Project) (core.ExecutionPlan, error) {
 	if len(p.Inputs) != 1 {
 		return core.ExecutionPlan{}, errors.New("the spike requires exactly one input")
 	}
-	s.mediaMu.RLock()
-	m, found := s.media[p.Inputs[0].URI]
-	s.mediaMu.RUnlock()
+	m, found := s.cachedMedia(p.Inputs[0].URI)
 	if !found {
 		var err error
 		m, err = s.probe(p.Inputs[0].URI)

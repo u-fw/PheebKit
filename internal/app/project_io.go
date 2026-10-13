@@ -254,7 +254,7 @@ func exportPresetAt(path string, p core.Preset) error {
 	if err != nil {
 		return err
 	}
-	if len(data) > 1024*1024 {
+	if len(data)+1 > 1024*1024 {
 		return errors.New("配置超过 1 MiB")
 	}
 	file, err := os.CreateTemp(filepath.Dir(path), ".pheebpreset-*")

@@ -1,5 +1,7 @@
 # Development environment audit — 2026-10-09
 
+Security update on 2026-10-13 pins and verifies Go 1.27.2 for releases, with Node 24. The observations below describe the original spike environment; current evidence is in the [security/performance audit](security-performance-audit.md).
+
 Native Windows 11 Pro 25H2 (build 26200), PowerShell 7.6.5, amd64. Repository started empty with an unborn `main` branch; implementation lives on `codex/technical-spike`.
 
 | Tool | Observed result |

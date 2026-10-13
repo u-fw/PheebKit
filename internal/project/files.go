@@ -49,7 +49,7 @@ func Save(path string, project core.Project) error {
 	if err != nil {
 		return err
 	}
-	if len(data) > maxProjectSize {
+	if len(data)+1 > maxProjectSize {
 		return fmt.Errorf("project exceeds 1 MiB limit")
 	}
 	file, err := os.CreateTemp(filepath.Dir(path), ".ffproject-*")

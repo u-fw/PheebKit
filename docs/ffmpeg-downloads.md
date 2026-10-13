@@ -1,5 +1,7 @@
 # Windows FFmpeg setup
 
+Security hardening in 0.2.0-beta.4 bounds 7z LZMA/LZMA2 dictionaries to 128 MiB and raw next-header metadata to 16 MiB. PPMd/Zstandard/Brotli/encrypted 7z codecs are refused with an explicit message; use LZMA/LZMA2 or ZIP. This is a supported-codec policy, not a process sandbox. See the [audit](security-performance-audit.md).
+
 The application downloads only on an explicit click in Settings. It never installs a package manager, clones Git repositories, requires elevation, changes system PATH, or upgrades an existing FFmpeg automatically. Automatic download is supported only on Windows amd64. Existing local selection remains available offline.
 
 ## Catalog

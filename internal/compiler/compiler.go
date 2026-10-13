@@ -11,6 +11,7 @@ import (
 
 	"kompeg/internal/capabilities"
 	"kompeg/internal/core"
+	"kompeg/internal/ffmpegpolicy"
 )
 
 type encoderPolicy struct {
@@ -112,7 +113,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		// Both video and audio are encoded; output -t limits the selected duration.
 		args = append(args, "-ss", strconv.FormatFloat(settings.Trim.StartSeconds, 'f', -1, 64), "-accurate_seek")
 	}
-	args = append(args, "-i", input.URI)
+	args = append(args, ffmpegpolicy.LocalInput(input.URI)...)
 	if settings.Trim != nil {
 		args = append(args, "-t", strconv.FormatFloat(duration, 'f', -1, 64), "-map_chapters", "-1")
 	}

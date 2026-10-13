@@ -8,6 +8,7 @@ import (
 
 	"kompeg/internal/capabilities"
 	"kompeg/internal/core"
+	"kompeg/internal/ffmpegpolicy"
 )
 
 var textSubtitles = map[string]bool{"subrip": true, "srt": true, "ass": true, "ssa": true, "webvtt": true, "mov_text": true, "text": true}
@@ -87,7 +88,7 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 	if s.Trim != nil {
 		args = append(args, "-ss", strconv.FormatFloat(s.Trim.StartSeconds, 'f', -1, 64), "-accurate_seek")
 	}
-	args = append(args, "-i", project.Inputs[0].URI)
+	args = append(args, ffmpegpolicy.LocalInput(project.Inputs[0].URI)...)
 	if s.Trim != nil {
 		args = append(args, "-t", strconv.FormatFloat(duration, 'f', -1, 64))
 	}

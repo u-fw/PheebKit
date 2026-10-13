@@ -23,6 +23,12 @@ describe("editable project protection", () => {
     expect(draftFingerprint({ ...project, id: "b" })).toBe(
       draftFingerprint(project),
     );
+    const reordered = Object.fromEntries(
+      Object.entries(project.settings).reverse(),
+    ) as typeof project.settings;
+    expect(draftFingerprint({ ...project, settings: reordered })).toBe(
+      draftFingerprint(project),
+    );
     expect(
       draftFingerprint({
         ...project,

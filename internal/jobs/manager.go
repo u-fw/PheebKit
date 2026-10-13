@@ -203,8 +203,9 @@ func (m *Manager) EnqueueBatch(plans []core.ExecutionPlan, projects []core.Proje
 		queued[i] = snapshot(job)
 	}
 	m.queueRevision++
+	m.persistLocked()
 	for _, job := range queued {
-		m.publishLocked(job)
+		m.emitLocked(job)
 	}
 	m.wakeLocked()
 	return queued, nil
@@ -415,6 +416,13 @@ func (m *Manager) log(id, line string) {
 
 func (m *Manager) publishLocked(job core.Job) {
 	if m.persist != nil && m.savedStates[job.ID] != job.State {
+		m.persistLocked()
+	}
+	m.emitLocked(job)
+}
+
+func (m *Manager) persistLocked() {
+	if m.persist != nil {
 		all := make([]core.Job, 0, len(m.order))
 		for _, id := range m.order {
 			all = append(all, snapshot(m.records[id].job))
@@ -423,9 +431,14 @@ func (m *Manager) publishLocked(job core.Job) {
 			m.persistenceError = err.Error()
 		} else {
 			m.persistenceError = ""
-			m.savedStates[job.ID] = job.State
+			for _, saved := range all {
+				m.savedStates[saved.ID] = saved.State
+			}
 		}
 	}
+}
+
+func (m *Manager) emitLocked(job core.Job) {
 	// Event delivery cannot block execution. Drop an old snapshot if a UI is slow;
 	// List/Get always retain the authoritative state and bounded log history.
 	select {

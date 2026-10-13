@@ -1,0 +1,24 @@
+# Security and performance audit — 2026-10-13
+
+Scope: native Windows 11 x64, PowerShell 7, PheebKit Technical Spike. Reviewed compiler argv, runner process/output boundaries, media assets/cache, download/archives, project/preset persistence, queue events/history, frontend edit state and pinned dependencies. Findings below are confirmed and remediated locally; publication is separate.
+
+| Finding | Severity / evidence | Correction and verification |
+|---|---|---|
+| Go 1.27.1 standard-library advisories | High, govulncheck reports nine reachable advisory entries; reachability does not establish remote exploitability in this desktop shell. | Pin Go 1.27.2 toolchain, enforce patched stable SDK in release script and CI. Before/after reports retained locally under `.tools/security-*.txt`. |
+| x/text advisory GO-2026-6629 | Low, module-only: `secure/precis` is not imported/called by this build. | Minimal official fix v0.40.0 → v0.41.0, retaining language/platform support. Final source scan reports no advisory findings at any level. |
+| 7z decoder dictionary allocation precedes expanded-file limits | High, installed sevenzip LZMA/LZMA2 defaults consume archive-declared dictionary properties. | Register bounded decoders before header parsing: 128 MiB per dictionary, 1 GiB declared stream bound, 16 MiB raw next-header bound with overflow-safe offsets. PPMd/Zstandard/Brotli/encrypted 7z codecs are explicitly refused; ordinary LZMA/LZMA2 and existing ZIP/RAR/TAR fixtures remain supported. Property rejection, LZMA/LZMA2 round trips and header bounds tested. These are decoder limits, not an OS process memory sandbox. |
+| Batch repeats identical complete-history writes | Medium, 32 admissions each marked only its own saved state despite persisting all records. | One complete snapshot per atomic batch; mark all states represented by successful persistence. A paused 32-job regression asserts exactly one write. This is 32 → 1 writes, not a measured 32× overall speed claim. Failed persistence remains visible and later transitions retry. |
+| Session metadata cache grows across repeated imports/samples | Medium, unbounded `Service.media` map. | 128-record LRU bound, pin current ≤32 files through versioned bridge state so active batches remain available; historical reuse/comparison re-probes. Regression churns 200 extra records and verifies bound, current-file retention, stale-state refusal and atomic rejection of invalid pins. Preview capabilities remain separately bounded. |
+| Exact-size project/preset export exceeds reopen limit by newline | Medium, writers checked JSON bytes before adding the final newline. | Count the newline before writing. Exact 1 MiB project round trip and rejected over-limit save preserve the previous file. |
+| Equivalent settings can appear dirty after key reordering | Low, raw JSON property-order comparison. | Canonical object-key ordering; preserve array order and actual path/settings changes. Regression compares reordered settings. |
+| Implicit FFmpeg input protocols | Hardening, not a demonstrated network vulnerability: the installed FFprobe already refused HTTP HLS via its default whitelist. | Explicit file-only input policy across probe, encode, extraction and thumbnails; generated output pipes still work. Real local HTTP playlist regression checks zero server requests and whitelist refusal. Real processing/frame/GPU/trim/cancellation fixtures pass. |
+
+## Verification and maintenance
+
+Source: `go test ./...`, `go vet ./...`, pinned `govulncheck@v1.9.0`; frontend 94 tests, typecheck/lint/format/build; real FFmpeg integration for compiler, app and Windows runner. `npm audit` reports zero advisories. Release packaging repeats checks with Go 1.27.2 / Node 24 and retains installer/ZIP checksums. Installer lifecycle acceptance is run separately.
+
+The release script and existing Windows CI now fail on vulnerability-check errors, rather than silently bypassing unavailable advisory services. No new production dependency, framework migration or Wails Beta upgrade was introduced. Existing Wails v3.0.0-beta.27 approval remains Technical Spike only. Old release artifacts remain historical and were not rebuilt with the patched SDK.
+
+Native dialog/Alt+F4 IPC, Windows 10 clean-machine behavior, other GPU vendors, Android and race-detector execution remain outside this run's verified coverage. This host has no GCC/CGO toolchain configured; ordinary concurrency regressions pass, but they are not race-detector evidence. Total decoder-process resource isolation remains a possible future improvement; current limits should not be described as a sandbox.
+
+Primary references: [Go security release](https://go.dev/doc/devel/release#go1.27.2), [x/text advisory](https://pkg.go.dev/vuln/GO-2026-6629), [FFmpeg protocol policy](https://ffmpeg.org/ffmpeg-protocols.html). Local pinned decoder sources supplied the allocation evidence.

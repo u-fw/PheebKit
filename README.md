@@ -8,7 +8,7 @@ Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the ve
 
 ## Windows development
 
-Requires Go 1.25+, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Install the exact CLI once:
+Requires Go 1.25+ with automatic selection of the pinned Go 1.27.2 security toolchain, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Release builds enforce Go 1.27.2 or newer and dependency vulnerability checks. See the [security/performance audit](docs/security-performance-audit.md). Install the exact CLI once:
 
 ```powershell
 go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27

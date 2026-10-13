@@ -213,6 +213,8 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  setActiveMedia: (uris: string[], revision: number): Promise<void> =>
+    Service.SetActiveMedia(uris, revision),
   setUnsavedEdits: (value: boolean, revision: number): Promise<void> =>
     Service.SetUnsavedEdits(value, revision),
   rememberOutputDirectory: (path: string): Promise<void> =>

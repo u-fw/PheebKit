@@ -156,6 +156,14 @@ export function SaveSettings(settings: core$0.Settings, name: string): $Cancella
     return $Call.ByID(375230187, settings, name);
 }
 
+/**
+ * Pin the current collection so cache cleanup cannot break a visible batch.
+ * Historical samples/projects re-probe their source when opened or reused.
+ */
+export function SetActiveMedia(uris: string[] | null, revision: number): $CancellablePromise<void> {
+    return $Call.ByID(3254258405, uris, revision);
+}
+
 export function SetQueuePaused(paused: boolean): $CancellablePromise<$models.QueueStatus> {
     return $Call.ByID(3319394886, paused);
 }

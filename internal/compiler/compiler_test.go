@@ -27,7 +27,7 @@ func TestCompileKeepsPathsAsIndividualArguments(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Args[len(plan.Args)-1] != project.Output.URI || plan.Args[7] != project.Inputs[0].URI {
+	if plan.Args[len(plan.Args)-1] != project.Output.URI || !hasArguments(plan.Args, []string{"-protocol_whitelist", "file", "-i", project.Inputs[0].URI}) {
 		t.Fatalf("paths were altered/split: %q", plan.Args)
 	}
 	if !strings.Contains(plan.Preview, "输入 '' $ & ;.mkv") || !strings.HasPrefix(plan.Preview, "& '") {
@@ -103,7 +103,7 @@ func TestCompressionSelectsMotionStreamAndRejectsOnlyCoverArt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Args[9] != "0:3" {
+	if !hasArguments(plan.Args, []string{"-map", "0:3"}) || hasArguments(plan.Args, []string{"-map", "0:0"}) {
 		t.Fatalf("mapped cover art instead of motion video: %q", plan.Args)
 	}
 	media.Streams = media.Streams[:2]
