@@ -4,6 +4,8 @@ Current branding is 菲比工具箱 / PheebKit. Version 0.2.0-beta.7 adds allowl
 
 ## Repaired findings
 
+Beta.7 local acceptance passed on 2026-10-14: pinned FFmpeg real-media integration, actual headless process-kill recovery, old-record reads, diagnostic privacy/snapshot protection, 101 frontend tests and production packaging from committed source with no cached frontend assets. The original beta.6 tag was rebuilt and successfully installed/upgraded to beta.7; configuration hashes/user files survived upgrade/reinstall/uninstall and running-process mutex guards held. Source/binary govulncheck and npm audit found no known vulnerabilities. These are local results; [release acceptance](release-acceptance.md) keeps hosted CI, clean Windows 10/11, native click-through, signing and public reporting-channel gates open.
+
 | Finding | Correction | Evidence |
 | --- | --- | --- |
 | Codec-private parameters could write unmanaged side files | Typed positive allowlists reject file access, multi-pass and unknown suboptions | Compiler regressions and three real software encodes; sentinel unchanged, no unexpected files |
