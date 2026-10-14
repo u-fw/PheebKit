@@ -70,8 +70,16 @@ export function DeletePreset(id: string): $CancellablePromise<$models.WorkspaceP
     return $Call.ByID(2362883055, id);
 }
 
+export function ExportDiagnosticReport(token: string): $CancellablePromise<string> {
+    return $Call.ByID(2283274480, token);
+}
+
 export function ExportPreset(id: string): $CancellablePromise<string> {
     return $Call.ByID(603229530, id);
+}
+
+export function GetDiagnosticPreview(options: $models.DiagnosticOptions): $CancellablePromise<$models.DiagnosticPreview> {
+    return $Call.ByID(2657881338, options);
 }
 
 export function GetEnvironment(): $CancellablePromise<$models.Environment> {

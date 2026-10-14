@@ -247,6 +247,13 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  getDiagnosticPreview: (
+    includeRecentJobs: boolean,
+    jobLimit: number,
+  ): Promise<{ token: string; json: string }> =>
+    Service.GetDiagnosticPreview({ includeRecentJobs, jobLimit }),
+  exportDiagnosticReport: (token: string): Promise<string> =>
+    Service.ExportDiagnosticReport(token),
   getProjectLibrary: async (): Promise<ProjectLibrary> => {
     const value = await Service.GetProjectLibrary();
     return { ...value, drafts: value.drafts ?? [], recent: value.recent ?? [] };

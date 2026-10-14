@@ -6,6 +6,12 @@ on:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      upgrade_from_tag:
+        description: 'Optional reviewed previous version tag to build and upgrade from'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -13,9 +19,11 @@ permissions:
 jobs:
   windows:
     runs-on: windows-2025
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.27.2"
@@ -31,6 +39,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm --prefix frontend ci
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm --prefix frontend run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./scripts/setup-inno.ps1
       - name: Check tagged version
         if: startsWith(github.ref, 'refs/tags/')
@@ -38,6 +48,21 @@ jobs:
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Git tag and VERSION disagree' }
+      - name: Prepare publisher-pinned FFmpeg test tools
+        shell: pwsh
+        run: ./scripts/setup-test-ffmpeg.ps1
+      - name: Real FFmpeg and process-interruption checks
+        shell: pwsh
+        run: |
+          $env:KOMPEG_INTEGRATION = '1'
+          go test ./... -count=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build optional previous-version upgrade candidate
+        if: github.event_name == 'workflow_dispatch' && inputs.upgrade_from_tag != ''
+        shell: pwsh
+        env:
+          PHEEBKIT_UPGRADE_FROM_TAG: ${{ inputs.upgrade_from_tag }}
+        run: ./scripts/prepare-upgrade-baseline.ps1 -Ref $env:PHEEBKIT_UPGRADE_FROM_TAG
       - name: Verify and package Windows x64
         shell: pwsh
         run: |
@@ -46,7 +71,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify installer lifecycle in an isolated directory
         shell: pwsh
-        run: ./scripts/verify-windows-release.ps1
+        run: |
+          if (Test-Path -LiteralPath '.tools/upgrade-baseline-path.txt') {
+            ./scripts/verify-windows-release.ps1 -PreviousReleaseDirectory (Get-Content -LiteralPath '.tools/upgrade-baseline-path.txt' -Raw).Trim()
+          } else {
+            ./scripts/verify-windows-release.ps1
+          }
       - name: Upload candidate artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

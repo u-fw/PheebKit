@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseVersion } from "./version.mjs";
+import { parseVersion, readVersion } from "./version.mjs";
+import { readFileSync } from "node:fs";
+
+test("frontend, Windows metadata and diagnostics match VERSION", () => {
+  const value = readVersion();
+  const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+  assert.equal(JSON.parse(read("frontend/package.json")).version, value.version);
+  assert.equal(JSON.parse(read("frontend/package-lock.json")).version, value.version);
+  assert.equal(JSON.parse(read("build/windows/info.json")).fixed.file_version, value.windowsVersion);
+  assert.ok(read("internal/buildinfo/version.go").includes(`const Version = ${JSON.stringify(value.version)}`));
+  assert.equal(read("RELEASE_NOTES.md").split(/\r?\n/)[0], `# PheebKit ${value.version}`);
+});
 
 test("Windows versions order prerelease stages before final", () => {
   const versions = [

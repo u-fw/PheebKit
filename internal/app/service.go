@@ -54,6 +54,8 @@ type Service struct {
 	editorSession      string
 	recoveryRevision   uint64
 	editorError        string
+	diagnosticsMu      sync.Mutex
+	diagnostics        map[string]diagnosticSnapshot
 }
 
 func NewService() *Service {

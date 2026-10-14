@@ -40,6 +40,10 @@ try {
     $dirty = git status --porcelain --untracked-files=normal
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Release packaging requires committed sources and synchronized version metadata; commit changes before packaging.' }
     Invoke-Checked node @('--test', 'scripts/version.test.mjs')
+    # A fresh clone has no embedded frontend/dist. Build real assets before Go
+    # package loading/tests; cached development output must not be a prerequisite.
+    Invoke-Checked npm @('--prefix', 'frontend', 'ci')
+    Invoke-Checked npm @('--prefix', 'frontend', 'run', 'build')
     Invoke-Checked go @('test', './...')
     Invoke-Checked go @('vet', './...')
     Invoke-Checked go @('run', 'golang.org/x/vuln/cmd/govulncheck@v1.9.0', './...')
@@ -51,6 +55,8 @@ try {
     if ($metadata.ProductVersion -ne $version.version) { throw 'Executable version does not match VERSION' }
     Copy-Item -LiteralPath $application -Destination (Join-Path $payload 'PheebKit.exe')
     Copy-Item -LiteralPath (Join-Path $workspace 'LICENSE') -Destination (Join-Path $payload 'LICENSE.txt')
+    if ((Get-Content -LiteralPath (Join-Path $workspace 'RELEASE_NOTES.md') -TotalCount 1) -ne "# PheebKit $($version.version)") { throw 'Release notes do not match VERSION' }
+    Copy-Item -LiteralPath (Join-Path $workspace 'RELEASE_NOTES.md') -Destination (Join-Path $payload 'RELEASE_NOTES.md')
     Invoke-Checked node @('scripts/dependency-notices.mjs', (Join-Path $payload 'THIRD_PARTY_NOTICES.txt'))
     @"
 PheebKit $($version.version) - Windows x64 experimental release
@@ -66,6 +72,7 @@ are separate release acceptance steps; a successful build is not evidence of the
 
 Project license: GPL-3.0-only. See LICENSE.txt and THIRD_PARTY_NOTICES.txt.
 Corresponding source: the repository's matching v$($version.version) tag.
+Changes and current limitations: RELEASE_NOTES.md in this directory.
 "@ | Set-Content -LiteralPath (Join-Path $payload 'README.txt') -Encoding utf8
     $zip = Join-Path $output "PheebKit-$($version.version)-windows-x64-standalone.zip"
     Compress-Archive -Path (Join-Path $payload '*') -DestinationPath $zip -CompressionLevel Optimal

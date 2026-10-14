@@ -18,6 +18,16 @@ export interface CloseRequest {
     "unsaved": boolean;
 }
 
+export interface DiagnosticOptions {
+    "includeRecentJobs": boolean;
+    "jobLimit": number;
+}
+
+export interface DiagnosticPreview {
+    "token": string;
+    "json": string;
+}
+
 export interface DraftSummary {
     "id": string;
     "source": string;

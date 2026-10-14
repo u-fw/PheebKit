@@ -1,0 +1,30 @@
+# Windows release acceptance — 0.2.0-beta.7
+
+This is a candidate checklist. Passing builds does not establish production stability or clean-machine compatibility. Android is deferred. Publication/push/signing requires the owner's explicit decision.
+
+## Repeatable local checks
+
+1. Use a clean committed checkout, Go 1.27.2+, Node 24+, the pinned Wails CLI and verified Inno compiler. Update `VERSION`, run `node scripts/sync-version.mjs`, write matching `RELEASE_NOTES.md`, then commit.
+2. Build frontend assets before loading the root Go package: `npm --prefix frontend ci`, then `npm --prefix frontend run build`. The release script now performs this bootstrap itself. Source text checkout rules keep JS/HTML compatible with formatting checks on Windows.
+3. Run `scripts/setup-test-ffmpeg.ps1` once into a fresh `.tools` destination. It verifies the publisher-pinned Gyan archive and extracted binary hashes, sets process-local `KOMPEG_FFMPEG`/`KOMPEG_FFPROBE`, and supplies the same paths to subsequent GitHub steps. No system PATH or application configuration is changed. Existing manifests are refused; this is not an unverified cache.
+4. Set `KOMPEG_INTEGRATION=1`; run `go test ./... -count=1` and `go vet ./...`. Run frontend tests, typecheck, lint, formatting and version tests. The process-interruption test kills only its own headless test child; it proves checkpoint persistence and recovery without automatic task execution.
+5. Run `scripts/release-windows.ps1`. It refuses dirty sources/existing version directories, audits dependencies, performs a production build and creates Setup, standalone ZIP and SHA-256 manifest. Both packages include identical license, notices and release notes. Inspect `go version -m bin/PheebKit.exe` and run the pinned govulncheck in binary mode.
+6. For version updates, build a reviewed existing local tag: `scripts/prepare-upgrade-baseline.ps1 -Ref v0.2.0-beta.6`. It creates an isolated detached worktree, builds the original source and removes the clean worktree. It does not fetch or modify tags. Execute `scripts/verify-windows-release.ps1 -PreviousReleaseDirectory (Get-Content .tools/upgrade-baseline-path.txt -Raw).Trim()`.
+
+Installer verification checks archive digests, exact current payload equality, actual older-version install → current upgrade, registration/version, running-application mutex refusal, reinstall, uninstall, and preservation of user-owned files and all four existing AppData JSON files. It refuses an existing registered real installation, uses a workspace-owned directory and never launches PheebKit.
+
+## Local evidence and separate manual gates
+
+The beta.7 local record includes publisher-pinned FFmpeg media integration, actual headless process termination/recovery, additive old-record compatibility, diagnostic privacy/snapshot regressions, frontend checks and a clean-source beta.6 baseline build. The final local installer result is recorded in [Windows distribution](windows-distribution.md). Diagnostic rules are in [diagnostics](diagnostics.md).
+
+Before broadly distributing binaries, record the machine/OS/build and pass/fail evidence for these steps:
+
+- Fresh Windows 10 and Windows 11 x64, normal user permissions, both existing and missing WebView2. Check explanatory missing-runtime wizard flow; no silent runtime installation.
+- Launch from the installed directory and extracted ZIP. Test native media/open/save dialogs, Unicode/long paths, a read-only output directory, existing output refusal, and missing source relocation.
+- Test no-FFmpeg setup/download cancellation and retry, a real CPU-only machine, and an actual qualified GPU. Check visible fallback and cancellation; hosted CPU checks do not qualify a GPU.
+- Edit → checkpoint → close/forced termination → restart → explicit restore; verify the retained settings, no automatic execution, and an explicit output operation. The automated headless test is not native renderer/IPC or OS-shutdown coverage.
+- Settings → diagnostic preview → save/cancel/expired preview. Compare saved bytes with preview and review attachments before sharing.
+- Run the repository's hosted Windows workflow. For an update, dispatch it with a reviewed previous tag. The default workflow runs installer lifecycle but cross-version acceptance is optional and must be requested for the update candidate.
+- Choose public repository identity/contact, configure private security reporting, review public history/assets and matching corresponding source, and decide signing. Keep unsigned/Beta status visible. An accessible local tag is not a public source release.
+
+No hosted CI, clean-machine, signing or native-dialog result is inferred from local builds. Never replace already published assets for the same version; publish a new version for changes.

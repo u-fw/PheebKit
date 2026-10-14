@@ -6,7 +6,7 @@ Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approv
 
 Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 
-Beta.6 adds configurable local drafts/recovery, recent projects, Undo/Redo, editable scene presets, AAC/Opus bitrate controls and direct sample-duration input. Output structure verification, explicit retry review and missing-source relocation remain. See [editing/recovery settings and evidence](docs/editor-recovery.md) and [workflow checks and limits](docs/workflows.md).
+Beta.7 adds local diagnostic preview/export, real headless interruption/recovery checks and repeatable cross-version installer acceptance. It retains configurable local drafts/recovery, recent projects, Undo/Redo, editable presets and audio/sample controls. See [release notes](RELEASE_NOTES.md), [diagnostic privacy](docs/diagnostics.md) and [release acceptance](docs/release-acceptance.md).
 
 ## Windows development
 
@@ -56,12 +56,14 @@ The app saves recent job history (normally 200 records) and up to 20 named proce
 - Remux copies the primary motion-video stream and selected compatible audio/subtitle streams to MP4/MKV/WebM. It does not encode, trim or apply filters. Unsupported container/codec combinations fail before processing.
 - Audio extraction saves one selected track as AAC/M4A, Opus, MP3, FLAC, WAV or a compatible copy in Matroska Audio. Text subtitle extraction supports SRT/ASS/WebVTT; OCR and subtitle burn-in are outside this release.
 - Batch processing uses full source durations and excludes the active single-file crop/trim. Track choices are reviewed per file. Processing remains serial; waiting jobs can be reordered, and pausing scheduling leaves the current job running. Remaining time is an estimate from live speed.
-- Short sample compression uses 10/20/30 seconds from the current range start, within that range. Samples are distinct output files and can be compared at corresponding positions in Queue. Copy audio becomes AAC for the sample; size budgets scale with duration. The 512px comparison is a positioning aid, not a full-resolution quality metric.
+- Short sample compression offers 10/20/30-second shortcuts and direct 1–30-second entry from the current range start, within that range. Samples are distinct output files and can be compared at corresponding positions in Queue. Copy audio becomes AAC for the sample; size budgets scale with duration. The 512px comparison is a positioning aid, not a full-resolution quality metric.
 - Save/open `.ffproject` files and import/export `.pheebpreset` configurations through native dialogs. Opening/importing never executes tasks; sources are re-probed, existing output targets require a new choice, and duplicate imported preset names are rejected. See [processing policies and acceptance](docs/media-tools.md).
 
 ## Verification commands
 
 ```powershell
+npm --prefix frontend ci
+npm --prefix frontend run build
 go test ./...
 go vet ./...
 $env:KOMPEG_INTEGRATION = '1'
@@ -101,6 +103,8 @@ docs/                       architecture, design and verification evidence
 See [architecture](docs/architecture.md), [UI design](docs/ui-design.md), [runner](docs/ffmpeg-runner.md), [project format](docs/project-format.md), [Android FFmpeg spike](docs/android-ffmpeg-spike.md) and [actual verification](docs/verification.md).
 
 The [open-source readiness review](docs/open-source-readiness.md) records repaired defects, verification and remaining publication decisions.
+
+For contributions and responsible reporting, see [CONTRIBUTING](CONTRIBUTING.md) and [SECURITY](SECURITY.md). Diagnostic reports are previewed locally and shared only by the user.
 
 ## License
 

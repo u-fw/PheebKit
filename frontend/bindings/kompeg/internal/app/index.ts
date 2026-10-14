@@ -9,6 +9,8 @@ export {
 export type {
     BinaryStatus,
     CloseRequest,
+    DiagnosticOptions,
+    DiagnosticPreview,
     DraftSummary,
     EditorPreferences,
     Environment,
