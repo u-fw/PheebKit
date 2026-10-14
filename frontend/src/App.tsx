@@ -16,6 +16,10 @@ import { ExitDialog } from "./components/ExitDialog";
 import { BatchPanel } from "./components/BatchPanel";
 import { ProjectActions } from "./components/ProjectActions";
 import { SampleComparison } from "./components/SampleComparison";
+import { ProjectLibrary } from "./components/ProjectLibrary";
+import { EditorPreferences } from "./components/EditorPreferences";
+import { useAutosaveDraft } from "./hooks/useAutosaveDraft";
+import type { ProjectLibrary as Library, LoadedProject } from "./bridge";
 
 type Page = "home" | "compress" | "queue" | "settings";
 const navigation: {
@@ -41,6 +45,8 @@ export default function App() {
   const [compressVisited, setCompressVisited] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(initialTheme);
   const draft = useRef<Draft | null>(null);
+  const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
+  const [library, setLibrary] = useState<Library | null>(null);
   const draftRevision = useRef(0);
   const [guardError, setGuardError] = useState("");
   const [dirty, setDirty] = useState(false);
@@ -53,8 +59,37 @@ export default function App() {
   }, []);
   const studio = useStudio(protect);
   const { connected, setError } = studio;
+  const refreshLibrary = useCallback(async () => {
+    const value = await API.getProjectLibrary();
+    setLibrary(value);
+    if (value.error) setError(value.error);
+  }, [setError]);
+  useEffect(() => {
+    if (!connected) return;
+    let alive = true;
+    void API.getProjectLibrary().then(
+      (value) => {
+        if (alive) {
+          setLibrary(value);
+          if (value.error) setError(value.error);
+        }
+      },
+      (cause) => {
+        if (alive) setError(`恢复记录读取失败：${String(cause)}`);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [connected, setError]);
+  const autosave = useAutosaveDraft(
+    editingDraft,
+    connected && !library?.error,
+    library?.preferences,
+  );
   const onDraft = useCallback((value: Draft) => {
     draft.current = value;
+    setEditingDraft(value);
     setDirty(value.dirty);
   }, []);
   useEffect(() => {
@@ -71,6 +106,9 @@ export default function App() {
     if (!path) return false;
     value.markSaved(value.project);
     studio.setNotice("");
+    void refreshLibrary().catch((cause) =>
+      setError(`最近项目刷新失败：${String(cause)}`),
+    );
     return true;
   }
   const [comparisonID, setComparisonID] = useState<string | null>(null);
@@ -102,8 +140,16 @@ export default function App() {
     document.documentElement.scrollTop = 0;
   }
   async function loadProject() {
+    openStoredProject(API.loadProject);
+  }
+  function openStoredProject(loader: () => Promise<LoadedProject | null>) {
     protect(async () => {
-      if (await studio.loadProject()) navigate("compress");
+      if (await studio.loadProject(loader)) {
+        navigate("compress");
+        void refreshLibrary().catch((cause) =>
+          setError(`最近项目刷新失败：${String(cause)}`),
+        );
+      }
     });
   }
 
@@ -316,6 +362,19 @@ export default function App() {
             </section>
           )}
           {page === "home" && (
+            <ProjectLibrary
+              library={library}
+              connected={connected}
+              refresh={refreshLibrary}
+              openRecent={(id) =>
+                openStoredProject(() => API.openRecentProject(id))
+              }
+              restore={(id) =>
+                openStoredProject(() => API.restoreRecoveryDraft(id))
+              }
+            />
+          )}
+          {page === "home" && (
             <Home
               media={studio.media}
               busy={studio.busy}
@@ -336,6 +395,7 @@ export default function App() {
                 initialSettings={studio.reuse?.settings ?? studio.savedSettings}
                 initialOutput={studio.reuse?.output}
                 needsSave={studio.reuse?.needsSave}
+                undoLimit={library?.preferences.undoLimit ?? 50}
                 renderBatch={(settings) =>
                   studio.mediaList.length > 1 ? (
                     <BatchPanel
@@ -361,8 +421,13 @@ export default function App() {
                     onSaved={(project) => {
                       markSaved(project);
                       studio.setNotice("");
+                      void refreshLibrary().catch((cause) =>
+                        setError(`最近项目刷新失败：${String(cause)}`),
+                      );
                     }}
                     dirty={dirty}
+                    autosaveMessage={autosave.error || autosave.message}
+                    autosaveError={Boolean(autosave.error)}
                     connected={studio.connected}
                     load={loadProject}
                     onJob={studio.addJob}
@@ -418,6 +483,19 @@ export default function App() {
           )}
           {page === "settings" && (
             <SettingsPage
+              editorSettings={
+                library && (
+                  <EditorPreferences
+                    key={JSON.stringify(library.preferences)}
+                    value={library.preferences}
+                    save={async (value) => {
+                      await API.saveEditorPreferences(value);
+                      await refreshLibrary();
+                      studio.setNotice("编辑与恢复设置已保存并生效。");
+                    }}
+                  />
+                )
+              }
               platform={studio.platform}
               connected={studio.connected}
               capabilities={studio.capabilities}

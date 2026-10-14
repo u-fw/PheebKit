@@ -281,14 +281,14 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     setReuse(null);
   }, []);
 
-  const loadProject = useCallback(async () => {
+  const loadProject = useCallback(async (loader = API.loadProject) => {
     if (importBusy.current) return false;
     importBusy.current = true;
     setBusy(true);
     setError("");
     setImportProgress({ completed: 0, total: 0 });
     try {
-      const value = await API.loadProject();
+      const value = await loader();
       if (!value) return false;
       setNotice(value.notice || "");
       setMedia(value.media);

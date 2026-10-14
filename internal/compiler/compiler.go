@@ -96,7 +96,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if ext == ".webm" && (settings.Codec != "av1" || (audio && settings.Audio != "opus" && settings.Audio != "copy")) {
 		return core.ExecutionPlan{}, fmt.Errorf("WebM compression requires AV1 and encoded Opus or compatible copied audio")
 	}
-	audioArgs, audioKbps, err := compileAudio(settings.Audio, audioStreams, ext, caps.Encoders)
+	audioArgs, audioKbps, err := compileAudio(settings.Audio, audioStreams, ext, caps.Encoders, settings.AudioBitrateKbps)
 	if err != nil {
 		return core.ExecutionPlan{}, err
 	}
@@ -197,7 +197,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		Encoder:           encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }
 
-func compileAudio(mode string, streams []core.Stream, ext string, encoders []core.Encoder) ([]string, int, error) {
+func compileAudio(mode string, streams []core.Stream, ext string, encoders []core.Encoder, bitrate int) ([]string, int, error) {
 	if mode != "copy" && mode != "aac" && mode != "opus" && mode != "none" {
 		return nil, 0, fmt.Errorf("unsupported audio mode %q", mode)
 	}
@@ -226,12 +226,18 @@ func compileAudio(mode string, streams []core.Stream, ext string, encoders []cor
 		if !capabilities.HasEncoder(encoders, "aac") {
 			return nil, 0, fmt.Errorf("AAC encoder unavailable in this FFmpeg build")
 		}
-		return []string{"-c:a", "aac", "-b:a", "192k"}, 192 * len(streams), nil
+		if bitrate == 0 {
+			bitrate = 192
+		}
+		return []string{"-c:a", "aac", "-b:a", strconv.Itoa(bitrate) + "k"}, bitrate * len(streams), nil
 	case "opus":
 		if !capabilities.HasEncoder(encoders, "libopus") {
 			return nil, 0, fmt.Errorf("libopus encoder unavailable in this FFmpeg build")
 		}
-		return []string{"-c:a", "libopus", "-b:a", "128k"}, 128 * len(streams), nil
+		if bitrate == 0 {
+			bitrate = 128
+		}
+		return []string{"-c:a", "libopus", "-b:a", strconv.Itoa(bitrate) + "k"}, bitrate * len(streams), nil
 	}
 	return nil, 0, fmt.Errorf("unsupported audio mode")
 }

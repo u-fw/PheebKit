@@ -1,4 +1,6 @@
-# PheebKit task workflows — 0.2.0-beta.5
+# PheebKit task workflows — 0.2.0-beta.6
+
+Beta.6 adds configurable local drafts/recovery and recent projects, bounded Undo/Redo, editable scene presets, AAC/Opus bitrate controls and direct 1–30 second sample entry. See [editing/recovery policy and evidence](editor-recovery.md). The dated sections below describe the earlier foundations; recent-project and autosave work described as future in beta.5 is now implemented for the focused single-file project.
 
 ## Beta.5 reliability iteration — 2026-10-14
 

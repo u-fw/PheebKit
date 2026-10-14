@@ -115,7 +115,7 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 		if ext == ".webm" && video.CodecName != "vp8" && video.CodecName != "vp9" && video.CodecName != "av1" {
 			return core.ExecutionPlan{}, fmt.Errorf("WebM stream copy requires VP8, VP9 or AV1 video")
 		}
-		audioArgs, _, err := compileAudio("copy", audio, ext, caps.Encoders)
+		audioArgs, _, err := compileAudio("copy", audio, ext, caps.Encoders, 0)
 		if err != nil {
 			return core.ExecutionPlan{}, err
 		}
@@ -161,6 +161,9 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 			args = append(args, mp4TrackTitles(audio, nil)...)
 		}
 		encoder = selectedEncoder
+		if s.AudioBitrateKbps != 0 && (s.Audio == "aac" || s.Audio == "opus") {
+			args = append(args, "-b:a", strconv.Itoa(s.AudioBitrateKbps)+"k")
+		}
 		if encoder != "copy" {
 			kind, label = "cpu", "音频编码"
 		}

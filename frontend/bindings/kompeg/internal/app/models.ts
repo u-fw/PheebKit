@@ -18,6 +18,22 @@ export interface CloseRequest {
     "unsaved": boolean;
 }
 
+export interface DraftSummary {
+    "id": string;
+    "source": string;
+    "updatedAt": string;
+    "active": boolean;
+}
+
+export interface EditorPreferences {
+    "autosave": boolean;
+    "intervalSeconds": number;
+    "draftLimit": number;
+    "retentionDays": number;
+    "recentLimit": number;
+    "undoLimit": number;
+}
+
 export interface Environment {
     "platform": string;
     "ready": boolean;
@@ -47,10 +63,23 @@ export interface JobReuse {
     "needsSave"?: boolean;
 }
 
+export interface ProjectLibrary {
+    "preferences": EditorPreferences;
+    "drafts": DraftSummary[] | null;
+    "recent": RecentProject[] | null;
+    "error": string;
+}
+
 export interface QueueStatus {
     "paused": boolean;
     "pendingIDs": string[] | null;
     "revision": number;
+}
+
+export interface RecentProject {
+    "id": string;
+    "path": string;
+    "updatedAt": string;
 }
 
 export interface SampleComparison {

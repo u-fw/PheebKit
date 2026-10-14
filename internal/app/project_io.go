@@ -50,6 +50,7 @@ func (s *Service) SaveProject(p core.Project) (string, error) {
 	if err := saveProjectAt(path, p); err != nil {
 		return "", err
 	}
+	s.rememberProject(path)
 	return path, nil
 }
 
@@ -111,15 +112,30 @@ func (s *Service) LoadProject() (*JobReuse, error) {
 	if err != nil || path == "" {
 		return nil, err
 	}
+	return s.openProjectFile(path)
+}
+
+func (s *Service) openProjectFile(path string) (*JobReuse, error) {
 	p, err := projectfile.Load(path)
 	if err != nil {
 		return nil, err
 	}
+	value, err := s.openStoredProject(p)
+	if err == nil && value != nil {
+		s.rememberProject(path)
+	}
+	return value, err
+}
+
+func (s *Service) openStoredProject(p core.Project) (*JobReuse, error) {
 	if err := validateProjectShape(p); err != nil {
 		return nil, err
 	}
 	notice := ""
 	if _, statErr := os.Stat(p.Inputs[0].URI); os.IsNotExist(statErr) {
+		if s.app == nil {
+			return nil, errors.New("项目源文件已丢失，请在桌面应用中重新定位")
+		}
 		replacement, err := s.app.Dialog.OpenFile().SetTitle("源文件丢失，请重新定位：" + filepath.Base(p.Inputs[0].URI)).PromptForSingleSelection()
 		if err != nil || replacement == "" {
 			return nil, err

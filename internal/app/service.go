@@ -50,6 +50,10 @@ type Service struct {
 	draftRevision      uint64
 	previewMu          sync.Mutex
 	previewTokens      map[string]core.Media
+	editorMu           sync.Mutex
+	editorSession      string
+	recoveryRevision   uint64
+	editorError        string
 }
 
 func NewService() *Service {

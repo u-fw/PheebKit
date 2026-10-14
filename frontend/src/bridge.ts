@@ -120,6 +120,34 @@ export interface LoadedProject {
   media: Media;
   project: Project;
 }
+
+export interface EditorPreferences {
+  autosave: boolean;
+  intervalSeconds: number;
+  draftLimit: number;
+  retentionDays: number;
+  recentLimit: number;
+  undoLimit: number;
+}
+export interface ProjectLibrary {
+  preferences: EditorPreferences;
+  drafts: { id: string; source: string; updatedAt: string; active: boolean }[];
+  recent: { id: string; path: string; updatedAt: string }[];
+  error: string;
+}
+
+function loadedProjectView(
+  value: Awaited<ReturnType<typeof Service.LoadProject>>,
+): LoadedProject | null {
+  return value
+    ? {
+        media: mediaView(value.media),
+        project: projectView(value.project),
+        notice: value.notice,
+        needsSave: value.needsSave,
+      }
+    : null;
+}
 function projectView(project: Core.Project): Project {
   return {
     ...project,
@@ -219,6 +247,23 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  getProjectLibrary: async (): Promise<ProjectLibrary> => {
+    const value = await Service.GetProjectLibrary();
+    return { ...value, drafts: value.drafts ?? [], recent: value.recent ?? [] };
+  },
+  saveEditorPreferences: (preferences: EditorPreferences): Promise<void> =>
+    Service.SaveEditorPreferences(preferences),
+  saveRecoveryDraft: (project: Project, revision: number): Promise<void> =>
+    Service.SaveRecoveryDraft(project, revision),
+  clearRecoveryDraft: (revision: number): Promise<void> =>
+    Service.ClearRecoveryDraft(revision),
+  removeRecoveryDraft: (id: string): Promise<void> =>
+    Service.RemoveRecoveryDraft(id),
+  clearRecentProjects: (): Promise<void> => Service.ClearRecentProjects(),
+  openRecentProject: async (id: string): Promise<LoadedProject | null> =>
+    loadedProjectView(await Service.OpenRecentProject(id)),
+  restoreRecoveryDraft: async (id: string): Promise<LoadedProject | null> =>
+    loadedProjectView(await Service.RestoreRecoveryDraft(id)),
   setActiveMedia: (uris: string[], revision: number): Promise<void> =>
     Service.SetActiveMedia(uris, revision),
   setUnsavedEdits: (value: boolean, revision: number): Promise<void> =>
@@ -252,15 +297,7 @@ export const API = {
   saveProject: async (project: Project): Promise<string> =>
     Service.SaveProject(project),
   loadProject: async (): Promise<LoadedProject | null> => {
-    const value = await Service.LoadProject();
-    return value
-      ? {
-          media: mediaView(value.media),
-          project: projectView(value.project),
-          notice: value.notice,
-          needsSave: value.needsSave,
-        }
-      : null;
+    return loadedProjectView(await Service.LoadProject());
   },
   importPreset: async (): Promise<WorkspacePreferences | null> => {
     const value = await Service.ImportPreset();

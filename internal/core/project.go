@@ -19,6 +19,7 @@ type Settings struct {
 	Preset            string          `json:"preset"`
 	Resolution        int             `json:"resolution"`
 	Audio             string          `json:"audio"`
+	AudioBitrateKbps  int             `json:"audioBitrateKbps,omitempty"`
 	Mode              string          `json:"mode"`
 	BitrateKbps       int             `json:"bitrateKbps"`
 	TargetSizeMB      float64         `json:"targetSizeMB"`

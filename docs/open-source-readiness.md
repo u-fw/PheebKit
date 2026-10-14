@@ -1,6 +1,6 @@
 # Open-source readiness — baseline 2026-10-10, iteration 2026-10-14
 
-Current branding is 菲比工具箱 / PheebKit. Version 0.2.0-beta.5 adds output structure verification before publication, review warnings, explicit retry navigation and missing-source relocation. See [workflows](workflows.md) and [media-tool evidence](media-tools.md) for current checks/limits. The dated baseline below describes earlier visual/defect verification. No remote push, hosted release or publication was performed. This review does not claim all bugs are absent or production stability.
+Current branding is 菲比工具箱 / PheebKit. Version 0.2.0-beta.6 adds configurable draft recovery/recent projects, bounded Undo/Redo, editable scene presets and audio bitrate/sample controls. Output verification and retry review remain. See [editor evidence](editor-recovery.md), [workflows](workflows.md) and [media-tool evidence](media-tools.md) for current checks/limits. The dated baseline below describes earlier verification. No remote push, hosted release or publication was performed. This review does not claim all bugs are absent or production stability.
 
 ## Repaired findings
 

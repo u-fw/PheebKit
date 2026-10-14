@@ -155,6 +155,7 @@ export interface Settings {
     "preset": string;
     "resolution": number;
     "audio": string;
+    "audioBitrateKbps"?: number;
     "mode": string;
     "bitrateKbps": number;
     "targetSizeMB": number;

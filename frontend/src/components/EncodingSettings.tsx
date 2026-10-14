@@ -9,6 +9,35 @@ export type UpdateSettings = <K extends keyof Settings>(
   key: K,
   value: Settings[K],
 ) => void;
+
+function AudioBitrate({
+  settings,
+  update,
+}: {
+  settings: Settings;
+  update: UpdateSettings;
+}) {
+  if (settings.audio !== "aac" && settings.audio !== "opus") return null;
+  return (
+    <label className="field-label">
+      音频码率 (kbps / 每条音轨)
+      <input
+        type="number"
+        min="32"
+        max="320"
+        step="1"
+        value={settings.audioBitrateKbps || ""}
+        placeholder={settings.audio === "aac" ? "默认 192" : "默认 128"}
+        onChange={(event) =>
+          update("audioBitrateKbps", Number(event.target.value))
+        }
+      />
+      <span className="field-hint">
+        可填 32–320；留空使用默认值。目标体积模式会按所选音轨数量扣除音频预算。
+      </span>
+    </label>
+  );
+}
 export const codecOptions = [
   { value: "h264", title: "H.264", note: "广泛兼容" },
   { value: "hevc", title: "H.265 / HEVC", note: "更小体积" },
@@ -27,6 +56,7 @@ const modes = [
 ];
 const resolutions = [
   { value: "0", label: "保持原始分辨率", description: "沿用源视频尺寸" },
+  { value: "720", label: "720p · HD", description: "较小体积" },
   { value: "2160", label: "2160p · 4K", description: "超高清" },
   { value: "1440", label: "1440p · QHD", description: "清晰与体积兼顾" },
   { value: "1080", label: "1080p · Full HD", description: "通用高清" },
@@ -74,6 +104,7 @@ export function AudioEncodingSettings({
         保留原音频保存为 MKA；其他格式会重新编码。格式支持以当前 FFmpeg
         检查结果为准。
       </p>
+      <AudioBitrate settings={settings} update={update} />
     </section>
   );
 }
@@ -275,6 +306,7 @@ export function EncodingSettings({
           </div>
         </div>
       )}
+      <AudioBitrate settings={settings} update={update} />
       {customResolution && (
         <label className="field-label">
           输出高度 (px)

@@ -5,6 +5,36 @@
   gap: var(--space-3);
   margin-block: var(--space-4);
 }
+
+.project-library {
+  margin-bottom: var(--space-6);
+}
+.project-library-list {
+  list-style: none;
+  padding: 0;
+}
+.project-library-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--outline-variant);
+}
+.project-library-list li > div:first-child {
+  flex: 1;
+  min-width: 160px;
+  overflow-wrap: anywhere;
+}
+.project-library-list small {
+  display: block;
+  color: var(--muted);
+  margin-top: var(--space-1);
+}
+.project-library-list .action-row {
+  margin: 0;
+}
 .exit-dialog {
   color: var(--color);
   width: min(520px, calc(100% - 32px));

@@ -15,7 +15,7 @@ $toolsRoot = [IO.Path]::GetFullPath((Join-Path $workspace '.tools')) + [IO.Path]
 if (-not [IO.Path]::GetFullPath($root).StartsWith($toolsRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Test paths must stay inside the workspace tools directory' }
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 $configHashes = @{}
-foreach ($name in @('ffmpeg.json', 'history.json', 'preferences.json')) {
+foreach ($name in @('ffmpeg.json', 'history.json', 'preferences.json', 'editor.json')) {
     $path = Join-Path $env:APPDATA "kompeg/$name"
     $configHashes[$path] = if (Test-Path -LiteralPath $path) { (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash } else { '' }
 }

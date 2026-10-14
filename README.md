@@ -6,7 +6,7 @@ Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approv
 
 Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 
-Beta.5 adds output structure verification before publication, visible duration warnings, a failed/interrupted queue filter and explicit review before retry. Missing `.ffproject` sources can be relocated without rewriting the saved project; the recovered editor remains unsaved until an explicit save. See [workflow checks and limits](docs/workflows.md).
+Beta.6 adds configurable local drafts/recovery, recent projects, Undo/Redo, editable scene presets, AAC/Opus bitrate controls and direct sample-duration input. Output structure verification, explicit retry review and missing-source relocation remain. See [editing/recovery settings and evidence](docs/editor-recovery.md) and [workflow checks and limits](docs/workflows.md).
 
 ## Windows development
 

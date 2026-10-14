@@ -34,18 +34,20 @@ func TestIntegrationPostflightUtilityOutputs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	caps := core.Capabilities{Encoders: []core.Encoder{{Name: "pcm_s16le", MediaType: "audio"}, {Name: "subrip", MediaType: "subtitle"}}}
+	caps := core.Capabilities{Encoders: []core.Encoder{{Name: "pcm_s16le", MediaType: "audio"}, {Name: "subrip", MediaType: "subtitle"}, {Name: "aac", MediaType: "audio"}}}
 	for _, item := range []struct {
 		operation, ext, audio string
 		counts                [3]int
 	}{
 		{"remux", ".mkv", "copy", [3]int{1, 1, 1}},
 		{"extract-audio", ".wav", "wav", [3]int{0, 1, 0}},
+		{"extract-audio", ".m4a", "aac", [3]int{0, 1, 0}},
 		{"extract-subtitle", ".srt", "none", [3]int{0, 0, 1}},
 	} {
 		t.Run(item.operation, func(t *testing.T) {
 			settings := core.DefaultSettings()
 			settings.Operation, settings.Audio = item.operation, item.audio
+			settings.AudioBitrateKbps = 64
 			settings.AudioSelection = &core.TrackSelection{Mode: "none"}
 			settings.SubtitleSelection = &core.TrackSelection{Mode: "none"}
 			if item.counts[1] > 0 {

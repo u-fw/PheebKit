@@ -13,6 +13,8 @@ export function ProjectActions({
   showQueue,
   onSaved,
   dirty = false,
+  autosaveMessage,
+  autosaveError = false,
 }: {
   project: Project;
   connected: boolean;
@@ -21,6 +23,8 @@ export function ProjectActions({
   showQueue: () => void;
   onSaved?: (project: Project) => void;
   dirty?: boolean;
+  autosaveMessage?: string;
+  autosaveError?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [seconds, setSeconds] = useState("10");
@@ -71,6 +75,14 @@ export function ProjectActions({
           打开项目
         </button>
       </div>
+      {autosaveMessage && (
+        <p
+          className={autosaveError ? "inline-error" : "field-hint"}
+          role={autosaveError ? "alert" : "status"}
+        >
+          {autosaveMessage}
+        </p>
+      )}
       <p className="field-hint">
         项目保存当前文件、轨道、剪辑范围和全部设置，打开后重新检查源文件，由你确认执行。
       </p>
@@ -79,12 +91,12 @@ export function ProjectActions({
           <div className="saved-settings-row">
             <MaterialSelect
               label="样片时长"
+              editable
               value={seconds}
-              options={[
-                { value: "10", label: "10 秒" },
-                { value: "20", label: "20 秒" },
-                { value: "30", label: "30 秒" },
-              ]}
+              options={Array.from({ length: 30 }, (_, index) => ({
+                value: String(index + 1),
+                label: `${index + 1} 秒`,
+              }))}
               onChange={setSeconds}
             />
             <button

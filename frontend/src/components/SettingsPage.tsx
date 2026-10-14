@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type {
   BinaryStatus,
   Capabilities,
@@ -52,6 +52,7 @@ function BinaryDetails({
 }
 
 export function SettingsPage({
+  editorSettings,
   platform,
   connected,
   capabilities,
@@ -68,6 +69,7 @@ export function SettingsPage({
   theme,
   toggleTheme,
 }: {
+  editorSettings?: ReactNode;
   platform: string;
   connected: boolean;
   capabilities: Capabilities | null;
@@ -116,6 +118,7 @@ export function SettingsPage({
           <p>外观、FFmpeg 路径与设备编码能力。</p>
         </div>
       </header>
+      {editorSettings}
       <section className="surface preferences-card">
         <div className="section-title">
           <h2>FFmpeg 环境</h2>

@@ -302,6 +302,14 @@ export function validateSettings(
       errors.push("提取字幕需要选择一条字幕轨。");
   }
   const volume = settings.volumeDB ?? 0;
+  const audioBitrate = settings.audioBitrateKbps ?? 0;
+  if (
+    (operation === "compress" || operation === "extract-audio") &&
+    (settings.audio === "aac" || settings.audio === "opus") &&
+    (!Number.isInteger(audioBitrate) ||
+      (audioBitrate !== 0 && (audioBitrate < 32 || audioBitrate > 320)))
+  )
+    errors.push("音频码率应为 32–320 kbps，或留空使用默认值。");
   if (!Number.isFinite(volume) || volume < -60 || volume > 20)
     errors.push("音量调整必须在 -60 至 20 dB 之间。");
   if (

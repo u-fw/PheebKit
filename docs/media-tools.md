@@ -34,7 +34,7 @@ Scheduling pause stops new starts; current work continues. Waiting tasks have ke
 
 ## Projects and shared presets
 
-`.ffproject` is strict schema-1 UTF-8 JSON, at most 1 MiB, retaining single-file trim/track/crop intent. Atomic save protects source/output aliases. Open re-probes the source, assigns a new project identity and clears an existing output target for a new choice. Beta.5 offers a native relocation picker for missing sources, clears the old target and keeps the recovered editor unsaved until an explicit save. Recent-project UI and autosave recovery remain future work. Opening never executes.
+`.ffproject` is strict schema-1 UTF-8 JSON, at most 1 MiB, retaining single-file trim/track/crop intent. Atomic save protects source/output aliases. Open re-probes the source, assigns a new project identity and clears an existing output target for a new choice. Beta.5 offers a native relocation picker for missing sources, clears the old target and keeps the recovered editor unsaved until an explicit save. Beta.6 adds recent-project navigation, configurable draft recovery and Undo/Redo; see [editor recovery](editor-recovery.md). Opening never executes.
 
 `.pheebpreset` contains one schema-1 named configuration, at most 1 MiB. Paths, trim, selected indexes and crop are omitted; generic all/none track policies, rotation, audio/volume and encoding can remain. Import validates safe advanced argv, rejects unknown/trailing data and duplicate names, preserves defaults/current intent and never executes. Apply remains explicit; the 20-preset bound remains.
 

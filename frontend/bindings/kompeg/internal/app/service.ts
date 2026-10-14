@@ -50,6 +50,14 @@ export function ChooseOutputDirectory(suggested: string): $CancellablePromise<st
     return $Call.ByID(1097593766, suggested);
 }
 
+export function ClearRecentProjects(): $CancellablePromise<void> {
+    return $Call.ByID(887171813);
+}
+
+export function ClearRecoveryDraft(revision: number): $CancellablePromise<void> {
+    return $Call.ByID(2754606222, revision);
+}
+
 export function ConfigureFFmpeg(ffmpegPath: string, ffprobePath: string): $CancellablePromise<$models.Environment> {
     return $Call.ByID(3260152768, ffmpegPath, ffprobePath);
 }
@@ -80,6 +88,10 @@ export function GetMediaPreviewURL(uri: string): $CancellablePromise<string> {
 
 export function GetPlatform(): $CancellablePromise<string> {
     return $Call.ByID(1948034858);
+}
+
+export function GetProjectLibrary(): $CancellablePromise<$models.ProjectLibrary> {
+    return $Call.ByID(2575878025);
 }
 
 export function GetSampleComparison(id: string): $CancellablePromise<$models.SampleComparison> {
@@ -118,6 +130,10 @@ export function OpenJobOutput(id: string, folder: boolean): $CancellablePromise<
     return $Call.ByID(554295103, id, folder);
 }
 
+export function OpenRecentProject(id: string): $CancellablePromise<$models.JobReuse | null> {
+    return $Call.ByID(3324189937, id);
+}
+
 export function Preview(p: core$0.Project): $CancellablePromise<core$0.ExecutionPlan> {
     return $Call.ByID(3133312629, p);
 }
@@ -141,12 +157,28 @@ export function RememberOutputDirectory(output: string): $CancellablePromise<voi
     return $Call.ByID(157952604, output);
 }
 
+export function RemoveRecoveryDraft(id: string): $CancellablePromise<void> {
+    return $Call.ByID(3893155095, id);
+}
+
+export function RestoreRecoveryDraft(id: string): $CancellablePromise<$models.JobReuse | null> {
+    return $Call.ByID(3806512459, id);
+}
+
 export function ReuseJob(id: string): $CancellablePromise<$models.JobReuse> {
     return $Call.ByID(3841018108, id);
 }
 
+export function SaveEditorPreferences(p: $models.EditorPreferences): $CancellablePromise<void> {
+    return $Call.ByID(854817011, p);
+}
+
 export function SaveProject(p: core$0.Project): $CancellablePromise<string> {
     return $Call.ByID(250069823, p);
+}
+
+export function SaveRecoveryDraft(p: core$0.Project, revision: number): $CancellablePromise<void> {
+    return $Call.ByID(3351358064, p, revision);
 }
 
 /**

@@ -33,6 +33,8 @@ import { OperationSettings } from "./OperationSettings";
 import { TrackSettings } from "./TrackSettings";
 import { TransformSettings } from "./TransformSettings";
 import { MaterialSelect } from "./MaterialSelect";
+import { useEditorHistory } from "../hooks/useEditorHistory";
+import { ScenarioPresets } from "./ScenarioPresets";
 
 type Props = {
   media: Media | null;
@@ -47,6 +49,7 @@ type Props = {
   onSaved?: (value: Settings) => void;
   initialOutput?: string;
   needsSave?: boolean;
+  undoLimit?: number;
   renderBatch?: (settings: Settings) => ReactNode;
   projectActions?: (
     project: Project,
@@ -71,6 +74,7 @@ export function Compress({
   onSaved,
   initialOutput,
   needsSave = false,
+  undoLimit = 50,
   renderBatch,
   projectActions,
   onDraft,
@@ -78,13 +82,11 @@ export function Compress({
   onOutputDirectory,
   onNotice,
 }: Props) {
-  const [settings, setSettings] = useState<Settings>(() =>
-    media
+  const editor = useEditorHistory(() => {
+    const settings = media
       ? settingsForMedia(initialSettings ?? defaultSettings, media)
-      : (initialSettings ?? defaultSettings),
-  );
-  const [output, setOutput] = useState(
-    () =>
+      : (initialSettings ?? defaultSettings);
+    const output =
       initialOutput ??
       (media
         ? inOutputDirectory(
@@ -94,8 +96,10 @@ export function Compress({
             ).replace(/(\.[^.]+)$/, reused ? `-${Date.now()}$1` : "$1"),
             outputDirectory,
           )
-        : ""),
-  );
+        : "");
+    return { settings, output };
+  }, undoLimit);
+  const { settings, output, setSettings, setOutput } = editor;
   const [customResolution, setCustomResolution] = useState(
     () =>
       ![0, 720, 1080, 1440, 2160].includes(
@@ -108,6 +112,34 @@ export function Compress({
   const [advancedRevision, setAdvancedRevision] = useState(0);
   const [settingsNotice, setSettingsNotice] = useState("");
   const [projectID] = useState(() => crypto.randomUUID());
+  useEffect(() => {
+    if (!visible || starting || choosingOutput) return;
+    function keydown(event: KeyboardEvent) {
+      const target = event.target;
+      if (
+        event.defaultPrevented ||
+        !(event.ctrlKey || event.metaKey) ||
+        event.altKey ||
+        (target instanceof HTMLElement &&
+          (target.isContentEditable ||
+            target.closest(
+              "input,textarea,select,[role='combobox'],dialog[open]",
+            )))
+      )
+        return;
+      const key = event.key.toLowerCase();
+      if (key === "z" || key === "y") {
+        event.preventDefault();
+        if (key === "y" || event.shiftKey) editor.redo();
+        else editor.undo();
+        setAdvancedRevision((value) => value + 1);
+        setCustomResolution(false);
+        setActionError("");
+      }
+    }
+    window.addEventListener("keydown", keydown);
+    return () => window.removeEventListener("keydown", keydown);
+  }, [visible, starting, choosingOutput, editor]);
   const [baseline, setBaseline] = useState(() =>
     media && !needsSave
       ? draftFingerprint(makeProject(media, settings, output, projectID))
@@ -168,22 +200,41 @@ export function Compress({
         ? { encoder: "auto" }
         : {}),
     };
-    setSettings((current) => ({
-      ...current,
-      [key]: value,
-      ...(key === "codec" && current.encoder !== "cpu"
-        ? { encoder: "auto" }
-        : {}),
+    editor.update(
+      (current) => ({
+        settings: next,
+        output:
+          (key === "audio" || key === "codec") && current.output
+            ? current.output.replace(
+                /\.[^./\\]+$/,
+                `.${outputExtension(next, current.output.split(".").pop())}`,
+              )
+            : current.output,
+      }),
+      String(key),
+    );
+    setActionError("");
+  }
+
+  function applySettings(value: Settings) {
+    if (!media) return;
+    const next = applyPresetSettings(settings, value, media);
+    setAdvancedRevision((current) => current + 1);
+    setSettingsNotice(
+      operationOf(settings) === operationOf(value)
+        ? "配置已应用，所有参数仍可修改。当前剪辑范围保持原样，请检查轨道与输出设置。"
+        : "配置已应用并切换任务；旧的剪辑范围和画面裁剪已清除，请检查输出设置。",
+    );
+    editor.update((current) => ({
+      settings: next,
+      output: current.output
+        ? current.output.replace(
+            /\.[^./\\]+$/,
+            `.${outputExtension(next, current.output.split(".").pop())}`,
+          )
+        : current.output,
     }));
-    if (key === "audio" || key === "codec")
-      setOutput((current) =>
-        current
-          ? current.replace(
-              /\.[^./\\]+$/,
-              `.${outputExtension(next, current.split(".").pop())}`,
-            )
-          : current,
-      );
+    setCustomResolution(![0, 720, 1080, 1440, 2160].includes(value.resolution));
     setActionError("");
   }
 
@@ -275,33 +326,44 @@ export function Compress({
         </span>
       </header>
       <MediaCard media={media} compact />
+      <div className="action-row editor-history" aria-label="编辑历史">
+        <button
+          className="button outlined"
+          disabled={!editor.canUndo || starting || choosingOutput}
+          title="Ctrl+Z（输入框使用文字撤销）"
+          onClick={() => {
+            editor.undo();
+            setAdvancedRevision((v) => v + 1);
+            setCustomResolution(false);
+            setActionError("");
+          }}
+        >
+          撤销
+        </button>
+        <button
+          className="button outlined"
+          disabled={!editor.canRedo || starting || choosingOutput}
+          title="Ctrl+Shift+Z / Ctrl+Y"
+          onClick={() => {
+            editor.redo();
+            setAdvancedRevision((v) => v + 1);
+            setCustomResolution(false);
+            setActionError("");
+          }}
+        >
+          重做
+        </button>
+        <span className="field-hint">
+          当前文件最多保留 {undoLimit} 步；仅还原编辑设置，不撤回已提交任务。
+        </span>
+      </div>
       <div className="compress-layout">
         <div className="settings-column">
+          <ScenarioPresets media={media} apply={applySettings} />
           <SavedSettings
             onSaved={onSaved}
             settings={settings}
-            apply={(value) => {
-              const next = applyPresetSettings(settings, value, media);
-              setAdvancedRevision((current) => current + 1);
-              setSettingsNotice(
-                operationOf(settings) === operationOf(value)
-                  ? "配置已应用；当前剪辑范围保持原样，请检查轨道与输出设置。"
-                  : "配置已应用，并切换任务；旧的剪辑范围和画面裁剪已清除。请检查输出设置。",
-              );
-              setSettings(next);
-              setOutput((current) =>
-                current
-                  ? current.replace(
-                      /\.[^./\\]+$/,
-                      `.${outputExtension(next, current.split(".").pop())}`,
-                    )
-                  : current,
-              );
-              setCustomResolution(
-                ![0, 720, 1080, 1440, 2160].includes(value.resolution),
-              );
-              setActionError("");
-            }}
+            apply={applySettings}
           />
           {settingsNotice && (
             <p className="field-hint" role="status">
@@ -319,23 +381,23 @@ export function Compress({
               const next = changeOperation(settings, value, media);
               setSettingsNotice("");
               setAdvancedRevision((current) => current + 1);
-              setSettings(next);
               const suffix = {
                 compress: "compressed",
                 remux: "remux",
                 "extract-audio": "audio",
                 "extract-subtitle": "subtitle",
               }[value];
-              setOutput((current) =>
-                current
-                  ? current
+              editor.update((current) => ({
+                settings: next,
+                output: current.output
+                  ? current.output
                       .replace(
                         /-(compressed|remux|audio|subtitle)(?=\.[^./\\]+$)/,
                         `-${suffix}`,
                       )
                       .replace(/\.[^./\\]+$/, `.${outputExtension(next)}`)
                   : suggestedOperationOutput(media.source.uri, next),
-              );
+              }));
               setActionError("");
             }}
           />
@@ -345,7 +407,7 @@ export function Compress({
               media={media}
               settings={settings}
               onChange={(next) => {
-                setSettings(next);
+                setSettings(next, "trim");
                 setActionError("");
               }}
             />
@@ -356,7 +418,10 @@ export function Compress({
               settings={settings}
               update={update}
               capabilities={capabilities}
-              customResolution={customResolution}
+              customResolution={
+                customResolution ||
+                ![0, 720, 1080, 1440, 2160].includes(settings.resolution)
+              }
               setCustomResolution={setCustomResolution}
               plan={preview.plan}
             />
