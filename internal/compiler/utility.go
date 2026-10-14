@@ -188,7 +188,16 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 		return core.ExecutionPlan{}, fmt.Errorf("unsupported operation %q", s.Operation)
 	}
 	args = append(args, project.Output.URI)
-	return core.ExecutionPlan{ProjectID: project.ID, Input: project.Inputs[0], Output: project.Output, Args: args, Preview: Preview("ffmpeg.exe", args), DurationSeconds: duration, InputSizeBytes: media.SizeBytes, SourceFingerprint: media.SourceFingerprint, Trim: core.CloneSettings(s).Trim, Encoder: encoder, EncoderKind: kind, EncoderLabel: label, EncoderReason: ""}, nil
+	expected := &core.OutputExpectation{}
+	switch s.Operation {
+	case "remux":
+		expected.VideoStreams, expected.AudioStreams, expected.SubtitleStreams = 1, len(audio), len(subtitles)
+	case "extract-audio":
+		expected.AudioStreams = 1
+	case "extract-subtitle":
+		expected.SubtitleStreams = 1
+	}
+	return core.ExecutionPlan{ProjectID: project.ID, Input: project.Inputs[0], Output: project.Output, Args: args, Preview: Preview("ffmpeg.exe", args), DurationSeconds: duration, InputSizeBytes: media.SizeBytes, SourceFingerprint: media.SourceFingerprint, Trim: core.CloneSettings(s).Trim, Encoder: encoder, EncoderKind: kind, EncoderLabel: label, EncoderReason: "", ExpectedOutput: expected}, nil
 }
 
 func extractAudioArguments(mode, sourceCodec, ext string, encoders []core.Encoder) ([]string, string, error) {

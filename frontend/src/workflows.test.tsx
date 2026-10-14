@@ -63,7 +63,8 @@ describe("task workflows", () => {
         reuse={async () => {}}
       />,
     );
-    expect(interrupted).toContain("沿用设置再处理");
+    expect(interrupted).toContain("调整并重试");
+    expect(interrupted).toContain("失败 / 中断 1");
     expect(interrupted).not.toContain("打开文件");
     expect(interrupted).toContain("previous session interrupted");
     const complete = renderToStaticMarkup(
@@ -76,6 +77,45 @@ describe("task workflows", () => {
       />,
     );
     expect(complete).toContain("打开所在文件夹");
+    expect(complete).not.toContain("输出结构已校验");
+  });
+  it("shows postflight evidence, duration warnings and keeps verification below 100 percent", () => {
+    const view = (value: Job) =>
+      renderToStaticMarkup(
+        <Queue
+          jobs={[value]}
+          cancel={() => {}}
+          refresh={() => {}}
+          compress={() => {}}
+          reuse={async () => {}}
+        />,
+      );
+    const verified = view({
+      ...job,
+      state: "completed",
+      error: "",
+      verification: {
+        videoStreams: 1,
+        audioStreams: 1,
+        subtitleStreams: 0,
+        durationSeconds: 2,
+        warnings: ["输出时长有差异，请检查结果。"],
+      },
+    });
+    expect(verified).toContain("输出结构已校验");
+    expect(verified).toContain("需要检查");
+    expect(verified).toContain("输出时长有差异");
+    const finishing = view({
+      ...job,
+      state: "running",
+      error: "",
+      progress: 0.999,
+      finishing: true,
+    });
+    expect(finishing).toContain("正在校验并保存输出");
+    expect(finishing).toContain("99%");
+    expect(finishing).not.toContain("100%");
+    expect(finishing).not.toContain("打开文件");
   });
   it("explains an output collision without hiding the original reason", () => {
     expect(jobErrorHelp("output already exists")).toContain("新的文件名");

@@ -153,9 +153,11 @@ function JobCard({
                   : "任务等待执行"
                 : state === "preparing"
                   ? "正在准备执行计划"
-                  : "处理进度"}
+                  : job.finishing
+                    ? "正在校验并保存输出"
+                    : "处理进度"}
             </span>
-            <strong>{Math.round(progress * 100)}%</strong>
+            <strong>{Math.min(99, Math.floor(progress * 100))}%</strong>
           </div>
           <progress max="1" value={progress} aria-label={`${name} 处理进度`} />
           <dl className="job-metrics">
@@ -176,7 +178,7 @@ function JobCard({
               <dd>{formatDuration(job.totalTime)}</dd>
             </div>
           </dl>
-          {state === "running" && (
+          {state === "running" && !job.finishing && (
             <p className="field-hint queue-eta">
               预计剩余：
               {remaining === null
@@ -189,6 +191,27 @@ function JobCard({
       )}
       {state === "completed" && (
         <>
+          {job.verification && (
+            <div className="field-hint" role="status">
+              <p>
+                输出结构已校验 · 视频 {job.verification.videoStreams} / 音频{" "}
+                {job.verification.audioStreams} / 字幕{" "}
+                {job.verification.subtitleStreams}
+                {job.verification.durationSeconds > 0
+                  ? ` · ${formatDuration(job.verification.durationSeconds)}`
+                  : ""}
+              </p>
+              <p>已检查文件可解析及轨道结构；完整画面和声音请打开文件确认。</p>
+              {!!job.verification.warnings?.length && (
+                <div className="output-review-note">
+                  <strong>需要检查</strong>
+                  {job.verification.warnings.map((warning) => (
+                    <p key={warning}>{warning}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div className="result-banner">
             <Icon name="check" />
             <span>处理完成</span>
@@ -283,7 +306,13 @@ function JobCard({
               disabled={busy}
               onClick={() => void action("reuse")}
             >
-              {busy ? "处理中…" : "沿用设置再处理"}
+              {busy
+                ? "处理中…"
+                : state === "failed" ||
+                    state === "interrupted" ||
+                    state === "cancelled"
+                  ? "调整并重试"
+                  : "沿用设置再处理"}
             </button>
           )}
         </div>
@@ -332,15 +361,26 @@ export function Queue({
   onMoveQueued?: (id: string, direction: number) => Promise<unknown> | void;
   compareSample?: (id: string) => void;
 }) {
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [filter, setFilter] = useState<
+    "all" | "active" | "completed" | "failed"
+  >("all");
   const active = jobs.filter((job) =>
     activeStates.has(job.state.toLowerCase()),
   );
   const completed = jobs.filter(
     (job) => job.state.toLowerCase() === "completed",
   );
+  const failed = jobs.filter((job) =>
+    ["failed", "interrupted"].includes(job.state.toLowerCase()),
+  );
   const visible =
-    filter === "active" ? active : filter === "completed" ? completed : jobs;
+    filter === "active"
+      ? active
+      : filter === "completed"
+        ? completed
+        : filter === "failed"
+          ? failed
+          : jobs;
   const [storageError, setStorageError] = useState("");
   const [scheduleError, setScheduleError] = useState("");
   const [scheduling, setScheduling] = useState(false);
@@ -439,6 +479,13 @@ export function Queue({
             onClick={() => setFilter("completed")}
           >
             已完成 {completed.length}
+          </button>
+          <button
+            className={filter === "failed" ? "selected" : ""}
+            aria-pressed={filter === "failed"}
+            onClick={() => setFilter("failed")}
+          >
+            失败 / 中断 {failed.length}
           </button>
         </div>
         <span className="subtle-label">

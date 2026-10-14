@@ -181,12 +181,22 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	if !stat.Mode().IsRegular() || stat.Size() == 0 {
 		return core.Result{}, fmt.Errorf("encoder did not create a nonempty regular output file")
 	}
+	if callbacks.Log != nil {
+		callbacks.Log("正在校验输出结构…")
+	}
+	verification, err := r.verifyOutput(ctx, scratchOutput, plan)
+	if err != nil {
+		return core.Result{}, err
+	}
 	if ctx.Err() != nil {
 		return core.Result{}, ctx.Err()
 	}
 	// A source edited during encoding must not be published as the analyzed
 	// video, even if FFmpeg happened to finish reading the older open handle.
 	if err := sourcefile.Verify(plan.Input.URI, plan.SourceFingerprint); err != nil {
+		return core.Result{}, err
+	}
+	if err := ctx.Err(); err != nil {
 		return core.Result{}, err
 	}
 	// Publish only a completed file. The platform primitive never replaces an
@@ -196,7 +206,7 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	}
 	elapsed := time.Since(started).Seconds()
 	result = core.Result{InputSizeBytes: plan.InputSizeBytes, OutputSizeBytes: stat.Size(),
-		ElapsedSeconds: elapsed, Output: plan.Output}
+		ElapsedSeconds: elapsed, Output: plan.Output, Verification: verification}
 	if plan.InputSizeBytes > 0 {
 		result.SavedPercent = (1 - float64(stat.Size())/float64(plan.InputSizeBytes)) * 100
 	}

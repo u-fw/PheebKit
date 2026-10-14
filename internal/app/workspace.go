@@ -223,8 +223,10 @@ func (s *Service) SaveSettings(settings core.Settings, name string) (WorkspacePr
 }
 
 type JobReuse struct {
-	Project core.Project `json:"project"`
-	Media   core.Media   `json:"media"`
+	Project   core.Project `json:"project"`
+	Media     core.Media   `json:"media"`
+	Notice    string       `json:"notice,omitempty"`
+	NeedsSave bool         `json:"needsSave,omitempty"`
 }
 
 func (s *Service) ReuseJob(id string) (JobReuse, error) {

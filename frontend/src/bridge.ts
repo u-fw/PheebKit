@@ -77,6 +77,7 @@ export interface Thumbnail {
   height: number;
 }
 export interface Job {
+  verification?: Core.OutputVerification | null;
   project?: Project | null;
   trim?: Core.TimeRange | null;
   id: string;
@@ -89,6 +90,7 @@ export interface Job {
   completedAt: string;
   duration: number;
   progress: number;
+  finishing?: boolean;
   fps: number;
   speed: number;
   currentTime: number;
@@ -113,6 +115,8 @@ export interface SampleComparison {
   durationSeconds: number;
 }
 export interface LoadedProject {
+  notice?: string;
+  needsSave?: boolean;
   media: Media;
   project: Project;
 }
@@ -126,6 +130,7 @@ function projectView(project: Core.Project): Project {
 
 function jobView(job: Core.Job): Job {
   return {
+    verification: job.result?.verification,
     project: job.project
       ? {
           ...job.project,
@@ -144,6 +149,7 @@ function jobView(job: Core.Job): Job {
     completedAt: job.completedAt,
     duration: job.result?.elapsedSeconds ?? 0,
     progress: job.progress.percent / 100,
+    finishing: job.state === "running" && job.progress.finished,
     fps: job.progress.fps,
     speed: job.progress.speed,
     currentTime: job.progress.currentTimeSeconds,
@@ -248,7 +254,12 @@ export const API = {
   loadProject: async (): Promise<LoadedProject | null> => {
     const value = await Service.LoadProject();
     return value
-      ? { media: mediaView(value.media), project: projectView(value.project) }
+      ? {
+          media: mediaView(value.media),
+          project: projectView(value.project),
+          notice: value.notice,
+          needsSave: value.needsSave,
+        }
       : null;
   },
   importPreset: async (): Promise<WorkspacePreferences | null> => {

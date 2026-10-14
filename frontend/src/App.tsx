@@ -70,6 +70,7 @@ export default function App() {
     const path = await API.saveProject(value.project);
     if (!path) return false;
     value.markSaved(value.project);
+    studio.setNotice("");
     return true;
   }
   const [comparisonID, setComparisonID] = useState<string | null>(null);
@@ -223,6 +224,19 @@ export default function App() {
               </button>
             </div>
           )}
+          {studio.notice && (
+            <div className="surface import-progress" role="status">
+              <Icon name="info" />
+              <span>{studio.notice}</span>
+              <button
+                className="icon-button"
+                aria-label="关闭操作提示"
+                onClick={() => studio.setNotice("")}
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+          )}
           {studio.busy && studio.importProgress.total > 0 && (
             <div className="surface import-progress" role="status">
               <span>
@@ -321,6 +335,7 @@ export default function App() {
                 media={studio.media}
                 initialSettings={studio.reuse?.settings ?? studio.savedSettings}
                 initialOutput={studio.reuse?.output}
+                needsSave={studio.reuse?.needsSave}
                 renderBatch={(settings) =>
                   studio.mediaList.length > 1 ? (
                     <BatchPanel
@@ -343,7 +358,10 @@ export default function App() {
                 projectActions={(project, markSaved) => (
                   <ProjectActions
                     project={project}
-                    onSaved={markSaved}
+                    onSaved={(project) => {
+                      markSaved(project);
+                      studio.setNotice("");
+                    }}
                     dirty={dirty}
                     connected={studio.connected}
                     load={loadProject}

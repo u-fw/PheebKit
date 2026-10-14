@@ -43,6 +43,8 @@ export interface FFmpegSetupStatus {
 export interface JobReuse {
     "project": core$0.Project;
     "media": core$0.Media;
+    "notice"?: string;
+    "needsSave"?: boolean;
 }
 
 export interface QueueStatus {

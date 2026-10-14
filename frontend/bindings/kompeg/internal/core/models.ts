@@ -50,6 +50,7 @@ export interface ExecutionPlan {
     "encoderLabel": string;
     "encoderReason": string;
     "trim"?: TimeRange | null;
+    "expectedOutput"?: OutputExpectation | null;
 }
 
 export interface GPU {
@@ -84,6 +85,27 @@ export interface Media {
     "durationSeconds": number;
     "bitrate": number;
     "streams": Stream[] | null;
+}
+
+/**
+ * OutputExpectation is compiler intent, checked before publishing a result.
+ */
+export interface OutputExpectation {
+    "videoStreams": number;
+    "audioStreams": number;
+    "subtitleStreams": number;
+    "videoCodec"?: string;
+}
+
+/**
+ * OutputVerification is a metadata/structure check, not a full decode scan.
+ */
+export interface OutputVerification {
+    "durationSeconds": number;
+    "videoStreams": number;
+    "audioStreams": number;
+    "subtitleStreams": number;
+    "warnings": string[] | null;
 }
 
 export interface Preset {
@@ -122,6 +144,7 @@ export interface Result {
     "elapsedSeconds": number;
     "averageSpeed": number;
     "output": Source;
+    "verification"?: OutputVerification | null;
 }
 
 export interface Settings {

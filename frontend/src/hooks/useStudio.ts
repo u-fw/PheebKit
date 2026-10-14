@@ -39,6 +39,7 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
   const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!connected) return;
@@ -55,6 +56,7 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     settings: Settings;
     nonce: string;
     output?: string;
+    needsSave?: boolean;
   } | null>(null);
   const importBusy = useRef(false);
   const environmentGeneration = useRef(0);
@@ -209,6 +211,7 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
       setImportProgress({ completed: i + 1, total: unique.length });
     }
     if (imported.length) {
+      setNotice("");
       const all = append ? [...existing, ...imported] : imported;
       const collection = [
         ...new Map(
@@ -273,6 +276,7 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
 
   const selectMedia = useCallback((value: Media) => {
     if (importBusy.current) return;
+    setNotice("");
     setMedia(value);
     setReuse(null);
   }, []);
@@ -286,12 +290,14 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     try {
       const value = await API.loadProject();
       if (!value) return false;
+      setNotice(value.notice || "");
       setMedia(value.media);
       setMediaList([value.media]);
       mediaListRef.current = [value.media];
       setReuse({
         settings: value.project.settings,
         output: value.project.output.uri || undefined,
+        needsSave: value.needsSave,
         nonce: crypto.randomUUID(),
       });
       return true;
@@ -463,6 +469,9 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     setError("");
     try {
       const next = await API.reuseJob(id);
+      setNotice(
+        "已恢复任务设置。请检查源文件、轨道和输出位置，再点击开始处理；这会创建新任务。",
+      );
       setMedia(next.media);
       setMediaList([next.media]);
       mediaListRef.current = [next.media];
@@ -542,6 +551,8 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     addJobs,
     jobs,
     error,
+    notice,
+    setNotice,
     busy,
     chooseMedia,
     addJob,

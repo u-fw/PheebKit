@@ -192,6 +192,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	return core.ExecutionPlan{ProjectID: project.ID, Input: input, Output: output, Args: args,
 		Preview: Preview("ffmpeg.exe", args), DurationSeconds: duration, InputSizeBytes: media.SizeBytes,
 		SourceFingerprint: media.SourceFingerprint,
+		ExpectedOutput:    &core.OutputExpectation{VideoStreams: 1, AudioStreams: len(audioStreams), SubtitleStreams: len(subtitleStreams), VideoCodec: settings.Codec},
 		Trim:              trim,
 		Encoder:           encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }

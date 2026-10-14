@@ -65,6 +65,23 @@ func TestProjectIOReprobesPreservesIntentAndNeverExecutes(t *testing.T) {
 	if _, err := s.loadProjectAt(path); err == nil {
 		t.Fatal("missing project media silently accepted")
 	}
+	relinked, err := relinkProject(p, p.Output.URI)
+	if err != nil || relinked.Inputs[0].URI != p.Output.URI || relinked.Output.URI != "" {
+		t.Fatal("relink did not clear the old target", err)
+	}
+	restored, err := s.restoreProject(relinked)
+	if err != nil || restored.Media.Source.URI != p.Output.URI || restored.Project.Settings.Trim.StartSeconds != 1.5 || len(s.jobs.List()) != 0 {
+		t.Fatal("relink lost intent or executed automatically", err)
+	}
+	if p.Inputs[0].URI == relinked.Inputs[0].URI || p.Output.URI == "" {
+		t.Fatal("relink mutated the original project")
+	}
+	if _, err := relinkProject(relinked, path); err == nil {
+		t.Fatal("relink replaced an existing source")
+	}
+	if _, err := relinkProject(p, "relative.mp4"); err == nil {
+		t.Fatal("relink accepted a relative path")
+	}
 }
 
 func TestPresetSharingStripsMediaDataAndDoesNotChangeDefault(t *testing.T) {

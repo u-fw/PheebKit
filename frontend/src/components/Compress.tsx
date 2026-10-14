@@ -46,6 +46,7 @@ type Props = {
   visible?: boolean;
   onSaved?: (value: Settings) => void;
   initialOutput?: string;
+  needsSave?: boolean;
   renderBatch?: (settings: Settings) => ReactNode;
   projectActions?: (
     project: Project,
@@ -69,6 +70,7 @@ export function Compress({
   visible = true,
   onSaved,
   initialOutput,
+  needsSave = false,
   renderBatch,
   projectActions,
   onDraft,
@@ -107,7 +109,7 @@ export function Compress({
   const [settingsNotice, setSettingsNotice] = useState("");
   const [projectID] = useState(() => crypto.randomUUID());
   const [baseline, setBaseline] = useState(() =>
-    media
+    media && !needsSave
       ? draftFingerprint(makeProject(media, settings, output, projectID))
       : "",
   );

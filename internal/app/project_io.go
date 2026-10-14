@@ -111,7 +111,29 @@ func (s *Service) LoadProject() (*JobReuse, error) {
 	if err != nil || path == "" {
 		return nil, err
 	}
-	value, err := s.loadProjectAt(path)
+	p, err := projectfile.Load(path)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateProjectShape(p); err != nil {
+		return nil, err
+	}
+	notice := ""
+	if _, statErr := os.Stat(p.Inputs[0].URI); os.IsNotExist(statErr) {
+		replacement, err := s.app.Dialog.OpenFile().SetTitle("源文件丢失，请重新定位：" + filepath.Base(p.Inputs[0].URI)).PromptForSingleSelection()
+		if err != nil || replacement == "" {
+			return nil, err
+		}
+		p, err = relinkProject(p, replacement)
+		if err != nil {
+			return nil, err
+		}
+		notice = "已重新定位项目源文件。请检查轨道、剪辑和裁剪设置，然后保存项目；原项目文件尚未改写。"
+	} else if statErr != nil {
+		return nil, fmt.Errorf("读取项目源文件：%w", statErr)
+	}
+	value, err := s.restoreProject(p)
+	value.Notice, value.NeedsSave = notice, notice != ""
 	return &value, err
 }
 
@@ -123,9 +145,30 @@ func (s *Service) loadProjectAt(path string) (JobReuse, error) {
 	if err := validateProjectShape(p); err != nil {
 		return JobReuse{}, err
 	}
+	return s.restoreProject(p)
+}
+
+func relinkProject(p core.Project, replacement string) (core.Project, error) {
+	p = core.CloneProject(p)
+	if err := validateProjectShape(p); err != nil {
+		return core.Project{}, err
+	}
+	if _, err := os.Stat(p.Inputs[0].URI); !os.IsNotExist(err) {
+		return core.Project{}, errors.New("仅在原源文件丢失时重新定位")
+	}
+	p.Inputs[0] = core.Source{Kind: core.SourceLocalFile, URI: replacement, DisplayName: filepath.Base(replacement)}
+	// A replacement can itself be the old target. Never carry that path over.
+	p.Output = core.Source{}
+	if err := validateProjectShape(p); err != nil {
+		return core.Project{}, err
+	}
+	return p, nil
+}
+
+func (s *Service) restoreProject(p core.Project) (JobReuse, error) {
 	media, err := s.Probe(p.Inputs[0].URI)
 	if err != nil {
-		return JobReuse{}, fmt.Errorf("项目源文件无法读取，请恢复原文件位置：%w", err)
+		return JobReuse{}, fmt.Errorf("项目源文件无法读取：%w", err)
 	}
 	// A saved target may now exist. Require a new choice instead of overwriting.
 	if p.Output.URI != "" {

@@ -22,6 +22,8 @@ The compiler maps the first motion video by its absolute stream index and option
 
 Existing output paths and identical input/output paths are refused. Encoding writes to an owned `.kompeg-*` directory adjacent to the requested output. On success, Windows `MoveFile` publishes the result without replacing an existing destination, even if another process created it during encoding. Cancellation/failure removes only the runner's temporary directory; the requested output remains absent and can be retried. Preview shows the logical output path; the adapter substitutes the temporary path internally and preserves every other argv element.
 
+Before publication, beta.5 re-probes the temporary output with a cancellable 30-second timeout and bounded response capture. Compiler intent supplies expected motion-video/audio/subtitle counts and compression codec; invalid/unknown codecs, invalid video geometry or missing/unexpected tracks fail the task before publication. Duration differences and unknown audio/video duration produce review warnings, not false claims of corruption. Result history records observed structure; legacy records have no verification badge. This metadata check is not a complete decode scan; [workflow policy and evidence](workflows.md) describe the limits.
+
 Cancel interrupts the actual process context. Process pause/resume is not supported in this spike. Android has no executable process fallback; its mock reports unsupported and never emits fabricated media or success.
 
 ## Advanced parameters

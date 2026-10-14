@@ -20,6 +20,23 @@ type testRunner struct {
 	max     atomic.Int32
 }
 
+func TestVerificationHistorySnapshotsAreIsolated(t *testing.T) {
+	manager := New(&testRunner{}, nil)
+	defer manager.Close()
+	original := core.Job{ID: "verified", State: core.JobCompleted, Result: &core.Result{Verification: &core.OutputVerification{VideoStreams: 1, Warnings: []string{"check duration"}}}}
+	manager.Restore([]core.Job{original}, nil)
+	original.Result.Verification.Warnings[0] = "caller mutation"
+	got, ok := manager.Get("verified")
+	if !ok || got.Result.Verification.Warnings[0] != "check duration" {
+		t.Fatal("restore retained caller-owned warnings")
+	}
+	got.Result.Verification.Warnings[0] = "snapshot mutation"
+	again, _ := manager.Get("verified")
+	if again.Result.Verification.Warnings[0] != "check duration" {
+		t.Fatal("returned snapshot mutated history")
+	}
+}
+
 func (*testRunner) Probe(context.Context, core.Source) (core.Media, error) {
 	return core.Media{}, core.ErrUnsupported
 }

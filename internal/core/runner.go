@@ -16,20 +16,38 @@ type Runner interface {
 }
 
 type ExecutionPlan struct {
-	JobID             string     `json:"jobID"`
-	ProjectID         string     `json:"projectID"`
-	Input             Source     `json:"input"`
-	SourceFingerprint string     `json:"sourceFingerprint,omitempty"`
-	Output            Source     `json:"output"`
-	Args              []string   `json:"args"`
-	Preview           string     `json:"preview"`
-	DurationSeconds   float64    `json:"durationSeconds"`
-	InputSizeBytes    int64      `json:"inputSizeBytes"`
-	Encoder           string     `json:"encoder"`
-	EncoderKind       string     `json:"encoderKind"`
-	EncoderLabel      string     `json:"encoderLabel"`
-	EncoderReason     string     `json:"encoderReason"`
-	Trim              *TimeRange `json:"trim,omitempty"`
+	JobID             string             `json:"jobID"`
+	ProjectID         string             `json:"projectID"`
+	Input             Source             `json:"input"`
+	SourceFingerprint string             `json:"sourceFingerprint,omitempty"`
+	Output            Source             `json:"output"`
+	Args              []string           `json:"args"`
+	Preview           string             `json:"preview"`
+	DurationSeconds   float64            `json:"durationSeconds"`
+	InputSizeBytes    int64              `json:"inputSizeBytes"`
+	Encoder           string             `json:"encoder"`
+	EncoderKind       string             `json:"encoderKind"`
+	EncoderLabel      string             `json:"encoderLabel"`
+	EncoderReason     string             `json:"encoderReason"`
+	Trim              *TimeRange         `json:"trim,omitempty"`
+	ExpectedOutput    *OutputExpectation `json:"expectedOutput,omitempty"`
+}
+
+// OutputExpectation is compiler intent, checked before publishing a result.
+type OutputExpectation struct {
+	VideoStreams    int    `json:"videoStreams"`
+	AudioStreams    int    `json:"audioStreams"`
+	SubtitleStreams int    `json:"subtitleStreams"`
+	VideoCodec      string `json:"videoCodec,omitempty"`
+}
+
+// OutputVerification is a metadata/structure check, not a full decode scan.
+type OutputVerification struct {
+	DurationSeconds float64  `json:"durationSeconds"`
+	VideoStreams    int      `json:"videoStreams"`
+	AudioStreams    int      `json:"audioStreams"`
+	SubtitleStreams int      `json:"subtitleStreams"`
+	Warnings        []string `json:"warnings"`
 }
 
 type Capabilities struct {
@@ -92,12 +110,13 @@ type Callbacks struct {
 }
 
 type Result struct {
-	InputSizeBytes  int64   `json:"inputSizeBytes"`
-	OutputSizeBytes int64   `json:"outputSizeBytes"`
-	SavedPercent    float64 `json:"savedPercent"`
-	ElapsedSeconds  float64 `json:"elapsedSeconds"`
-	AverageSpeed    float64 `json:"averageSpeed"`
-	Output          Source  `json:"output"`
+	InputSizeBytes  int64               `json:"inputSizeBytes"`
+	OutputSizeBytes int64               `json:"outputSizeBytes"`
+	SavedPercent    float64             `json:"savedPercent"`
+	ElapsedSeconds  float64             `json:"elapsedSeconds"`
+	AverageSpeed    float64             `json:"averageSpeed"`
+	Output          Source              `json:"output"`
+	Verification    *OutputVerification `json:"verification,omitempty"`
 }
 
 type Job struct {

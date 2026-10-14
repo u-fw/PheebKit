@@ -186,6 +186,10 @@ func (m *Manager) EnqueueBatch(plans []core.ExecutionPlan, projects []core.Proje
 	queued := make([]core.Job, len(plans))
 	for i, plan := range plans {
 		plan.Args = append([]string(nil), plan.Args...)
+		if plan.ExpectedOutput != nil {
+			expected := *plan.ExpectedOutput
+			plan.ExpectedOutput = &expected
+		}
 		if plan.Trim != nil {
 			copy := *plan.Trim
 			plan.Trim = &copy
@@ -477,6 +481,11 @@ func snapshot(job core.Job) core.Job {
 	}
 	if job.Result != nil {
 		result := *job.Result
+		if result.Verification != nil {
+			verification := *result.Verification
+			verification.Warnings = append([]string{}, verification.Warnings...)
+			result.Verification = &verification
+		}
 		job.Result = &result
 	}
 	return job

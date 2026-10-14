@@ -1,4 +1,18 @@
-# PheebKit task workflows — 0.2.0-beta.3
+# PheebKit task workflows — 0.2.0-beta.5
+
+## Beta.5 reliability iteration — 2026-10-14
+
+Every successful Windows FFmpeg operation now re-probes its temporary output before no-overwrite publication. The 30-second, cancellable check uses the existing bounded capture and local-file protocol policy. It checks readability, recognizable codecs, motion-video geometry, expected video/audio/subtitle counts and the requested compression codec. Failure/cancellation cleans the scratch directory and leaves the requested target absent. A destination created by another process remains protected by final no-overwrite publication.
+
+The completed record stores observed track counts/duration and review warnings. Audio/video duration differences greater than `max(1 second, 2% of planned duration)` are visible warnings: container duration can include unselected tracks and codec delays. Unknown audio/video duration also warns; sparse subtitle-only files are exempt. This is metadata/structure verification, not a full decode scan, frame-quality assessment or guarantee that the duration matches intent. Existing history without evidence never gains a verification badge retroactively. The running UI stays at most 99% and identifies the final verification/save phase.
+
+The queue adds Failed / Interrupted filtering. Failed, interrupted and cancelled records expose Adjust and Retry; this reuses the existing re-probe-and-edit flow, clears the old target and requires an explicit start to create a new task. Restored history never starts automatically, and saved argv is never executed.
+
+Opening a `.ffproject` whose source no longer exists prompts a native file selection to relocate it. Cancellation leaves the current editor intact. The replacement is probed, source-specific intent is retained for review, and the output target is cleared (including when the chosen file was the former target). The original project is untouched. The restored editor is dirty until explicitly saved, so media replacement/exit retains existing unsaved-edit protection. Invalid trim/track/crop combinations remain subject to normal preview/compile validation. This is manual relocation, not automatic identity matching, crash recovery or autosave; recent-project navigation remains future work.
+
+Evidence: real compiler → runner → FFmpeg → ffprobe → publication checks for compression, remux, WAV and SRT; missing-track, unavailable-probe, cancellation, unreadable-file and immutable-history regressions. A disposable browser fixture verified the failed filter, retry navigation, dirty-to-saved transition, 99% final phase and 375px light/dark layout without console errors. Fixture/server/tab were removed after verification. Native file-dialog click-through remains manual; the browser fixture does not establish native IPC behavior.
+
+The beta.5 source checks passed with Go 1.27.2 and Node 24.19.0: `KOMPEG_INTEGRATION=1 go test ./...`, `go vet ./...`, 96 frontend tests in 17 files, TypeScript, ESLint and Prettier. Packaging additionally enforces dependency audits and a production Wails build. Native dialog selection, Windows 10/clean-machine smoke tests and signing remain publication checks; Android remains deferred.
 
 The beta.4 workflow foundation below remains in place. Current batch/scheduling, tracks, remux/extraction, transforms, sample comparison and project/preset sharing are documented in [media tools](media-tools.md). Presets now exclude selected track indexes and crop margins in addition to trim/paths, while retaining generic all/none track policies.
 

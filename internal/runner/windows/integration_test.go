@@ -75,6 +75,46 @@ func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
 	if progressCount.Load() == 0 || logCount.Load() == 0 {
 		t.Fatalf("progress/stderr separation failed: progress=%d log=%d", progressCount.Load(), logCount.Load())
 	}
+	if result.Verification == nil || result.Verification.VideoStreams != 1 || result.Verification.AudioStreams != 1 || len(result.Verification.Warnings) != 0 {
+		t.Fatalf("real output was not structurally verified: %+v", result.Verification)
+	}
+	t.Run("failed and cancelled postflight never publish", func(t *testing.T) {
+		for _, mode := range []string{"missing-track", "probe-unavailable", "cancel-verification"} {
+			t.Run(mode, func(t *testing.T) {
+				candidate := plan
+				candidate.JobID = "postflight-" + mode
+				candidate.Output.URI = filepath.Join(dir, mode+".mp4")
+				candidate.Args = append([]string{}, plan.Args...)
+				candidate.Args[len(candidate.Args)-1] = candidate.Output.URI
+				adapter := New(runner.FFmpeg, runner.FFprobe)
+				if mode == "missing-track" {
+					candidate.ExpectedOutput = &core.OutputExpectation{VideoStreams: 1, AudioStreams: 2}
+				} else if mode == "probe-unavailable" {
+					adapter.FFprobe = filepath.Join(dir, "missing-ffprobe.exe")
+				}
+				callbacks := core.Callbacks{}
+				if mode == "cancel-verification" {
+					callbacks.Log = func(line string) {
+						if line == "正在校验输出结构…" {
+							if err := adapter.Cancel(candidate.JobID); err != nil {
+								t.Error(err)
+							}
+						}
+					}
+				}
+				if _, err := adapter.Start(ctx, candidate, callbacks); err == nil {
+					t.Fatal("invalid/cancelled postflight reported success")
+				}
+				if _, err := os.Stat(candidate.Output.URI); !os.IsNotExist(err) {
+					t.Fatalf("failed postflight published output: %v", err)
+				}
+				matches, err := filepath.Glob(filepath.Join(dir, ".kompeg-*"))
+				if err != nil || len(matches) != 0 {
+					t.Fatalf("scratch files leaked: %v %v", matches, err)
+				}
+			})
+		}
+	})
 	t.Logf("FFmpeg=%s; HEVC input=%d output=%d saved=%.2f%% elapsed=%.2fs speed=%.2fx updates=%d logs=%d", runner.FFmpeg, result.InputSizeBytes, result.OutputSizeBytes, result.SavedPercent, result.ElapsedSeconds, result.AverageSpeed, progressCount.Load(), logCount.Load())
 
 	t.Run("CPU preserves genuine 10-bit input", func(t *testing.T) {

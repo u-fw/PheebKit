@@ -6,6 +6,8 @@ Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approv
 
 Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 
+Beta.5 adds output structure verification before publication, visible duration warnings, a failed/interrupted queue filter and explicit review before retry. Missing `.ffproject` sources can be relocated without rewriting the saved project; the recovered editor remains unsaved until an explicit save. See [workflow checks and limits](docs/workflows.md).
+
 ## Windows development
 
 Requires Go 1.25+ with automatic selection of the pinned Go 1.27.2 security toolchain, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Release builds enforce Go 1.27.2 or newer and dependency vulnerability checks. See the [security/performance audit](docs/security-performance-audit.md). Install the exact CLI once:

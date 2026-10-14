@@ -10,6 +10,8 @@ export type {
     GPU,
     Job,
     Media,
+    OutputExpectation,
+    OutputVerification,
     Preset,
     Progress,
     Project,

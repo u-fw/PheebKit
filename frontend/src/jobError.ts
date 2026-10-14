@@ -1,5 +1,7 @@
 export function jobErrorHelp(error: string): string {
   const text = error.toLowerCase();
+  if (/verify output structure/.test(text))
+    return "输出结构校验未通过，结果未发布。请查看详细原因，检查源文件或尝试其他输出格式。";
   if (/changed|fingerprint|已变化|重新导入|re-import/.test(text))
     return "源文件已变化，请重新导入后再处理。";
   if (/already exists|file exists|已存在/.test(text))
