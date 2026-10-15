@@ -50,6 +50,10 @@ For publication, create the matching tag, draft a GitHub Release and attach thes
 
 ## Local verification and remaining acceptance
 
+Beta.8 (2026-10-15) production packages were built from clean committed source `5d46ea2b2f84a591d25d25e02cc5f55f99d42fe5`; the EXE reports Go 1.27.2 and `vcs.modified=false`. The release gate passed real-media Go tests with `KOMPEG_INTEGRATION=1`, vet, 109 frontend tests/typecheck/lint/format, three version tests, source/binary govulncheck and npm audit (no known findings). Actual beta.7 package → beta.8 upgrade, exact installer/ZIP payload checks, checksum/version checks, reinstall/uninstall, mutex refusal and preservation of configuration/user sentinels passed. Logs remain in `.tools/installer-test-ea10d1ad12a244ee9b2ec850bf8fa5c7`. No app window was launched. Native subtitle picking, the new flows on GPU, installed-window interaction, clean Windows 10/11 and hosted CI remain separate acceptance items. See [feature evidence](ffmpeg-expansion.md).
+
+The first beta.8 release attempt exposed equal Windows timestamps making diagnostic preview FIFO eviction nondeterministic; it stopped before producing a final version directory. The cache now uses a monotonic sequence for FIFO ordering and timestamps only for expiration. Equal-timestamp regression and 30 repeated diagnostic test runs passed before the successful rebuild. No failed candidate was published or overwritten.
+
 Beta.6 adds local `editor.json` for draft/recovery preferences, checkpoints and recent projects. Installer/uninstaller preserve it alongside FFmpeg settings and history; lifecycle verification now includes it in configuration-hash comparisons. See [editing/recovery](editor-recovery.md) for the user-controlled retention and privacy policy.
 
 `0.2.0-beta.1` adds batch scheduling, track selection, remux/extraction, transforms, samples and project/preset sharing; policies and evidence are in [media tools](media-tools.md). `0.1.0-beta.4` added [task/preview/history workflows](workflows.md). Beta.3 introduced PheebKit branding/time selectors; beta.2 added single-range trimming. Earlier artifacts remain unchanged.

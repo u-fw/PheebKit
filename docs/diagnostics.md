@@ -2,6 +2,8 @@
 
 Settings → 故障诊断 generates a local JSON preview. Saving opens a native JSON save dialog and writes the exact preview bytes. Nothing is uploaded. Options changed after generation invalidate the preview; a snapshot expires after ten minutes. At most four previews, each at most 512 KiB, are retained in memory.
 
+Beta.8 uses a monotonic creation sequence to evict the oldest snapshot, independent of wall-clock resolution. Equal Windows timestamps no longer make the selected eviction nondeterministic. Expiration still uses elapsed time; an equal-clock regression and 30 repeated diagnostic suites passed during release verification.
+
 The report uses a positive field/value allowlist rather than attempting to redact an arbitrary log. It includes application/Go/Wails versions, validated Git revision and modified-build flag, numeric Windows version/build, architecture/logical CPU count, FFmpeg/ffprobe availability/source category/numeric release, cached encoder availability/GPU vendor categories, queue state counts and boolean/status flags for local storage. It never initiates GPU qualification or FFmpeg processes. A busy capabilities scan is reported as such, avoiding waiting for that scan.
 
 Recent job summaries are off by default. Opting in permits 1–50 latest records with operation/codec/state enums, classified failure category and output-verification/warning counts. Unknown values become generic categories. No error text, command, log or media metadata is copied. The summary is intentionally less detailed than local history and may require follow-up investigation.

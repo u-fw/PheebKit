@@ -15,6 +15,8 @@ Installer verification checks archive digests, exact current payload equality, a
 
 ## Local evidence and separate manual gates
 
+Beta.8 additionally passes real ordered segment/subtitle/independent-queue tests, 109 frontend checks and production packaging, with successful local beta.7 → beta.8 installer lifecycle/configuration preservation. Source and binary audits have no known findings. Exact source revision and local log path are in [Windows distribution](windows-distribution.md); the [feature acceptance matrix](ffmpeg-expansion.md) distinguishes CPU/browser evidence, native/GPU manual gates and future unimplemented workflows. Diagnostic FIFO now has equal-clock regression coverage.
+
 The beta.7 local record includes publisher-pinned FFmpeg media integration, actual headless process termination/recovery, additive old-record compatibility, diagnostic privacy/snapshot regressions, 101 frontend tests and a clean-source beta.6 baseline build. The release script also succeeded with old frontend assets absent. Actual original-tag beta.6 → beta.7 upgrade, reinstall/uninstall, mutex refusal, payload/checksum comparisons and configuration/user-file preservation passed on the current host. Source/binary govulncheck and npm audit reported no known vulnerabilities. Exact build revision and local log location are recorded in [Windows distribution](windows-distribution.md). Diagnostic rules are in [diagnostics](diagnostics.md).
 
 Before broadly distributing binaries, record the machine/OS/build and pass/fail evidence for these steps:
