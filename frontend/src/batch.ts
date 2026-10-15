@@ -69,6 +69,8 @@ export function makeBatchProjects(
     const current: Settings = {
       ...settings,
       trim: null,
+      segments: null,
+      subtitleBurn: null,
       rawArguments: [...settings.rawArguments],
       audioSelection: selection(tracks.audio),
       subtitleSelection: selection(tracks.subtitle),

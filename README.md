@@ -6,7 +6,7 @@ Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approv
 
 Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 
-Beta.7 adds local diagnostic preview/export, real headless interruption/recovery checks and repeatable cross-version installer acceptance. It retains configurable local drafts/recovery, recent projects, Undo/Redo, editable presets and audio/sample controls. See [release notes](RELEASE_NOTES.md), [diagnostic privacy](docs/diagnostics.md) and [release acceptance](docs/release-acceptance.md).
+Beta.8 adds ordered multi-range editing/joining or independent exports, configurable embedded/external text subtitle burn-in, and a searchable 13-category local FFmpeg capability/option-help explorer. It retains diagnostic export, recovery, Undo/Redo and installer acceptance. See [release notes](RELEASE_NOTES.md), [expansion scope and evidence](docs/ffmpeg-expansion.md) and [release acceptance](docs/release-acceptance.md). Capability discovery is not a claim that every listed FFmpeg workflow is executable through the GUI.
 
 ## Windows development
 
@@ -40,6 +40,10 @@ New compression settings default to GPU preference. NVENC, QSV and AMF are offer
 
 Compression defaults to the complete source duration. Select **剪辑并压缩** to retain one start/end range using Material hour/minute/second selectors, 0.1-second adjustment buttons or keyboard-accessible sliders. The same FFmpeg invocation trims and encodes once; progress, speed and size-mode bitrate budget use the selected duration. Audio uses AAC/Opus for accurate boundaries (Copy changes to AAC when enabling trim). See [trimming behavior and verification](docs/trimming.md).
 
+**多片段拼接** retains up to 16 ordered ranges from the same file. Edit times directly, add/remove/reorder ranges, then produce one joined encode or separate `-part-01` outputs. Repeats/overlaps intentionally repeat content. Joining supports up to four selected encoded audio tracks; remove soft subtitle tracks or burn them into video. Subtitle Burn-in supports an embedded text track or local SRT/ASS/SSA/VTT, with offset/font/size/colors/outline/shadow/margins/position/bold controls. Samples use the first range and retain the burn settings. No lossless cut, multi-file timeline, bitmap subtitle/OCR or rendered live preview is implied; generate a sample to review the actual result.
+
+Settings → FFmpeg Capabilities and Option Help reads the current binary's compiled encoders, decoders, filters, formats, protocols and other catalogs, with bounded searchable pages and local detailed/full help. These lists do not replace actual GPU trials. Typed execution controls remain validated; arbitrary commands, network/live capture and unrestricted filter graphs are not enabled by opening help.
+
 Windows packaging produces an installer, a standalone ZIP and SHA-256 checksums from the same build. `VERSION` is the version source; Settings, EXE resources and package metadata stay synchronized. See [Windows distribution and verification](docs/windows-distribution.md) for packaging commands, local lifecycle checks and remaining clean-machine/signing checks. Publication remains a separate owner action.
 
 ## Task workflow and local preferences
@@ -54,8 +58,8 @@ The app saves recent job history (normally 200 records) and up to 20 named proce
 
 - Compression selects audio/subtitle tracks, mutes audio, retains compatible subtitles, crops even pixel margins, rotates/flips video and adjusts encoded audio volume. Crop coordinates follow the source's displayed orientation; the preview remains the original, and adjustments apply to output.
 - Remux copies the primary motion-video stream and selected compatible audio/subtitle streams to MP4/MKV/WebM. It does not encode, trim or apply filters. Unsupported container/codec combinations fail before processing.
-- Audio extraction saves one selected track as AAC/M4A, Opus, MP3, FLAC, WAV or a compatible copy in Matroska Audio. Text subtitle extraction supports SRT/ASS/WebVTT; OCR and subtitle burn-in are outside this release.
-- Batch processing uses full source durations and excludes the active single-file crop/trim. Track choices are reviewed per file. Processing remains serial; waiting jobs can be reordered, and pausing scheduling leaves the current job running. Remaining time is an estimate from live speed.
+- Audio extraction saves one selected track as AAC/M4A, Opus, MP3, FLAC, WAV or a compatible copy in Matroska Audio. Text subtitle extraction supports SRT/ASS/WebVTT. Beta.8 also burns text subtitles into compressed video; bitmap subtitle/OCR remains outside this release.
+- Batch processing uses full source durations and excludes the active single-file crop/trim/multi-range/burn settings. Track choices are reviewed per file. Processing remains serial; waiting jobs can be reordered, and pausing scheduling leaves the current job running. Remaining time is an estimate from live speed.
 - Short sample compression offers 10/20/30-second shortcuts and direct 1–30-second entry from the current range start, within that range. Samples are distinct output files and can be compared at corresponding positions in Queue. Copy audio becomes AAC for the sample; size budgets scale with duration. The 512px comparison is a positioning aid, not a full-resolution quality metric.
 - Save/open `.ffproject` files and import/export `.pheebpreset` configurations through native dialogs. Opening/importing never executes tasks; sources are re-probed, existing output targets require a new choice, and duplicate imported preset names are rejected. See [processing policies and acceptance](docs/media-tools.md).
 
@@ -112,7 +116,7 @@ PheebKit's original code is licensed under the GNU General Public License versio
 
 ## Current scope
 
-Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression with single-range trimming/preview and basic transforms, selected tracks, compatible remux/audio/text-subtitle extraction, batch submission and queue scheduling, sample comparison, project-file management, preset sharing, limited advanced argv, exit protection and persisted history form the current Windows slice. Multi-clip editing, HDR encoding, unrestricted Raw Command, all component scanners and FFmpeg process pause/resume remain later milestones. Windows FFmpeg is discovered rather than bundled; third-party redistribution needs its own source/notice review.
+Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression with single/multi-range editing and basic transforms, text subtitle burn-in, selected tracks, compatible remux/audio/text-subtitle extraction, batch/queue scheduling, samples, project management/recovery, presets, diagnostic export and local FFmpeg discovery/help form the current Windows slice. Multi-file timelines, HDR encoding, unrestricted Raw Command/filter graphs, live/network capture and FFmpeg process pause/resume remain later milestones. Windows FFmpeg is discovered rather than bundled; third-party redistribution needs its own source/notice review.
 
 Android SDK/NDK/emulator and a connected device are absent on the audited machine. The pinned Android task assets also require a POSIX build host. APK build, Android Go binding and native FFmpeg execution are therefore not verified; responsive UI reuse alone does not satisfy those criteria.
 

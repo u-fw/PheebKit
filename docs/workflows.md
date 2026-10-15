@@ -1,4 +1,6 @@
-# PheebKit task workflows — 0.2.0-beta.7
+# PheebKit task workflows — 0.2.0-beta.8
+
+Beta.8 adds ordered same-source segment joins/independent exports, typed subtitle burn-in and searchable local FFmpeg catalogs/help. New edits participate in project/recovery/undo snapshots. Samples use the first ordered range; source-specific ranges and burn references are excluded from portable defaults/presets and unrelated multi-file batches. See [expansion scope and evidence](ffmpeg-expansion.md).
 
 Beta.7 adds [local diagnostic preview/export](diagnostics.md) and [release acceptance checks](release-acceptance.md), including actual headless process-interruption recovery and previous-version installer verification. Diagnostics use structured allowlists and are never uploaded automatically. Native/clean-machine/hosted-CI gates remain separate.
 

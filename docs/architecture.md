@@ -2,6 +2,8 @@
 
 The first milestone is a technical spike, not the complete product. Windows 10/11 x64 is the active target; Android is deferred. Wails v3 Beta and experimental Android support were explicitly approved for this spike on 2026-10-09; they are not a production stability claim.
 
+Beta.8 keeps the same architecture: ordered ranges and typed subtitle styles are editable Project IR. The compiler emits a bounded same-source seek/concat graph and freezes any subtitle asset identity. The Windows runner prepares a generated ASS file through restricted input/forced text formats, captures at most 32 MiB and refuses prepared subtitles above 16 MiB, then runs the encode in its existing private scratch directory and publishes only verified output. No user subtitle path is interpolated into a filter. The optional `FFmpegInspector` boundary exposes fixed-category catalogs/help without changing the core execution interface or granting arbitrary command execution. Catalogs are serialized, deadline/output bounded and invalidated when the binary fingerprint changes. See [expansion scope](ffmpeg-expansion.md).
+
 ```mermaid
 flowchart TD
   UI[Shared React / TypeScript UI] --> Bridge[Wails Bridge]

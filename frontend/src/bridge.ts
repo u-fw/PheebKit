@@ -29,6 +29,9 @@ export type Settings = Omit<
   transform?: VideoTransform | null;
   volumeDB?: number;
 };
+export type TimeRange = Core.TimeRange;
+export type SubtitleBurn = Core.SubtitleBurn;
+export type CatalogEntry = Core.CatalogEntry;
 export type Project = Omit<Core.Project, "inputs" | "settings"> & {
   inputs: Source[];
   settings: Settings;
@@ -55,6 +58,7 @@ export interface Capabilities {
   codecs: Core.Codec[];
   videoEncoders: VideoEncoder[];
   gpus: { name: string; vendor: string }[];
+  filters?: string[];
 }
 export interface BinaryStatus {
   path: string;
@@ -236,6 +240,7 @@ function preferencesView(
 function capabilityView(caps: Core.Capabilities): Capabilities {
   return {
     version: caps.version,
+    filters: caps.filters ?? [],
     encoders: (caps.encoders ?? []).map((encoder) => encoder.name),
     codecs: caps.codecs ?? [],
     videoEncoders: (caps.videoEncoders ?? []).map((encoder) => ({
@@ -247,6 +252,11 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  getFFmpegCatalog: async (category: string): Promise<CatalogEntry[]> =>
+    (await Service.GetFFmpegCatalog(category)) ?? [],
+  getFFmpegOptionHelp: (category: string, name: string): Promise<string> =>
+    Service.GetFFmpegOptionHelp(category, name),
+  chooseSubtitleFile: (): Promise<string> => Service.ChooseSubtitleFile(),
   getDiagnosticPreview: (
     includeRecentJobs: boolean,
     jobLimit: number,

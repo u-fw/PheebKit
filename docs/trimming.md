@@ -1,6 +1,16 @@
 # Optional trimming with compression
 
-The compression page defaults to the entire source. **剪辑并压缩** keeps one continuous interval of the input and encodes it in the same invocation; there is no second intermediate encoded file or order selector. This is range trimming, not a timeline editor, multi-segment join or lossless stream-copy feature.
+## Beta.8: ordered ranges and subtitles
+
+The original single-range flow below remains. **多片段拼接** additionally stores an ordered `settings.segments` list (1–16 ranges), mutually exclusive with `trim`. Every range must be finite, within known source duration and at least one video frame. Repeated/overlapping ranges are intentional repetitions. Add/delete/up/down controls work without dragging; the existing direct-entry time picker edits the selected range. Range changes position its original-source preview at the selected start.
+
+One joined output uses bounded independent input seeks of the same source, timestamp resets, one concat filter graph and a single encode. Decoder threads are limited per input, complex-filter threads are limited to one, and at most four audio tracks are retained. Progress/size budgets use summed selected duration. Soft subtitle retiming across joins is refused; the UI offers explicit soft-track removal, and text burn-in can follow each source interval. The separate-export button creates unique numbered single-range projects and uses existing atomic batch admission; size budgets are proportionally divided. No existing output is overwritten.
+
+Samples retain the first listed range only, capped at its end, with a proportional share of the whole edit's size budget. Multi-file batch/default presets omit source-specific ranges/burn references. Projects/checkpoints/undo retain them. See [expansion details and evidence](ffmpeg-expansion.md). This is same-source range editing, not lossless cuts or a multi-file transition timeline.
+
+## Original single-range behavior
+
+The compression page defaults to the entire source. **剪辑并压缩** keeps one continuous interval of the input and encodes it in the same invocation. This original mode has no second intermediate encode; the beta.8 multi-range mode is described above. Neither mode is a lossless stream-copy cut.
 
 Both boundaries use Material hour/minute/second selectors limited by the known source duration (hours may exceed 23). Fractional values from sliders are retained when selecting a unit, and ±0.1-second buttons allow finer adjustment. Both boundaries also have keyboard-accessible sliders with millisecond steps. Inline feedback rejects reversed, empty, out-of-duration and shorter-than-one-frame intervals. Unknown duration disables range selection. Full-source mode keeps existing behavior. Switching modes retains the editable range; importing a different source resets settings. Beta.2 had manual timecode fields; beta.3 replaces them with these selectors.
 

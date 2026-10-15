@@ -38,6 +38,7 @@ export function OutputSummary({
 }) {
   const operation = operationOf(settings);
   const compress = operation === "compress";
+  const subtitleCount = selectedTracks(media, "subtitle", settings).length;
   const video = media.streams.find(
     (stream) =>
       stream.codecType === "video" &&
@@ -101,7 +102,13 @@ export function OutputSummary({
       <div className="summary-divider" />
       <div className="output-summary">
         <span>处理范围</span>
-        <strong>{settings.trim ? "所选片段" : "完整媒体"}</strong>
+        <strong>
+          {settings.segments?.length
+            ? `${settings.segments.length} 段拼接`
+            : settings.trim
+              ? "所选片段"
+              : "完整媒体"}
+        </strong>
         <span>输出时长</span>
         <strong>
           {rangeInvalid
@@ -145,9 +152,11 @@ export function OutputSummary({
           <>
             <span>字幕</span>
             <strong>
-              {selectedTracks(media, "subtitle", settings).length
-                ? `${selectedTracks(media, "subtitle", settings).length} 条`
-                : "不保留"}
+              {settings.subtitleBurn
+                ? `烧录到画面${subtitleCount ? ` + ${subtitleCount} 条软字幕` : ""}`
+                : subtitleCount
+                  ? `${subtitleCount} 条软字幕`
+                  : "不保留"}
             </strong>
           </>
         )}

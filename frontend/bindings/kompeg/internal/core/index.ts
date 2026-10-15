@@ -3,6 +3,7 @@
 
 export type {
     Capabilities,
+    CatalogEntry,
     Codec,
     CropMargins,
     Encoder,
@@ -19,6 +20,8 @@ export type {
     Settings,
     Source,
     Stream,
+    SubtitleAsset,
+    SubtitleBurn,
     TimeRange,
     TrackSelection,
     VideoEncoder,

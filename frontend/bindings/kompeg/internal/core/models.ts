@@ -10,6 +10,13 @@ export interface Capabilities {
     "platform": string;
     "videoEncoders": VideoEncoder[] | null;
     "gpus": GPU[] | null;
+    "filters"?: string[] | null;
+}
+
+export interface CatalogEntry {
+    "name": string;
+    "description": string;
+    "flags": string;
 }
 
 /**
@@ -50,6 +57,7 @@ export interface ExecutionPlan {
     "encoderLabel": string;
     "encoderReason": string;
     "trim"?: TimeRange | null;
+    "subtitleAsset"?: SubtitleAsset | null;
     "expectedOutput"?: OutputExpectation | null;
 }
 
@@ -161,6 +169,8 @@ export interface Settings {
     "targetSizeMB": number;
     "rawArguments": string[] | null;
     "trim"?: TimeRange | null;
+    "segments"?: TimeRange[] | null;
+    "subtitleBurn"?: SubtitleBurn | null;
     "audioSelection"?: TrackSelection | null;
     "subtitleSelection"?: TrackSelection | null;
     "transform"?: VideoTransform | null;
@@ -196,6 +206,32 @@ export interface Stream {
     "title": string;
     "attachedPicture": boolean;
     "timedThumbnails": boolean;
+}
+
+export interface SubtitleAsset {
+    "source": Source;
+    "fingerprint": string;
+    "streamIndex": number;
+    "format": string;
+}
+
+/**
+ * SubtitleBurn identifies editable subtitle intent; compilation freezes its file identity.
+ */
+export interface SubtitleBurn {
+    "source": string;
+    "path"?: string;
+    "streamIndex": number;
+    "offsetSeconds": number;
+    "font": string;
+    "fontSize": number;
+    "color": string;
+    "outlineColor": string;
+    "outline": number;
+    "shadow": number;
+    "alignment": number;
+    "margin": number;
+    "bold": boolean;
 }
 
 /**

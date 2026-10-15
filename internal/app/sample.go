@@ -44,7 +44,21 @@ func (s *Service) StartSample(p core.Project, seconds float64) (core.Job, error)
 	if err := compiler.ValidateSettings(p.Settings); err != nil {
 		return core.Job{}, err
 	}
+	rate := 0.0
+	for _, stream := range media.Streams {
+		if stream.CodecType == "video" && !stream.AttachedPicture && !stream.TimedThumbnails {
+			rate = stream.FrameRate
+			break
+		}
+	}
+	selectedDuration, err := compiler.SelectedDuration(p.Settings, media.DurationSeconds, rate)
+	if err != nil {
+		return core.Job{}, err
+	}
 	start, end := 0.0, media.DurationSeconds
+	if len(p.Settings.Segments) > 0 {
+		start, end = p.Settings.Segments[0].StartSeconds, p.Settings.Segments[0].EndSeconds
+	}
 	if trim := p.Settings.Trim; trim != nil {
 		if trim.StartSeconds < 0 || trim.EndSeconds > end || trim.StartSeconds >= trim.EndSeconds {
 			return core.Job{}, errors.New("剪辑区间无效")
@@ -54,9 +68,11 @@ func (s *Service) StartSample(p core.Project, seconds float64) (core.Job, error)
 	if end <= start || end <= 0 || math.IsNaN(end) || math.IsInf(end, 0) {
 		return core.Job{}, errors.New("样片需要已知的媒体时长")
 	}
-	selectedDuration := end - start
 	end = math.Min(end, start+seconds)
 	p = core.CloneProject(p)
+	if len(p.Settings.Segments) > 0 {
+		p.Settings.Segments = nil
+	}
 	p.Settings.Trim = &core.TimeRange{StartSeconds: start, EndSeconds: end}
 	if p.Settings.Audio == "copy" {
 		p.Settings.Audio = "aac"

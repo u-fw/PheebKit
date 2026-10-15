@@ -39,6 +39,12 @@ export function CommandPreview({
         </button>
       </div>
       <p>根据当前设置生成，用于核对实际处理方式。</p>
+      {plan?.subtitleAsset && (
+        <p className="field-hint">
+          执行前会在临时目录将所选文字字幕转换为
+          ASS；下方命令使用该临时目录中的固定字幕文件，不能单独复制运行。
+        </p>
+      )}
       <pre aria-live="polite">
         {loading
           ? "正在生成执行计划…"

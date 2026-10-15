@@ -50,6 +50,10 @@ export function ChooseOutputDirectory(suggested: string): $CancellablePromise<st
     return $Call.ByID(1097593766, suggested);
 }
 
+export function ChooseSubtitleFile(): $CancellablePromise<string> {
+    return $Call.ByID(2552208564);
+}
+
 export function ClearRecentProjects(): $CancellablePromise<void> {
     return $Call.ByID(887171813);
 }
@@ -84,6 +88,14 @@ export function GetDiagnosticPreview(options: $models.DiagnosticOptions): $Cance
 
 export function GetEnvironment(): $CancellablePromise<$models.Environment> {
     return $Call.ByID(2101974642);
+}
+
+export function GetFFmpegCatalog(category: string): $CancellablePromise<core$0.CatalogEntry[] | null> {
+    return $Call.ByID(78270607, category);
+}
+
+export function GetFFmpegOptionHelp(category: string, name: string): $CancellablePromise<string> {
+    return $Call.ByID(4241714670, category, name);
 }
 
 export function GetFFmpegSetupStatus(): $CancellablePromise<$models.FFmpegSetupStatus> {

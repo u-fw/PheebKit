@@ -35,6 +35,8 @@ import { TransformSettings } from "./TransformSettings";
 import { MaterialSelect } from "./MaterialSelect";
 import { useEditorHistory } from "../hooks/useEditorHistory";
 import { ScenarioPresets } from "./ScenarioPresets";
+import { SubtitleBurnSettings } from "./SubtitleBurnSettings";
+import { segmentProjects } from "../segments";
 
 type Props = {
   media: Media | null;
@@ -255,7 +257,7 @@ export function Compress({
     }
   }
 
-  async function start() {
+  async function start(parts = false) {
     if (
       !media ||
       starting ||
@@ -269,10 +271,17 @@ export function Compress({
     setStarting(true);
     setActionError("");
     try {
-      const job = await API.start(
-        makeProject(media, settings, output, projectID),
-      );
-      onJob(job);
+      if (parts) {
+        const jobs = await API.startBatch(
+          segmentProjects(media, settings, output),
+        );
+        for (const job of jobs) onJob(job);
+      } else {
+        const job = await API.start(
+          makeProject(media, settings, output, projectID),
+        );
+        onJob(job);
+      }
       void API.rememberOutputDirectory(output)
         .then(() => onOutputDirectory?.(directoryOf(output)))
         .catch((cause: unknown) => {
@@ -406,6 +415,15 @@ export function Compress({
               visible={visible}
               media={media}
               settings={settings}
+              exportParts={() => void start(true)}
+              canExport={
+                connected &&
+                Boolean(preview.plan) &&
+                !preview.loading &&
+                !starting &&
+                validation.length === 0 &&
+                encoderAvailable
+              }
               onChange={(next) => {
                 setSettings(next, "trim");
                 setActionError("");
@@ -430,6 +448,15 @@ export function Compress({
             <AudioEncodingSettings settings={settings} update={update} />
           )}
           <TrackSettings media={media} settings={settings} update={update} />
+          {compress && (
+            <SubtitleBurnSettings
+              media={media}
+              settings={settings}
+              onChange={(next) => setSettings(next, "subtitles")}
+              capabilities={capabilities}
+              connected={connected}
+            />
+          )}
           {(compress || operation === "extract-audio") && (
             <TransformSettings
               media={media}

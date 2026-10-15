@@ -1,4 +1,6 @@
-# Media tools — 0.2.0-beta.1
+# Media tools — foundations and 0.2.0-beta.8 expansion
+
+Beta.8 adds ordered same-source ranges with joined or separate exports, configurable text subtitle burn-in, and local FFmpeg catalogs/help. See [expansion scope, policy and evidence](ffmpeg-expansion.md). The foundations below remain; soft subtitle selection controls embedded output tracks independently of burn-in. Multi-file batches omit ranges and burn references. Samples also accept direct 1–30-second entry and use the first range when there are multiple segments.
 
 The existing Go compiler/runner and React Material/glass components are reused. No dependency or framework was added/upgraded. Windows remains active; Android is deferred.
 
@@ -10,7 +12,7 @@ The processing picker exposes compression, remux, audio extraction and text subt
 
 Audio selection defaults to all; subtitles default to none, preserving older project behavior. Explicit choices use global ffprobe indexes and validate type/existence/uniqueness. Labels include language, codec and source title; MP4 handler names are read as titles when no title tag exists.
 
-Compression encodes the primary motion-video stream and selected audio/subtitles. MP4 retains the existing audio-copy policy and text subtitle conversion to `mov_text`; Matroska supports the explicit copy table and text fallback; WebM compression remains AV1/Opus with compatible text subtitles. Unsupported bitmap/text or container combinations fail preflight. Subtitles are embedded tracks, not burned into pixels. Copy audio cannot apply volume or accurate trim; the UI offers an explicit switch to AAC.
+Compression encodes the primary motion-video stream and selected audio/subtitles. MP4 retains the existing audio-copy policy and text subtitle conversion to `mov_text`; Matroska supports the explicit copy table and text fallback; WebM compression remains AV1/Opus with compatible text subtitles. Unsupported bitmap/text or container combinations fail preflight. Track selection retains soft subtitle streams; the separate burn-in controls render text into pixels. Copy audio cannot apply volume or accurate trim; the UI offers an explicit switch to AAC.
 
 Remux copies primary motion video and selected compatible tracks without a video encoder/GPU. MP4 copy is conservatively limited to H.264/HEVC/AV1/MPEG-4 video, allowed audio and existing `mov_text`; WebM accepts VP8/VP9/AV1, Opus/Vorbis and existing WebVTT. Matroska uses the explicit subtitle copy table. HDR copying is permitted; HDR compression is unsupported. Chapters/global metadata are retained where supported. Covers, additional video streams, attachments and data are excluded; this is not an all-stream archival copy.
 

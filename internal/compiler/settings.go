@@ -12,6 +12,9 @@ import (
 // ValidateSettings checks intent independent of any particular input file.
 // Compile additionally checks stream indexes, source geometry and mux compatibility.
 func ValidateSettings(settings core.Settings) error {
+	if err := validateEditing(settings); err != nil {
+		return err
+	}
 	if (settings.Operation == "" || settings.Operation == "compress" || settings.Operation == "extract-audio") && (settings.Audio == "aac" || settings.Audio == "opus") && settings.AudioBitrateKbps != 0 && (settings.AudioBitrateKbps < 32 || settings.AudioBitrateKbps > 320) {
 		return fmt.Errorf("audio bitrate must be 0 (default) or 32–320 Kbps")
 	}

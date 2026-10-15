@@ -162,7 +162,7 @@ export function SavedSettings({
         </button>
       </div>
       <p className="field-hint">
-        保存处理方式、编码、音量与旋转等通用设置。剪辑范围、轨道编号、裁剪边距及文件路径不保存到配置。
+        保存处理方式、编码、音量与旋转等通用设置。剪辑、多片段、字幕烧录、轨道编号、裁剪边距及文件路径不保存到配置；这些编辑可保存到项目文件。
       </p>
       <div className="action-row">
         <button

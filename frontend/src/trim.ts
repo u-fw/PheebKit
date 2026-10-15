@@ -24,6 +24,19 @@ export function trimError(
   total: number,
   frameRate = 0,
 ): string {
+  if (settings.segments?.length) {
+    if (settings.trim) return "单区间和多片段不能同时启用。";
+    if (settings.segments.length > 16) return "最多保留 16 个片段。";
+    for (const [index, range] of settings.segments.entries()) {
+      const error = trimError(
+        { ...settings, segments: null, trim: range },
+        total,
+        frameRate,
+      );
+      if (error) return `片段 ${index + 1}：${error}`;
+    }
+    return "";
+  }
   const trim = settings.trim;
   if (!trim) return "";
   if (!Number.isFinite(total) || total <= 0)
@@ -47,6 +60,13 @@ export function trimError(
 }
 
 export function selectedDuration(settings: Settings, total: number): number {
+  if (settings.segments?.length)
+    return trimError(settings, total)
+      ? 0
+      : settings.segments.reduce(
+          (sum, range) => sum + range.endSeconds - range.startSeconds,
+          0,
+        );
   return settings.trim
     ? trimError(settings, total)
       ? 0

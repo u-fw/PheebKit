@@ -20,10 +20,13 @@ import (
 )
 
 type Runner struct {
-	FFmpeg  string
-	FFprobe string
-	mu      sync.Mutex
-	active  map[string]context.CancelFunc
+	FFmpeg          string
+	FFprobe         string
+	mu              sync.Mutex
+	active          map[string]context.CancelFunc
+	inspectMu       sync.Mutex
+	catalogs        map[string][]core.CatalogEntry
+	catalogIdentity string
 }
 
 var _ core.Runner = (*Runner)(nil)
@@ -85,6 +88,14 @@ func (r *Runner) Capabilities(ctx context.Context) (core.Capabilities, error) {
 	}
 	parsed := capabilities.ParseEncoders(string(encoders))
 	qualified := r.qualifyVideoEncoders(ctx, parsed)
+	filters, err := r.Catalog(ctx, "filters")
+	if err != nil {
+		return core.Capabilities{}, err
+	}
+	filterNames := make([]string, 0, len(filters))
+	for _, f := range filters {
+		filterNames = append(filterNames, f.Name)
+	}
 	if err := ctx.Err(); err != nil {
 		return core.Capabilities{}, fmt.Errorf("scan GPU encoders: %w", err)
 	}
@@ -98,7 +109,7 @@ func (r *Runner) Capabilities(ctx context.Context) (core.Capabilities, error) {
 	return core.Capabilities{Version: strings.SplitN(strings.TrimSpace(string(version)), "\n", 2)[0],
 		BuildConfiguration: strings.TrimSpace(string(build)), Encoders: parsed,
 		Codecs: capabilities.ResolveQualified(qualified), Hardware: hardware, Platform: "windows",
-		VideoEncoders: qualified, GPUs: detectGPUs()}, nil
+		VideoEncoders: qualified, GPUs: detectGPUs(), Filters: filterNames}, nil
 }
 
 func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callbacks core.Callbacks) (result core.Result, resultErr error) {
@@ -139,8 +150,17 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 		delete(r.active, plan.JobID)
 		r.mu.Unlock()
 	}()
+	if plan.SubtitleAsset != nil {
+		if callbacks.Log != nil {
+			callbacks.Log("正在准备本地文字字幕…")
+		}
+		if err := r.prepareSubtitle(ctx, scratchDir, *plan.SubtitleAsset); err != nil {
+			return core.Result{}, err
+		}
+	}
 
 	cmd := exec.CommandContext(ctx, r.FFmpeg, args...)
+	cmd.Dir = scratchDir
 	hideProcess(cmd)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -195,6 +215,11 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	// video, even if FFmpeg happened to finish reading the older open handle.
 	if err := sourcefile.Verify(plan.Input.URI, plan.SourceFingerprint); err != nil {
 		return core.Result{}, err
+	}
+	if plan.SubtitleAsset != nil {
+		if err := sourcefile.Verify(plan.SubtitleAsset.Source.URI, plan.SubtitleAsset.Fingerprint); err != nil {
+			return core.Result{}, fmt.Errorf("字幕源已变化：%w", err)
+		}
 	}
 	if err := ctx.Err(); err != nil {
 		return core.Result{}, err
@@ -278,13 +303,15 @@ func validatePlan(plan core.ExecutionPlan) error {
 		return fmt.Errorf("plan output does not match output source")
 	}
 	hasNoOverwrite, hasInput, hasProgress := false, false, false
+	inputs := 0
 	for i, arg := range plan.Args {
 		if arg == "-y" {
 			return fmt.Errorf("overwrite option is forbidden")
 		}
 		hasNoOverwrite = hasNoOverwrite || arg == "-n"
 		if arg == "-i" && i+1 < len(plan.Args) {
-			if hasInput || plan.Args[i+1] != plan.Input.URI {
+			inputs++
+			if inputs > 16 || plan.Args[i+1] != plan.Input.URI {
 				return fmt.Errorf("plan contains an unexpected input")
 			}
 			hasInput = true

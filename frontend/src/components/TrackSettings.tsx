@@ -142,7 +142,7 @@ export function TrackSettings({
                 {single
                   ? "一次提取一条轨道，源文件保持原样。"
                   : kind === "subtitle"
-                    ? `当前将${chosen.length ? `保留 ${chosen.length} 条字幕` : "移除字幕"}，不会把字幕烧录到画面。`
+                    ? `当前将${chosen.length ? `保留 ${chosen.length} 条软字幕` : "移除软字幕轨道"}；画面烧录由下方字幕烧录设置控制。`
                     : `当前将${chosen.length ? `保留 ${chosen.length} 条音轨` : "输出静音视频"}。`}
               </p>
             )}

@@ -3,17 +3,22 @@ import type { Media, Settings } from "../bridge";
 import { formatTimecode, selectedDuration, trimError } from "../trim";
 import { TimePicker } from "./TimePicker";
 import { ClipPreview } from "./ClipPreview";
+import { SegmentsEditor } from "./SegmentsEditor";
 
 export function TrimSettings({
   media,
   settings,
   onChange,
   visible = true,
+  exportParts,
+  canExport = false,
 }: {
   media: Media;
   settings: Settings;
   onChange: (settings: Settings) => void;
   visible?: boolean;
+  exportParts?: () => void;
+  canExport?: boolean;
 }) {
   const trim = settings.trim;
   const total = media.durationSeconds;
@@ -33,12 +38,13 @@ export function TrimSettings({
 
   function enable(enabled: boolean) {
     if (!enabled) {
-      onChange({ ...settings, trim: null });
+      onChange({ ...settings, trim: null, segments: null });
       return;
     }
     onChange({
       ...settings,
       trim: range,
+      segments: null,
       audio: hasAudio && settings.audio === "copy" ? "aac" : settings.audio,
     });
   }
@@ -64,8 +70,8 @@ export function TrimSettings({
       <div className="segmented" aria-label="处理范围">
         <button
           type="button"
-          aria-pressed={!trim}
-          className={!trim ? "selected" : ""}
+          aria-pressed={!trim && !settings.segments?.length}
+          className={!trim && !settings.segments?.length ? "selected" : ""}
           onClick={() => enable(false)}
         >
           完整视频
@@ -79,12 +85,41 @@ export function TrimSettings({
         >
           剪辑并压缩
         </button>
+        <button
+          type="button"
+          aria-pressed={Boolean(settings.segments?.length)}
+          className={settings.segments?.length ? "selected" : ""}
+          disabled={!known}
+          onClick={() =>
+            onChange({
+              ...settings,
+              trim: null,
+              segments: settings.segments?.length
+                ? settings.segments
+                : [trim ?? range],
+              audio:
+                hasAudio && settings.audio === "copy" ? "aac" : settings.audio,
+            })
+          }
+        >
+          多片段拼接
+        </button>
       </div>
       <p className="field-hint" id="trim-help">
         {known
-          ? `源视频总时长 ${formatTimecode(total)}。${trim ? "仅保留所选片段，在同一次处理中完成压缩。" : "保留完整时长，并按下方设置压缩。"}`
+          ? `源视频总时长 ${formatTimecode(total)}。${settings.segments?.length ? "按列表保留片段并拼接。" : trim ? "仅保留所选片段，在同一次处理中完成压缩。" : "保留完整时长，并按下方设置压缩。"}`
           : "视频时长未知，暂不支持选择片段。"}
       </p>
+      {Boolean(settings.segments?.length) && (
+        <SegmentsEditor
+          media={media}
+          settings={settings}
+          onChange={onChange}
+          visible={visible}
+          exportParts={exportParts}
+          canExport={canExport}
+        />
+      )}
       {trim && (
         <>
           <div className="action-row">

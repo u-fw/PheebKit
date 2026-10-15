@@ -49,6 +49,24 @@ func TestSampleUsesDistinctBoundedRangeAndProportionalBudget(t *testing.T) {
 	}
 }
 
+func TestSampleUsesFirstOrderedSegmentAndFullBudget(t *testing.T) {
+	s, projects := batchService(t)
+	p := projects[0]
+	p.Settings.Segments = []core.TimeRange{{StartSeconds: 5, EndSeconds: 8}, {StartSeconds: 0, EndSeconds: 1}}
+	p.Settings.Mode = "size"
+	p.Settings.TargetSizeMB = 100
+	job, err := s.StartSample(p, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Trim.StartSeconds != 5 || job.Trim.EndSeconds != 6 || len(job.Project.Settings.Segments) != 0 || job.Project.Settings.TargetSizeMB != 25 {
+		t.Fatal("sample lost first-range or budget policy")
+	}
+	if len(p.Settings.Segments) != 2 {
+		t.Fatal("sample changed editor ranges")
+	}
+}
+
 func TestRealSampleJobAndComparisonRejectChangedSource(t *testing.T) {
 	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
 		t.Skip("set KOMPEG_INTEGRATION=1")

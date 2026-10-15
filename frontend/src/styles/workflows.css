@@ -9,6 +9,64 @@
 .diagnostics-card > .field-label {
   margin-top: var(--space-4);
 }
+.segment-list,
+.catalog-list {
+  list-style: none;
+  padding: 0;
+  margin-block: var(--space-4);
+}
+.segment-list li,
+.catalog-list li {
+  padding: var(--space-3);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-2);
+  min-width: 0;
+}
+.segment-list li.selected {
+  border-color: var(--primary);
+  background: var(--primary-container);
+}
+.segment-list .button {
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.segments-editor h3 {
+  margin-block: var(--space-4);
+}
+.catalog-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  align-items: center;
+}
+.catalog-list li > div {
+  flex: 1;
+  min-width: min(100%, 180px);
+  overflow-wrap: anywhere;
+}
+.catalog-list code {
+  font-weight: 600;
+}
+.catalog-list p {
+  font-size: var(--font-sm);
+}
+.ffmpeg-explorer summary,
+.subtitle-appearance summary {
+  min-height: 44px;
+  padding-block: var(--space-3);
+  font-weight: 600;
+}
+.subtitle-settings > .material-select,
+.subtitle-settings > .field-label,
+.subtitle-settings > .field-grid,
+.subtitle-settings > details {
+  margin-top: var(--space-4);
+}
+.subtitle-appearance .track-choice {
+  margin-top: var(--space-4);
+}
 .diagnostic-preview {
   max-height: 360px;
   overflow: auto;

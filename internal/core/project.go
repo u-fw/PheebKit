@@ -25,10 +25,29 @@ type Settings struct {
 	TargetSizeMB      float64         `json:"targetSizeMB"`
 	RawArguments      []string        `json:"rawArguments"`
 	Trim              *TimeRange      `json:"trim,omitempty"`
+	Segments          []TimeRange     `json:"segments,omitempty"`
+	SubtitleBurn      *SubtitleBurn   `json:"subtitleBurn,omitempty"`
 	AudioSelection    *TrackSelection `json:"audioSelection,omitempty"`
 	SubtitleSelection *TrackSelection `json:"subtitleSelection,omitempty"`
 	Transform         *VideoTransform `json:"transform,omitempty"`
 	VolumeDB          float64         `json:"volumeDB,omitempty"`
+}
+
+// SubtitleBurn identifies editable subtitle intent; compilation freezes its file identity.
+type SubtitleBurn struct {
+	Source        string  `json:"source"`
+	Path          string  `json:"path,omitempty"`
+	StreamIndex   int     `json:"streamIndex"`
+	OffsetSeconds float64 `json:"offsetSeconds"`
+	Font          string  `json:"font"`
+	FontSize      int     `json:"fontSize"`
+	Color         string  `json:"color"`
+	OutlineColor  string  `json:"outlineColor"`
+	Outline       int     `json:"outline"`
+	Shadow        int     `json:"shadow"`
+	Alignment     int     `json:"alignment"`
+	Margin        int     `json:"margin"`
+	Bold          bool    `json:"bold"`
 }
 
 // TrackSelection uses global input stream indexes from ffprobe, not an index
@@ -56,6 +75,11 @@ type CropMargins struct {
 // CloneSettings isolates editable project, preset and queue snapshots.
 func CloneSettings(settings Settings) Settings {
 	settings.RawArguments = append([]string(nil), settings.RawArguments...)
+	settings.Segments = append([]TimeRange(nil), settings.Segments...)
+	if settings.SubtitleBurn != nil {
+		copy := *settings.SubtitleBurn
+		settings.SubtitleBurn = &copy
+	}
 	if settings.Trim != nil {
 		copy := *settings.Trim
 		settings.Trim = &copy

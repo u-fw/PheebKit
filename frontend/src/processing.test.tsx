@@ -331,8 +331,8 @@ describe("processing interface", () => {
     expect(html).toContain("音轨 2 · 中文 · OPUS · 原声");
     expect(html).toContain('type="checkbox"');
     expect(html).toContain('checked=""');
-    expect(html).toContain("移除字幕");
-    expect(html).toContain("不会把字幕烧录到画面");
+    expect(html).toContain("移除软字幕轨道");
+    expect(html).toContain("画面烧录由下方字幕烧录设置控制");
   });
   it("gives volume copy recovery and explains original-only preview", () => {
     const html = renderToStaticMarkup(

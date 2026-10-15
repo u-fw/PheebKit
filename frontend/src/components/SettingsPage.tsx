@@ -9,6 +9,7 @@ import { errorMessage } from "../format";
 import { Icon } from "./Icon";
 import { FFmpegDownload, explicitEnvironmentOverride } from "./FFmpegDownload";
 import { DiagnosticsPanel } from "./DiagnosticsPanel";
+import { FFmpegExplorer } from "./FFmpegExplorer";
 
 function BinaryDetails({
   label,
@@ -356,6 +357,10 @@ export function SettingsPage({
         </div>
       )}
       <DiagnosticsPanel connected={connected} />
+      <FFmpegExplorer
+        key={`${environment?.ffmpeg.path}:${environment?.ffmpeg.version}`}
+        connected={connected}
+      />
       <p className="field-hint">
         菲比工具箱 · PheebKit {__KOMPEG_VERSION__} · Windows 测试版 · Android
         暂缓

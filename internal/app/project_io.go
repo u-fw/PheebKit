@@ -21,6 +21,8 @@ import (
 func portableSettings(settings core.Settings) core.Settings {
 	settings = core.CloneSettings(settings)
 	settings.Trim = nil
+	settings.Segments = nil
+	settings.SubtitleBurn = nil
 	if settings.AudioSelection != nil && settings.AudioSelection.Mode == "selected" {
 		settings.AudioSelection = nil
 	}
@@ -78,6 +80,9 @@ func saveProjectAt(path string, p core.Project) error {
 	}
 	if pathsAlias(path, p.Inputs[0].URI) || (p.Output.URI != "" && pathsAlias(path, p.Output.URI)) {
 		return errors.New("项目文件不能覆盖媒体或处理结果")
+	}
+	if p.Settings.SubtitleBurn != nil && p.Settings.SubtitleBurn.Source == "external" && pathsAlias(path, p.Settings.SubtitleBurn.Path) {
+		return errors.New("项目文件不能覆盖字幕源")
 	}
 	return projectfile.Save(path, core.CloneProject(p))
 }

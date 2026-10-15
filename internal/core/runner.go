@@ -30,7 +30,25 @@ type ExecutionPlan struct {
 	EncoderLabel      string             `json:"encoderLabel"`
 	EncoderReason     string             `json:"encoderReason"`
 	Trim              *TimeRange         `json:"trim,omitempty"`
+	SubtitleAsset     *SubtitleAsset     `json:"subtitleAsset,omitempty"`
 	ExpectedOutput    *OutputExpectation `json:"expectedOutput,omitempty"`
+}
+
+type SubtitleAsset struct {
+	Source      Source `json:"source"`
+	Fingerprint string `json:"fingerprint"`
+	StreamIndex int    `json:"streamIndex"`
+	Format      string `json:"format"`
+}
+
+type CatalogEntry struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Flags       string `json:"flags"`
+}
+type FFmpegInspector interface {
+	Catalog(context.Context, string) ([]CatalogEntry, error)
+	OptionHelp(context.Context, string, string) (string, error)
 }
 
 // OutputExpectation is compiler intent, checked before publishing a result.
@@ -59,6 +77,7 @@ type Capabilities struct {
 	Platform           string         `json:"platform"`
 	VideoEncoders      []VideoEncoder `json:"videoEncoders"`
 	GPUs               []GPU          `json:"gpus"`
+	Filters            []string       `json:"filters,omitempty"`
 }
 
 // VideoEncoder reports runtime-qualified hardware encoders, rather than merely

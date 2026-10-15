@@ -1,4 +1,4 @@
-# Windows release acceptance — 0.2.0-beta.7
+# Windows release acceptance — 0.2.0-beta.8
 
 This is a candidate checklist. Passing builds does not establish production stability or clean-machine compatibility. Android is deferred. Publication/push/signing requires the owner's explicit decision.
 
@@ -9,7 +9,7 @@ This is a candidate checklist. Passing builds does not establish production stab
 3. Run `scripts/setup-test-ffmpeg.ps1` once into a fresh `.tools` destination. It verifies the publisher-pinned Gyan archive and extracted binary hashes, sets process-local `KOMPEG_FFMPEG`/`KOMPEG_FFPROBE`, and supplies the same paths to subsequent GitHub steps. No system PATH or application configuration is changed. Existing manifests are refused; this is not an unverified cache.
 4. Set `KOMPEG_INTEGRATION=1`; run `go test ./... -count=1` and `go vet ./...`. Run frontend tests, typecheck, lint, formatting and version tests. The process-interruption test kills only its own headless test child; it proves checkpoint persistence and recovery without automatic task execution.
 5. Run `scripts/release-windows.ps1`. It refuses dirty sources/existing version directories, audits dependencies, performs a production build and creates Setup, standalone ZIP and SHA-256 manifest. Both packages include identical license, notices and release notes. Inspect `go version -m bin/PheebKit.exe` and run the pinned govulncheck in binary mode.
-6. For version updates, build a reviewed existing local tag: `scripts/prepare-upgrade-baseline.ps1 -Ref v0.2.0-beta.6`. It creates an isolated detached worktree, builds the original source and removes the clean worktree. It does not fetch or modify tags. Execute `scripts/verify-windows-release.ps1 -PreviousReleaseDirectory (Get-Content .tools/upgrade-baseline-path.txt -Raw).Trim()`.
+6. For version updates, build a reviewed existing local tag: `scripts/prepare-upgrade-baseline.ps1 -Ref v0.2.0-beta.7`. It creates an isolated detached worktree, builds the original source and removes the clean worktree. It does not fetch or modify tags. Execute `scripts/verify-windows-release.ps1 -PreviousReleaseDirectory (Get-Content .tools/upgrade-baseline-path.txt -Raw).Trim()`. An existing immutable local package from the verified matching source tag can instead be supplied directly with `-PreviousReleaseDirectory`.
 
 Installer verification checks archive digests, exact current payload equality, actual older-version install → current upgrade, registration/version, running-application mutex refusal, reinstall, uninstall, and preservation of user-owned files and all four existing AppData JSON files. It refuses an existing registered real installation, uses a workspace-owned directory and never launches PheebKit.
 

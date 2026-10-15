@@ -1,5 +1,6 @@
 import type { Media, Project, Settings } from "./bridge";
 import { trimError } from "./trim";
+import { subtitleError } from "./subtitles";
 
 export const defaultSettings: Settings = {
   codec: "hevc",
@@ -122,6 +123,8 @@ export function changeOperation(
     ...settings,
     operation,
     trim: null,
+    segments: null,
+    subtitleBurn: null,
     transform: null,
     volumeDB: 0,
     rawArguments: [],
@@ -204,6 +207,8 @@ export function applyPresetSettings(
       {
         ...preset,
         trim: null,
+        segments: null,
+        subtitleBurn: null,
         audioSelection:
           requested === "extract-audio"
             ? null
@@ -233,6 +238,8 @@ export function applyPresetSettings(
     {
       ...preset,
       trim: current.trim,
+      segments: current.segments,
+      subtitleBurn: current.subtitleBurn,
       audioSelection,
       subtitleSelection,
       transform:
@@ -257,6 +264,19 @@ export function validateSettings(
 ): string[] {
   const errors: string[] = [];
   const operation = operationOf(settings);
+  const burnError = subtitleError(settings, media);
+  if (burnError) errors.push(burnError);
+  if (
+    operation !== "compress" &&
+    (settings.segments?.length || settings.subtitleBurn)
+  )
+    errors.push("多片段和字幕烧录仅适用于压缩任务。");
+  if (settings.segments?.length && media) {
+    if (selectedTracks(media, "audio", settings).length > 4)
+      errors.push("多片段最多保留 4 条音轨。");
+    if (selectedTracks(media, "subtitle", settings).length)
+      errors.push("多片段拼接请移除软字幕轨道，或使用字幕烧录。");
+  }
   if (!(operation in operationLabels)) errors.push("请选择有效的处理任务。");
   if (!outputPath.trim()) errors.push("请选择输出文件。");
   if (
@@ -369,7 +389,7 @@ export function validateSettings(
   if (operation !== "compress" && settings.resolution !== 0)
     errors.push("调整分辨率仅适用于压缩任务。");
   if (operation !== "compress") return errors;
-  if (settings.trim) {
+  if (settings.trim || settings.segments?.length) {
     const video = media?.streams.find(
       (stream) =>
         stream.codecType === "video" &&

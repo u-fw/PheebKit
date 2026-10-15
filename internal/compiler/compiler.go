@@ -68,14 +68,11 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if video == nil {
 		return core.ExecutionPlan{}, fmt.Errorf("selected media has no motion video stream (cover art and thumbnails cannot be compressed as a movie)")
 	}
-	duration, err := outputDuration(settings.Trim, media.DurationSeconds)
+	duration, err := SelectedDuration(settings, media.DurationSeconds, video.FrameRate)
 	if err != nil {
 		return core.ExecutionPlan{}, err
 	}
-	if settings.Trim != nil && video.FrameRate > 0 && !math.IsNaN(video.FrameRate) && !math.IsInf(video.FrameRate, 0) && duration < 1/video.FrameRate {
-		return core.ExecutionPlan{}, fmt.Errorf("trim duration must include at least one video frame (%.3f seconds)", 1/video.FrameRate)
-	}
-	if settings.Trim != nil && audio && settings.Audio == "copy" {
+	if (settings.Trim != nil || len(settings.Segments) > 0) && audio && settings.Audio == "copy" {
 		return core.ExecutionPlan{}, fmt.Errorf("trimming requires AAC/Opus audio encoding for accurate boundaries; copied audio is packet-aligned")
 	}
 	selected, pixelFormat, encoderReason, err := capabilities.SelectVideoEncoder(caps, settings.Codec, settings.Encoder, video.BitDepth > 8 && settings.Codec != "h264")
@@ -107,23 +104,56 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if settings.VolumeDB != 0 && (!audio || settings.Audio == "copy") {
 		return core.ExecutionPlan{}, fmt.Errorf("volume changes require a selected audio track and AAC/Opus encoding")
 	}
+	filter, err := videoFilter(settings, *video, pixelFormat)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	asset, err := compileSubtitleAsset(settings, media, caps, output.URI)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
+	if len(settings.Segments) > 0 {
+		if len(subtitleStreams) > 0 {
+			return core.ExecutionPlan{}, fmt.Errorf("多片段拼接需要移除软字幕轨道，或使用字幕烧录")
+		}
+		for _, name := range []string{"concat", "trim", "setpts"} {
+			if !hasFilter(caps, name) {
+				return core.ExecutionPlan{}, fmt.Errorf("多片段需要当前 FFmpeg 的 %s 滤镜", name)
+			}
+		}
+		if audio {
+			for _, name := range []string{"atrim", "asetpts"} {
+				if !hasFilter(caps, name) {
+					return core.ExecutionPlan{}, fmt.Errorf("多片段需要当前 FFmpeg 的 %s 滤镜", name)
+				}
+			}
+		}
+	}
 	args := []string{"-hide_banner", "-nostdin", "-n", "-progress", "pipe:1", "-nostats"}
-	if settings.Trim != nil {
-		// Input seeking decodes/discards the prefix up to the requested boundary.
-		// Both video and audio are encoded; output -t limits the selected duration.
-		args = append(args, "-ss", strconv.FormatFloat(settings.Trim.StartSeconds, 'f', -1, 64), "-accurate_seek")
-	}
-	args = append(args, ffmpegpolicy.LocalInput(input.URI)...)
-	if settings.Trim != nil {
-		args = append(args, "-t", strconv.FormatFloat(duration, 'f', -1, 64), "-map_chapters", "-1")
-	}
-	args = append(args, "-map", "0:"+strconv.Itoa(video.Index))
-	if settings.AudioSelection == nil && settings.Audio != "none" {
-		args = append(args, "-map", "0:a?")
+	if len(settings.Segments) > 0 {
+		graphArgs, err := segmentGraph(settings, input.URI, *video, audioStreams, filter)
+		if err != nil {
+			return core.ExecutionPlan{}, err
+		}
+		args = append(args, graphArgs...)
 	} else {
-		args = append(args, trackMaps(audioStreams)...)
+		if settings.Trim != nil {
+			// Input seeking decodes/discards the prefix up to the requested boundary.
+			// Both video and audio are encoded; output -t limits the selected duration.
+			args = append(args, "-ss", strconv.FormatFloat(settings.Trim.StartSeconds, 'f', -1, 64), "-accurate_seek")
+		}
+		args = append(args, ffmpegpolicy.LocalInput(input.URI)...)
+		if settings.Trim != nil {
+			args = append(args, "-t", strconv.FormatFloat(duration, 'f', -1, 64), "-map_chapters", "-1")
+		}
+		args = append(args, "-map", "0:"+strconv.Itoa(video.Index))
+		if settings.AudioSelection == nil && settings.Audio != "none" {
+			args = append(args, "-map", "0:a?")
+		} else {
+			args = append(args, trackMaps(audioStreams)...)
+		}
+		args = append(args, trackMaps(subtitleStreams)...)
 	}
-	args = append(args, trackMaps(subtitleStreams)...)
 	if len(subtitleStreams) == 0 {
 		args = append(args, "-sn")
 	}
@@ -153,20 +183,26 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		return core.ExecutionPlan{}, err
 	}
 	args = append(args, videoArgs...)
-	filter, err := videoFilter(settings, *video, pixelFormat)
-	if err != nil {
-		return core.ExecutionPlan{}, err
-	}
 	// Require the requested depth on software encoders too. Custom FFmpeg
 	// builds can have an 8-bit-only libx265/libx264; silently choosing another
 	// format would otherwise discard depth when auto falls back to CPU.
-	args = append(args, "-vf", filter, "-pix_fmt", "+"+pixelFormat)
+	if len(settings.Segments) == 0 {
+		if settings.SubtitleBurn != nil {
+			start := 0.0
+			if settings.Trim != nil {
+				start = settings.Trim.StartSeconds
+			}
+			filter += "," + burnFilter(settings.SubtitleBurn, start)
+		}
+		args = append(args, "-vf", filter)
+	}
+	args = append(args, "-pix_fmt", "+"+pixelFormat)
 	if hasTransform(settings.Transform) {
 		args = append(args, "-metadata:s:v:0", "rotate=0")
 	}
 	args = append(args, audioArgs...)
 	args = append(args, subtitleArgs...)
-	if settings.VolumeDB != 0 {
+	if settings.VolumeDB != 0 && len(settings.Segments) == 0 {
 		args = append(args, "-af", "volume="+strconv.FormatFloat(settings.VolumeDB, 'f', -1, 64)+"dB")
 	}
 	if ext == ".mp4" {
@@ -194,6 +230,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		SourceFingerprint: media.SourceFingerprint,
 		ExpectedOutput:    &core.OutputExpectation{VideoStreams: 1, AudioStreams: len(audioStreams), SubtitleStreams: len(subtitleStreams), VideoCodec: settings.Codec},
 		Trim:              trim,
+		SubtitleAsset:     asset,
 		Encoder:           encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }
 

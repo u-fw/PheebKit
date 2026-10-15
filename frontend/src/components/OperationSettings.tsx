@@ -51,7 +51,7 @@ export function OperationSettings({
         ]}
       />
       <p className="field-hint">
-        切换任务会清除剪辑、画面调整、音量调整和附加参数，并更新输出扩展名。源文件保持原样。
+        切换任务会清除剪辑、多片段、字幕烧录、画面调整、音量调整和附加参数，并更新输出扩展名。源文件保持原样。
       </p>
       {operation === "remux" && (
         <div className="field-notice">

@@ -120,7 +120,7 @@ export function BatchPanel({
       </div>
       <p className="field-hint">
         使用上面的{operationLabels[operation]}
-        通用设置，处理每个文件的完整时长。剪辑区间和裁剪边距只用于单文件；每个文件的音轨、字幕在下面单独选择。
+        通用设置，处理每个文件的完整时长。剪辑、多片段、字幕烧录和裁剪边距只用于当前单文件；每个文件的音轨、软字幕在下面单独选择。
       </p>
       <div className="field-grid">
         <div>

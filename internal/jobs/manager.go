@@ -186,6 +186,10 @@ func (m *Manager) EnqueueBatch(plans []core.ExecutionPlan, projects []core.Proje
 	queued := make([]core.Job, len(plans))
 	for i, plan := range plans {
 		plan.Args = append([]string(nil), plan.Args...)
+		if plan.SubtitleAsset != nil {
+			copy := *plan.SubtitleAsset
+			plan.SubtitleAsset = &copy
+		}
 		if plan.ExpectedOutput != nil {
 			expected := *plan.ExpectedOutput
 			plan.ExpectedOutput = &expected
