@@ -79,6 +79,33 @@ func TestDiagnosticsTokensExpireAndAreBounded(t *testing.T) {
 	}
 }
 
+func TestDiagnosticsFIFOEvictionWithEqualTimestamps(t *testing.T) {
+	s, _ := batchService(t)
+	tokens := []string{}
+	clock := time.Now()
+	for i := 0; i < 4; i++ {
+		preview, err := s.GetDiagnosticPreview(DiagnosticOptions{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		tokens = append(tokens, preview.Token)
+		snapshot := s.diagnostics[preview.Token]
+		snapshot.created = clock
+		s.diagnostics[preview.Token] = snapshot
+	}
+	if _, err := s.GetDiagnosticPreview(DiagnosticOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.diagnosticData(tokens[0]); err == nil {
+		t.Fatal("equal wall clocks changed FIFO eviction")
+	}
+	for _, token := range tokens[1:] {
+		if _, err := s.diagnosticData(token); err != nil {
+			t.Fatal("newer preview incorrectly evicted", err)
+		}
+	}
+}
+
 func TestDiagnosticSaveProtectsOwnedFilesAndPreservesExactPreview(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "source.json")

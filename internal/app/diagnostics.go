@@ -29,6 +29,7 @@ type DiagnosticPreview struct {
 type diagnosticSnapshot struct {
 	data    []byte
 	created time.Time
+	order   uint64
 }
 type diagnosticBinary struct {
 	Available bool   `json:"available"`
@@ -235,17 +236,18 @@ func (s *Service) GetDiagnosticPreview(options DiagnosticOptions) (DiagnosticPre
 	}
 	for len(s.diagnostics) >= 4 {
 		oldest := ""
-		var oldestTime time.Time
+		var oldestOrder uint64
 		for token, snapshot := range s.diagnostics {
-			if oldest == "" || snapshot.created.Before(oldestTime) {
+			if oldest == "" || snapshot.order < oldestOrder {
 				oldest = token
-				oldestTime = snapshot.created
+				oldestOrder = snapshot.order
 			}
 		}
 		delete(s.diagnostics, oldest)
 	}
 	token := "diagnostic-" + rand.Text()
-	s.diagnostics[token] = diagnosticSnapshot{data: data, created: time.Now()}
+	s.diagnosticSequence++
+	s.diagnostics[token] = diagnosticSnapshot{data: data, created: time.Now(), order: s.diagnosticSequence}
 	return DiagnosticPreview{Token: token, JSON: string(data)}, nil
 }
 

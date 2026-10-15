@@ -56,6 +56,7 @@ type Service struct {
 	editorError        string
 	diagnosticsMu      sync.Mutex
 	diagnostics        map[string]diagnosticSnapshot
+	diagnosticSequence uint64
 }
 
 func NewService() *Service {
