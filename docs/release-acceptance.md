@@ -30,3 +30,7 @@ Before broadly distributing binaries, record the machine/OS/build and pass/fail 
 - Choose public repository identity/contact, configure private security reporting, review public history/assets and matching corresponding source, and decide signing. Keep unsigned/Beta status visible. An accessible local tag is not a public source release.
 
 No hosted CI, clean-machine, signing or native-dialog result is inferred from local builds. Never replace already published assets for the same version; publish a new version for changes.
+# Beta.9 media recovery acceptance
+
+The 2026-10-15 beta.9 gate passed complete local checks and actual beta.8 package upgrade, reinstall/uninstall, exact payload/checksum/version tests, mutex protection and AppData hash preservation. Actual corrupt-packet fixtures prove default deletion and black/silence replacement, complete decode success markers and refusal to publish a corrupt remux. A real Service scan and queued recovery prove the backend boundary. Browser component fixtures prove review/application/cancel/precision/Undo/Redo/error states. See [media recovery](media-recovery.md) and [distribution evidence](windows-distribution.md) for precise coverage and limits. New native/GPU recovery combinations, clean-machine/Windows 10, hosted CI and signing remain external; older dated entries below remain historical baselines.
+

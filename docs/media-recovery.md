@@ -34,7 +34,7 @@ No shell, network input, arbitrary filter expression, extra output path, source 
 | Domain/safety | Invalid/overlapping/nonfinite/out-of-bounds ranges, no retained content, excessive fragmentation, incompatible operations/copy/raw options and snapshot aliasing have regressions. Operational decoder/configuration failures are not deletion advice. |
 | Service lifecycle | Duplicate/stale cancellation, source report snapshots, cancel settlement, close/environment guards, closed-service admission and portable-preset exclusion are tested. |
 | UI | Disposable real-component browser fixture verifies progress/cancel, completed-only application, default deletion, black strategy, automatic audio re-encoding, Undo/Redo, healthy/error no-advice states, configurable one-second windows and disabled controls while scanning. 375px light/dark layouts have no horizontal overflow; final fresh-load run has no console errors. Earlier fixture hot-reload root warnings were confined to the disposable entry point. Fixture/server/tab/viewport override removed. |
-| Release | Production build/package/installer evidence is recorded separately in [Windows distribution](windows-distribution.md) once verified. Native installed-window/GPU-recovery/clean-machine/hosted-CI gates remain external. |
+| Release | Beta.9 production release gate passed real media Go tests/vet, 113 frontend tests/typecheck/lint/format/build, version tests and vulnerability checks. Actual beta.8 → beta.9 upgrade, payload/checksum consistency, reinstall/uninstall and configuration preservation passed. Exact source/log/checksum evidence is in [Windows distribution](windows-distribution.md). Native installed-window/GPU-recovery/clean-machine/hosted-CI gates remain external. |
 
 ## Subsequent priorities
 
