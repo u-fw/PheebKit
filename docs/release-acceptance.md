@@ -2,7 +2,7 @@
 
 ## Beta.11 audio processing acceptance
 
-Local real-media tests verify actual sample rates/channels, PCM envelopes/EQ/noise attenuation, measured single-pass loudness, multi-track concat and nonzero trim. Service queue and project/preset/draft/sample tests cover application boundaries; 118 frontend tests and real-component browser fixtures cover editing and failure states. Production installer/upgrade evidence is recorded in [distribution](windows-distribution.md) after packaging. See [audio processing](audio-processing.md) for exact measurements, known timeline limits and external native/GPU/clean-machine/CI gates.
+Local real-media tests verify actual sample rates/channels, PCM envelopes/EQ/noise attenuation, measured single-pass loudness, multi-track concat and nonzero trim. Service queue and project/preset/draft/sample tests cover application boundaries; 118 frontend tests and real-component browser fixtures cover editing and failure states, including the beta.10 zero-value denoise input regression fixed in beta.11. The production gate and actual beta.9 → beta.11 upgrade/reinstall/uninstall, payload/checksum/version consistency, running guards and configuration preservation passed. Exact evidence is in [distribution](windows-distribution.md). See [audio processing](audio-processing.md) for measurements, known timeline limits and external native/GPU/clean-machine/CI gates.
 
 ## Beta.9 media recovery acceptance
 
