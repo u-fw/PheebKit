@@ -4,7 +4,7 @@ The direction is broad FFmpeg coverage through the existing local Go compiler/ru
 
 ## This increment
 
-Beta.10 additionally implements [typed audio processing](audio-processing.md) for compression/extraction, including single-pass loudness, denoise/EQ/fades/rate/channels. Track mixing and measured two-pass normalization remain future work.
+Beta.11 additionally implements [typed audio processing](audio-processing.md) for compression/extraction, including single-pass loudness, denoise/EQ/fades/rate/channels. Track mixing and measured two-pass normalization remain future work.
 
 Beta.9 additionally implements [conservative media scans/recovery](media-recovery.md), with mandatory complete decode verification of recovery outputs. Ordinary jobs still use metadata/structure checks. The beta.8 evidence below remains the preceding expansion's dated baseline.
 

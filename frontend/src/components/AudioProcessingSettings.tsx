@@ -185,16 +185,19 @@ export function AudioProcessingSettings({
               />
               <span>FFT 降噪</span>
             </label>
-            {p.denoiseReductionDB > 0 && (
+            <>
               <div className="field-grid">
                 <label className="field-label">
                   降噪强度 (dB)
                   <input
                     type="number"
-                    min="0.01"
+                    min="0"
                     max="97"
                     step="0.01"
                     value={p.denoiseReductionDB}
+                    onBlur={(event) => {
+                      event.currentTarget.value = String(p.denoiseReductionDB);
+                    }}
                     onChange={(e) =>
                       edit("denoiseReductionDB", Number(e.target.value))
                     }
@@ -214,7 +217,11 @@ export function AudioProcessingSettings({
                   />
                 </label>
               </div>
-            )}
+              <p className="field-hint">
+                强度 0 关闭降噪，输入正值即启用；参数保持可编辑，支持 0.01–97
+                dB。
+              </p>
+            </>
             <div className="section-title">
               <h3>均衡器</h3>
               <span className="field-hint">最多 8 段；增益 0 为旁路</span>

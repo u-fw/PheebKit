@@ -1,6 +1,6 @@
 # Open-source readiness — baseline 2026-10-10, iteration 2026-10-15
 
-Beta.10 adds opt-in typed audio processing with real PCM/loudness/noise/rate/channel evidence, post-concat whole-output envelopes and actual Service queue/persistence checks. Dynamic single-pass normalization is distinguished from future measured two-pass mastering workflows. [Audio evidence](audio-processing.md) records measured fixtures and remaining native/manual limits; it is not a universal audio-quality guarantee.
+Beta.11 adds opt-in typed audio processing with real PCM/loudness/noise/rate/channel evidence, post-concat whole-output envelopes and actual Service queue/persistence checks. Dynamic single-pass normalization is distinguished from future measured two-pass mastering workflows. [Audio evidence](audio-processing.md) records measured fixtures and remaining native/manual limits; it is not a universal audio-quality guarantee.
 
 Beta.9 adds conservative decode scanning/recovery and mandatory output decoding for recovery jobs. Real corrupted H.264 packets exercise deletion, black/silence replacement, edge intervals and refusal to publish a readable-but-corrupt remux. Service queue/lifecycle and frontend regressions supplement browser fixture checks. See [recovery evidence and bounds](media-recovery.md). This extends CPU-verified media workflows; new native/GPU combinations and remaining publication gates below still require separate acceptance.
 

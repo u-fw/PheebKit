@@ -63,6 +63,8 @@ describe("typed audio processing", () => {
       />,
     );
     expect(html).toContain("启用声音处理");
+    expect(html).toContain("降噪强度 (dB)");
+    expect(html).toContain("参数保持可编辑");
     expect(html).toContain("输出采样率");
     expect(html).toContain("保留源声道");
     expect(html).toContain("样片不应用整片淡入淡出");

@@ -1,6 +1,6 @@
 # Windows release acceptance
 
-## Beta.10 audio processing acceptance
+## Beta.11 audio processing acceptance
 
 Local real-media tests verify actual sample rates/channels, PCM envelopes/EQ/noise attenuation, measured single-pass loudness, multi-track concat and nonzero trim. Service queue and project/preset/draft/sample tests cover application boundaries; 118 frontend tests and real-component browser fixtures cover editing and failure states. Production installer/upgrade evidence is recorded in [distribution](windows-distribution.md) after packaging. See [audio processing](audio-processing.md) for exact measurements, known timeline limits and external native/GPU/clean-machine/CI gates.
 

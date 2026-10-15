@@ -6,7 +6,7 @@ Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approv
 
 Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 
-Beta.10 adds optional configurable audio processing: dynamic single-pass loudness normalization, FFT denoise, up to eight EQ bands, whole-output fades, sample rate and mono/stereo conversion. See [audio behavior/evidence](docs/audio-processing.md). It retains [conservative media recovery](docs/media-recovery.md), ordered range editing, subtitle burn-in, local capability/help discovery, diagnostics, draft recovery and Undo/Redo. See [release notes](RELEASE_NOTES.md), [expansion scope](docs/ffmpeg-expansion.md) and [release acceptance](docs/release-acceptance.md). Capability discovery is not a claim that every listed FFmpeg workflow is executable through the GUI.
+Beta.11 adds optional configurable audio processing: dynamic single-pass loudness normalization, FFT denoise, up to eight EQ bands, whole-output fades, sample rate and mono/stereo conversion. See [audio behavior/evidence](docs/audio-processing.md). It retains [conservative media recovery](docs/media-recovery.md), ordered range editing, subtitle burn-in, local capability/help discovery, diagnostics, draft recovery and Undo/Redo. See [release notes](RELEASE_NOTES.md), [expansion scope](docs/ffmpeg-expansion.md) and [release acceptance](docs/release-acceptance.md). Capability discovery is not a claim that every listed FFmpeg workflow is executable through the GUI.
 
 ## Windows development
 
