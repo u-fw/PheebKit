@@ -155,9 +155,14 @@ func audioProcessingFilter(s core.Settings, duration float64, caps core.Capabili
 	return strings.Join(chain, ","), nil
 }
 
-func expectAudioProcessing(expected *core.OutputExpectation, s core.Settings) {
+func expectAudioProcessing(expected *core.OutputExpectation, s core.Settings, tracks []core.Stream) {
 	if s.AudioProcessing != nil {
 		expected.AudioSampleRate = processingSampleRate(s.AudioProcessing)
 		expected.AudioChannels = processingChannels(s.AudioProcessing)
+		if expected.AudioChannels == 0 {
+			for _, track := range tracks {
+				expected.AudioSourceChannels = append(expected.AudioSourceChannels, track.Channels)
+			}
+		}
 	}
 }

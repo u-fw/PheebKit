@@ -259,7 +259,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		trim = &copy
 	}
 	expected := &core.OutputExpectation{VideoStreams: 1, AudioStreams: len(audioStreams), SubtitleStreams: len(subtitleStreams), VideoCodec: settings.Codec}
-	expectAudioProcessing(expected, settings)
+	expectAudioProcessing(expected, settings, audioStreams)
 	return core.ExecutionPlan{ProjectID: project.ID, Input: input, Output: output, Args: args,
 		Preview: Preview("ffmpeg.exe", args), DurationSeconds: duration, InputSizeBytes: media.SizeBytes,
 		SourceFingerprint:      media.SourceFingerprint,

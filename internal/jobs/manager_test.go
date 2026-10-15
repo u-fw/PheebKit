@@ -20,6 +20,24 @@ type testRunner struct {
 	max     atomic.Int32
 }
 
+func TestExpectedSourceChannelsSnapshotIsIsolated(t *testing.T) {
+	m := New(&testRunner{}, nil)
+	defer m.Close()
+	m.SetQueuePaused(true)
+	p := core.ExecutionPlan{ExpectedOutput: &core.OutputExpectation{AudioSourceChannels: []int{6}}}
+	job, err := m.Enqueue(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.ExpectedOutput.AudioSourceChannels[0] = 2
+	m.mu.Lock()
+	channels := m.records[job.ID].plan.ExpectedOutput.AudioSourceChannels[0]
+	m.mu.Unlock()
+	if channels != 6 {
+		t.Fatal("caller changed queued source channel expectation")
+	}
+}
+
 func TestVerificationHistorySnapshotsAreIsolated(t *testing.T) {
 	manager := New(&testRunner{}, nil)
 	defer manager.Close()

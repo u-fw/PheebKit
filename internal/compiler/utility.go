@@ -203,7 +203,7 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 		expected.VideoStreams, expected.AudioStreams, expected.SubtitleStreams = 1, len(audio), len(subtitles)
 	case "extract-audio":
 		expected.AudioStreams = 1
-		expectAudioProcessing(expected, s)
+		expectAudioProcessing(expected, s, audio)
 	case "extract-subtitle":
 		expected.SubtitleStreams = 1
 	}

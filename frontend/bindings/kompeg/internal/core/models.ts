@@ -137,6 +137,7 @@ export interface MediaHealth {
 export interface OutputExpectation {
     "audioSampleRate"?: number;
     "audioChannels"?: number;
+    "audioSourceChannels"?: number[] | null;
     "videoStreams": number;
     "audioStreams": number;
     "subtitleStreams": number;

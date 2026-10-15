@@ -192,6 +192,7 @@ func (m *Manager) EnqueueBatch(plans []core.ExecutionPlan, projects []core.Proje
 		}
 		if plan.ExpectedOutput != nil {
 			expected := *plan.ExpectedOutput
+			expected.AudioSourceChannels = append([]int(nil), expected.AudioSourceChannels...)
 			plan.ExpectedOutput = &expected
 		}
 		if plan.Trim != nil {

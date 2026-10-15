@@ -65,6 +65,10 @@ func verifyOutputMedia(media core.Media, plan core.ExecutionPlan) (*core.OutputV
 				if e.AudioChannels != 0 && stream.Channels != e.AudioChannels {
 					return nil, fmt.Errorf("verify output audio: expected %d channels, found %d", e.AudioChannels, stream.Channels)
 				}
+				index := v.AudioStreams - 1
+				if index < len(e.AudioSourceChannels) && e.AudioSourceChannels[index] > 0 && stream.Channels != e.AudioSourceChannels[index] {
+					return nil, fmt.Errorf("verify output audio: source channel count changed for track %d", index+1)
+				}
 			}
 		case "subtitle":
 			v.SubtitleStreams++

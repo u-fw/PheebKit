@@ -74,4 +74,9 @@ func TestOutputVerificationChecksRequestedAudioFormat(t *testing.T) {
 	if _, err := verifyOutputMedia(m, p); err != nil {
 		t.Fatal(err)
 	}
+	p.ExpectedOutput.AudioChannels = 0
+	p.ExpectedOutput.AudioSourceChannels = []int{6}
+	if _, err := verifyOutputMedia(m, p); err == nil {
+		t.Fatal("preserve channel count silently downmixed")
+	}
 }
