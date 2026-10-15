@@ -1,5 +1,9 @@
 # Windows release acceptance
 
+## Beta.12 settings switch acceptance
+
+The autosave switch layout, pointer/Space interaction and saved boolean passed disposable real-component browser checks. Light/dark, 375px portrait, 812px landscape, reduced-motion and forced-colors were checked; the editable time selector retains its transparent background, zero padding and 24px minimum input height. Fresh-page checks reported no console errors. The production gate passed 118 frontend tests, TypeScript/ESLint/Prettier, Go tests with integration enabled, vet, version checks and source/binary vulnerability audits. Actual beta.11 → beta.12 upgrade/reinstall/uninstall passed with exact payload/checksum/version checks, running guards and user configuration preservation. Native installed-window and clean-machine acceptance remain separate. See [distribution evidence](windows-distribution.md).
+
 ## Beta.11 audio processing acceptance
 
 Local real-media tests verify actual sample rates/channels, PCM envelopes/EQ/noise attenuation, measured single-pass loudness, multi-track concat and nonzero trim. Service queue and project/preset/draft/sample tests cover application boundaries; 118 frontend tests and real-component browser fixtures cover editing and failure states, including the beta.10 zero-value denoise input regression fixed in beta.11. The production gate and actual beta.9 → beta.11 upgrade/reinstall/uninstall, payload/checksum/version consistency, running guards and configuration preservation passed. Exact evidence is in [distribution](windows-distribution.md). See [audio processing](audio-processing.md) for measurements, known timeline limits and external native/GPU/clean-machine/CI gates.
