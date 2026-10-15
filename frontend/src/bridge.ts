@@ -32,6 +32,7 @@ export type Settings = Omit<
 export type TimeRange = Core.TimeRange;
 export type SubtitleBurn = Core.SubtitleBurn;
 export type CatalogEntry = Core.CatalogEntry;
+export type MediaHealth = Core.MediaHealth;
 export type Project = Omit<Core.Project, "inputs" | "settings"> & {
   inputs: Source[];
   settings: Settings;
@@ -252,6 +253,13 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
 }
 
 export const API = {
+  startMediaHealthScan: (
+    uri: string,
+    windowSeconds: number,
+  ): Promise<MediaHealth> => Service.StartMediaHealthScan(uri, windowSeconds),
+  getMediaHealthScan: (): Promise<MediaHealth> => Service.GetMediaHealthScan(),
+  cancelMediaHealthScan: (id: string): Promise<void> =>
+    Service.CancelMediaHealthScan(id),
   getFFmpegCatalog: async (category: string): Promise<CatalogEntry[]> =>
     (await Service.GetFFmpegCatalog(category)) ?? [],
   getFFmpegOptionHelp: (category: string, name: string): Promise<string> =>

@@ -203,6 +203,9 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	}
 	if callbacks.Log != nil {
 		callbacks.Log("正在校验输出结构…")
+		if plan.FullDecodeVerification {
+			callbacks.Log("恢复输出需要完整解码复检；复检完成前不会保存结果。")
+		}
 	}
 	verification, err := r.verifyOutput(ctx, scratchOutput, plan)
 	if err != nil {

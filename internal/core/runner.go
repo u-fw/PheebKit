@@ -16,22 +16,23 @@ type Runner interface {
 }
 
 type ExecutionPlan struct {
-	JobID             string             `json:"jobID"`
-	ProjectID         string             `json:"projectID"`
-	Input             Source             `json:"input"`
-	SourceFingerprint string             `json:"sourceFingerprint,omitempty"`
-	Output            Source             `json:"output"`
-	Args              []string           `json:"args"`
-	Preview           string             `json:"preview"`
-	DurationSeconds   float64            `json:"durationSeconds"`
-	InputSizeBytes    int64              `json:"inputSizeBytes"`
-	Encoder           string             `json:"encoder"`
-	EncoderKind       string             `json:"encoderKind"`
-	EncoderLabel      string             `json:"encoderLabel"`
-	EncoderReason     string             `json:"encoderReason"`
-	Trim              *TimeRange         `json:"trim,omitempty"`
-	SubtitleAsset     *SubtitleAsset     `json:"subtitleAsset,omitempty"`
-	ExpectedOutput    *OutputExpectation `json:"expectedOutput,omitempty"`
+	JobID                  string             `json:"jobID"`
+	ProjectID              string             `json:"projectID"`
+	Input                  Source             `json:"input"`
+	SourceFingerprint      string             `json:"sourceFingerprint,omitempty"`
+	Output                 Source             `json:"output"`
+	Args                   []string           `json:"args"`
+	Preview                string             `json:"preview"`
+	DurationSeconds        float64            `json:"durationSeconds"`
+	InputSizeBytes         int64              `json:"inputSizeBytes"`
+	Encoder                string             `json:"encoder"`
+	EncoderKind            string             `json:"encoderKind"`
+	EncoderLabel           string             `json:"encoderLabel"`
+	EncoderReason          string             `json:"encoderReason"`
+	Trim                   *TimeRange         `json:"trim,omitempty"`
+	SubtitleAsset          *SubtitleAsset     `json:"subtitleAsset,omitempty"`
+	FullDecodeVerification bool               `json:"fullDecodeVerification,omitempty"`
+	ExpectedOutput         *OutputExpectation `json:"expectedOutput,omitempty"`
 }
 
 type SubtitleAsset struct {
@@ -59,13 +60,14 @@ type OutputExpectation struct {
 	VideoCodec      string `json:"videoCodec,omitempty"`
 }
 
-// OutputVerification is a metadata/structure check, not a full decode scan.
+// Ordinary jobs check metadata/structure; recovery additionally requires a full decode.
 type OutputVerification struct {
-	DurationSeconds float64  `json:"durationSeconds"`
-	VideoStreams    int      `json:"videoStreams"`
-	AudioStreams    int      `json:"audioStreams"`
-	SubtitleStreams int      `json:"subtitleStreams"`
-	Warnings        []string `json:"warnings"`
+	FullDecodePassed bool     `json:"fullDecodePassed,omitempty"`
+	DurationSeconds  float64  `json:"durationSeconds"`
+	VideoStreams     int      `json:"videoStreams"`
+	AudioStreams     int      `json:"audioStreams"`
+	SubtitleStreams  int      `json:"subtitleStreams"`
+	Warnings         []string `json:"warnings"`
 }
 
 type Capabilities struct {

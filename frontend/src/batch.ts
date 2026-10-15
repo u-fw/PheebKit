@@ -70,6 +70,7 @@ export function makeBatchProjects(
       ...settings,
       trim: null,
       segments: null,
+      recovery: null,
       subtitleBurn: null,
       rawArguments: [...settings.rawArguments],
       audioSelection: selection(tracks.audio),

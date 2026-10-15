@@ -12,6 +12,7 @@ type Project struct {
 }
 
 type Settings struct {
+	Recovery          *Recovery       `json:"recovery,omitempty"`
 	Operation         string          `json:"operation,omitempty"`
 	Codec             string          `json:"codec"`
 	Encoder           string          `json:"encoder"`
@@ -74,6 +75,11 @@ type CropMargins struct {
 
 // CloneSettings isolates editable project, preset and queue snapshots.
 func CloneSettings(settings Settings) Settings {
+	if settings.Recovery != nil {
+		copy := *settings.Recovery
+		copy.DamagedRanges = append([]TimeRange(nil), copy.DamagedRanges...)
+		settings.Recovery = &copy
+	}
 	settings.RawArguments = append([]string(nil), settings.RawArguments...)
 	settings.Segments = append([]TimeRange(nil), settings.Segments...)
 	if settings.SubtitleBurn != nil {

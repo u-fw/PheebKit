@@ -90,6 +90,20 @@ export function OutputSummary({
           </strong>
         </div>
       </div>
+      {settings.recovery && (
+        <p>
+          恢复：
+          {settings.recovery.mode === "delete"
+            ? "删除失败区间"
+            : "黑画面与静音填补"}{" "}
+          · 预计{" "}
+          {formatTimecode(
+            plan?.durationSeconds ??
+              selectedDuration(settings, media.durationSeconds),
+          )}
+          。完整解码复检通过后保存。
+        </p>
+      )}
       <p>
         {!compress
           ? operation === "remux"
@@ -226,9 +240,11 @@ export function OutputSummary({
             ? "正在检查设置…"
             : !compress
               ? `开始${operationLabels[operation]}`
-              : settings.trim
-                ? "开始剪辑并压缩"
-                : "开始压缩"}
+              : settings.recovery
+                ? "开始恢复并压缩"
+                : settings.trim
+                  ? "开始剪辑并压缩"
+                  : "开始压缩"}
         <Icon name="arrow" />
       </button>
       <span className="field-hint">任务进入队列后可查看进度和取消。</span>

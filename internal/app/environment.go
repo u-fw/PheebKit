@@ -216,6 +216,9 @@ func sameSelectedEnvironment(a, b Environment) bool {
 }
 
 func (s *Service) hasPendingJobs() bool {
+	if s.healthBusy.Load() {
+		return true
+	}
 	for _, job := range s.jobs.List() {
 		if job.State == core.JobQueued || job.State == core.JobPreparing || job.State == core.JobRunning || job.State == core.JobCancelling {
 			return true

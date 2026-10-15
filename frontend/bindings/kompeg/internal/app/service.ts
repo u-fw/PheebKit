@@ -26,6 +26,10 @@ export function CancelFFmpegSetup(): $CancellablePromise<void> {
     return $Call.ByID(1538047589);
 }
 
+export function CancelMediaHealthScan(id: string): $CancellablePromise<void> {
+    return $Call.ByID(419371768, id);
+}
+
 export function Capabilities(): $CancellablePromise<core$0.Capabilities> {
     return $Call.ByID(1476031073);
 }
@@ -100,6 +104,10 @@ export function GetFFmpegOptionHelp(category: string, name: string): $Cancellabl
 
 export function GetFFmpegSetupStatus(): $CancellablePromise<$models.FFmpegSetupStatus> {
     return $Call.ByID(1314079415);
+}
+
+export function GetMediaHealthScan(): $CancellablePromise<core$0.MediaHealth> {
+    return $Call.ByID(3952455056);
 }
 
 export function GetMediaPreviewURL(uri: string): $CancellablePromise<string> {
@@ -242,6 +250,10 @@ export function StartCustomFFmpegSetup(link: string, sha256: string, trustBuild:
 
 export function StartFFmpegSetup(source: string): $CancellablePromise<$models.FFmpegSetupStatus> {
     return $Call.ByID(514916809, source);
+}
+
+export function StartMediaHealthScan(uri: string, windowSeconds: number): $CancellablePromise<core$0.MediaHealth> {
+    return $Call.ByID(3736656660, uri, windowSeconds);
 }
 
 /**

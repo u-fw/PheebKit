@@ -197,6 +197,7 @@ function JobCard({
                 输出结构已校验 · 视频 {job.verification.videoStreams} / 音频{" "}
                 {job.verification.audioStreams} / 字幕{" "}
                 {job.verification.subtitleStreams}
+                {job.verification.fullDecodePassed ? " · 完整解码复检通过" : ""}
                 {job.verification.durationSeconds > 0
                   ? ` · ${formatDuration(job.verification.durationSeconds)}`
                   : ""}

@@ -16,6 +16,9 @@ import (
 )
 
 func validateEditing(s core.Settings) error {
+	if err := validateRecovery(s); err != nil {
+		return err
+	}
 	if len(s.Segments) > 16 {
 		return fmt.Errorf("最多保留 16 个片段")
 	}
@@ -146,6 +149,13 @@ func decimal(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
 
 // SelectedDuration validates source-relative ranges and returns their total budget.
 func SelectedDuration(s core.Settings, total, rate float64) (float64, error) {
+	if s.Recovery != nil && len(s.Segments) == 0 {
+		pieces, err := recoveryTimeline(s, total, rate)
+		if err != nil {
+			return 0, err
+		}
+		s.Segments = pieces
+	}
 	if len(s.Segments) == 0 {
 		d, err := outputDuration(s.Trim, total)
 		if err == nil && s.Trim != nil && rate > 0 && d < 1/rate {
@@ -177,27 +187,56 @@ func segmentGraph(s core.Settings, input string, video core.Stream, audio []core
 	args := []string{}
 	graph := []string{}
 	labels := ""
+	inputIndex := 0
 	for i, r := range s.Segments {
 		// Independent bounded seeks avoid buffering an entire source for reordered
 		// split branches. Decode concurrency is bounded by the 16-range limit.
-		args = append(args, "-threads", "1", "-ss", decimal(r.StartSeconds), "-t", decimal(r.EndSeconds-r.StartSeconds), "-accurate_seek")
-		args = append(args, ffmpegpolicy.LocalInput(input)...)
+		replace := replacementRange(s, r)
+		if !replace {
+			args = append(args, "-threads", "1", "-ss", decimal(r.StartSeconds), "-t", decimal(r.EndSeconds-r.StartSeconds), "-accurate_seek")
+			if s.Recovery != nil {
+				args = append(args, "-err_detect", "explode")
+			}
+			args = append(args, ffmpegpolicy.LocalInput(input)...)
+		}
 		v := fmt.Sprintf("v%d", i)
 		chain := "setpts=PTS-STARTPTS," + filter
 		if s.SubtitleBurn != nil {
 			chain += "," + burnFilter(s.SubtitleBurn, r.StartSeconds)
 		}
 		chain += ",trim=duration=" + decimal(r.EndSeconds-r.StartSeconds) + ",setpts=PTS-STARTPTS"
-		graph = append(graph, fmt.Sprintf("[%d:%d]%s[%s]", i, video.Index, chain, v))
+		if replace {
+			w, h := video.Width, video.Height
+			if video.DisplayRotation == 90 || video.DisplayRotation == 270 {
+				w, h = h, w
+			}
+			rate := video.FrameRate
+			if rate <= 0 || rate > 240 {
+				rate = 30
+			}
+			graph = append(graph, fmt.Sprintf("color=c=black:s=%dx%d:r=%s:d=%s,%s[%s]", w, h, decimal(rate), decimal(r.EndSeconds-r.StartSeconds), chain, v))
+		} else {
+			graph = append(graph, fmt.Sprintf("[%d:%d]%s[%s]", inputIndex, video.Index, chain, v))
+		}
 		labels += "[" + v + "]"
 		for j, a := range audio {
 			label := fmt.Sprintf("a%d_%d", i, j)
 			audioFilter := "atrim=duration=" + decimal(r.EndSeconds-r.StartSeconds) + ",asetpts=PTS-STARTPTS"
+			if s.Recovery != nil && s.Recovery.Mode == "black" {
+				audioFilter += ",aresample=48000:out_chlayout=stereo"
+			}
 			if s.VolumeDB != 0 {
 				audioFilter += ",volume=" + decimal(s.VolumeDB) + "dB"
 			}
-			graph = append(graph, fmt.Sprintf("[%d:%d]%s[%s]", i, a.Index, audioFilter, label))
+			if replace {
+				graph = append(graph, "anullsrc=r=48000:cl=stereo,"+audioFilter+"["+label+"]")
+			} else {
+				graph = append(graph, fmt.Sprintf("[%d:%d]%s[%s]", inputIndex, a.Index, audioFilter, label))
+			}
 			labels += "[" + label + "]"
+		}
+		if !replace {
+			inputIndex++
 		}
 	}
 	outputs := "[joinedv]"

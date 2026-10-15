@@ -205,3 +205,25 @@
     flex-basis: 100%;
   }
 }
+.media-recovery progress {
+  width: 100%;
+  accent-color: var(--primary);
+}
+.recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block: var(--space-3);
+}
+.recovery-ranges {
+  max-height: 12rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  padding-inline-start: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.recovery-intent {
+  border-top: 1px solid var(--outline-variant);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+}

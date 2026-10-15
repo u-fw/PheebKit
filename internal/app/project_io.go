@@ -21,6 +21,7 @@ import (
 func portableSettings(settings core.Settings) core.Settings {
 	settings = core.CloneSettings(settings)
 	settings.Trim = nil
+	settings.Recovery = nil
 	settings.Segments = nil
 	settings.SubtitleBurn = nil
 	if settings.AudioSelection != nil && settings.AudioSelection.Mode == "selected" {

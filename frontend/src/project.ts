@@ -123,6 +123,7 @@ export function changeOperation(
     ...settings,
     operation,
     trim: null,
+    recovery: null,
     segments: null,
     subtitleBurn: null,
     transform: null,
@@ -207,6 +208,7 @@ export function applyPresetSettings(
       {
         ...preset,
         trim: null,
+        recovery: null,
         segments: null,
         subtitleBurn: null,
         audioSelection:
@@ -238,6 +240,7 @@ export function applyPresetSettings(
     {
       ...preset,
       trim: current.trim,
+      recovery: current.recovery,
       segments: current.segments,
       subtitleBurn: current.subtitleBurn,
       audioSelection,
@@ -263,6 +266,19 @@ export function validateSettings(
   media?: Pick<Media, "streams" | "durationSeconds">,
 ): string[] {
   const errors: string[] = [];
+  if (settings.recovery) {
+    if (
+      settings.trim ||
+      settings.segments?.length ||
+      settings.subtitleBurn ||
+      settings.rawArguments.length
+    )
+      errors.push("恢复不能同时剪辑、烧录字幕或使用高级参数，请先恢复再编辑。");
+    if (settings.audio === "copy")
+      errors.push("恢复需要重新编码音频或移除音频。");
+    if (media && selectedTracks(media, "subtitle", settings).length)
+      errors.push("恢复请移除软字幕轨道。");
+  }
   const operation = operationOf(settings);
   const burnError = subtitleError(settings, media);
   if (burnError) errors.push(burnError);

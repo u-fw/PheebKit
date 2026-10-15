@@ -60,6 +60,15 @@ export function trimError(
 }
 
 export function selectedDuration(settings: Settings, total: number): number {
+  if (settings.recovery?.mode === "delete")
+    return Math.max(
+      0,
+      total -
+        (settings.recovery.damagedRanges ?? []).reduce(
+          (sum, r) => sum + r.endSeconds - r.startSeconds,
+          0,
+        ),
+    );
   if (settings.segments?.length)
     return trimError(settings, total)
       ? 0

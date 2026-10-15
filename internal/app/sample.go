@@ -23,6 +23,9 @@ type SampleComparison struct {
 // StartSample creates a regular cancellable job with a distinct output beside
 // the proposed result. The UI declares the bounded range and audio re-encode.
 func (s *Service) StartSample(p core.Project, seconds float64) (core.Job, error) {
+	if p.Settings.Recovery != nil {
+		return core.Job{}, errors.New("恢复任务需要完整复检，不支持样片；请先恢复再试压")
+	}
 	if p.Settings.Operation != "" && p.Settings.Operation != "compress" {
 		return core.Job{}, errors.New("样片试压仅适用于压缩任务")
 	}

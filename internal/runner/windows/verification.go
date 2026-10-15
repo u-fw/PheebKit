@@ -16,7 +16,26 @@ func (r *Runner) verifyOutput(ctx context.Context, path string, plan core.Execut
 	if err != nil {
 		return nil, fmt.Errorf("verify output structure: %w", err)
 	}
-	return verifyOutputMedia(media, plan)
+	verification, err := verifyOutputMedia(media, plan)
+	if err != nil {
+		return nil, err
+	}
+	if plan.FullDecodeVerification {
+		if math.Abs(media.DurationSeconds-plan.DurationSeconds) > math.Max(.3, plan.DurationSeconds*.001) {
+			return nil, fmt.Errorf("恢复输出时长不符，拒绝保存")
+		}
+		decodeCtx, stopDecode := context.WithTimeout(ctx, 12*time.Hour)
+		defer stopDecode()
+		bad, err := r.decodeHealthRange(decodeCtx, core.Source{Kind: core.SourceLocalFile, URI: path}, 0, plan.DurationSeconds, false)
+		if err != nil {
+			return nil, fmt.Errorf("恢复输出完整解码校验：%w", err)
+		}
+		if bad {
+			return nil, fmt.Errorf("恢复输出完整解码校验失败，拒绝保存")
+		}
+		verification.FullDecodePassed = true
+	}
+	return verification, nil
 }
 
 func verifyOutputMedia(media core.Media, plan core.ExecutionPlan) (*core.OutputVerification, error) {

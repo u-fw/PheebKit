@@ -58,6 +58,7 @@ export interface ExecutionPlan {
     "encoderReason": string;
     "trim"?: TimeRange | null;
     "subtitleAsset"?: SubtitleAsset | null;
+    "fullDecodeVerification"?: boolean;
     "expectedOutput"?: OutputExpectation | null;
 }
 
@@ -95,6 +96,18 @@ export interface Media {
     "streams": Stream[] | null;
 }
 
+export interface MediaHealth {
+    "id": string;
+    "uri": string;
+    "sourceFingerprint": string;
+    "state": string;
+    "percent": number;
+    "durationSeconds": number;
+    "windowSeconds": number;
+    "damagedRanges": TimeRange[] | null;
+    "error": string;
+}
+
 /**
  * OutputExpectation is compiler intent, checked before publishing a result.
  */
@@ -106,9 +119,10 @@ export interface OutputExpectation {
 }
 
 /**
- * OutputVerification is a metadata/structure check, not a full decode scan.
+ * Ordinary jobs check metadata/structure; recovery additionally requires a full decode.
  */
 export interface OutputVerification {
+    "fullDecodePassed"?: boolean;
     "durationSeconds": number;
     "videoStreams": number;
     "audioStreams": number;
@@ -145,6 +159,15 @@ export interface Project {
     "settings": Settings;
 }
 
+/**
+ * Recovery removes or replaces conservative failed decode windows, never source data.
+ */
+export interface Recovery {
+    "mode": string;
+    "sourceFingerprint": string;
+    "damagedRanges": TimeRange[] | null;
+}
+
 export interface Result {
     "inputSizeBytes": number;
     "outputSizeBytes": number;
@@ -156,6 +179,7 @@ export interface Result {
 }
 
 export interface Settings {
+    "recovery"?: Recovery | null;
     "operation"?: string;
     "codec": string;
     "encoder": string;

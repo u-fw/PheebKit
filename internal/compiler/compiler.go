@@ -68,6 +68,19 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if video == nil {
 		return core.ExecutionPlan{}, fmt.Errorf("selected media has no motion video stream (cover art and thumbnails cannot be compressed as a movie)")
 	}
+	if settings.Recovery != nil {
+		if settings.Recovery.SourceFingerprint != media.SourceFingerprint {
+			return core.ExecutionPlan{}, fmt.Errorf("恢复扫描与当前源文件不匹配，请重新扫描")
+		}
+		if video.DisplayRotation != 0 && video.DisplayRotation != 90 && video.DisplayRotation != 180 && video.DisplayRotation != 270 {
+			return core.ExecutionPlan{}, fmt.Errorf("恢复暂不支持非直角旋转元数据")
+		}
+		pieces, err := recoveryTimeline(settings, media.DurationSeconds, video.FrameRate)
+		if err != nil {
+			return core.ExecutionPlan{}, err
+		}
+		settings.Segments = pieces
+	}
 	duration, err := SelectedDuration(settings, media.DurationSeconds, video.FrameRate)
 	if err != nil {
 		return core.ExecutionPlan{}, err
@@ -128,8 +141,22 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 				}
 			}
 		}
+		if settings.Recovery != nil && settings.Recovery.Mode == "black" {
+			filters := []string{"color"}
+			if audio {
+				filters = append(filters, "anullsrc", "aresample")
+			}
+			for _, name := range filters {
+				if !hasFilter(caps, name) {
+					return core.ExecutionPlan{}, fmt.Errorf("黑画面恢复需要 %s 滤镜", name)
+				}
+			}
+		}
 	}
 	args := []string{"-hide_banner", "-nostdin", "-n", "-progress", "pipe:1", "-nostats"}
+	if settings.Recovery != nil {
+		args = append(args, "-xerror", "-max_error_rate", "0")
+	}
 	if len(settings.Segments) > 0 {
 		graphArgs, err := segmentGraph(settings, input.URI, *video, audioStreams, filter)
 		if err != nil {
@@ -227,11 +254,12 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	}
 	return core.ExecutionPlan{ProjectID: project.ID, Input: input, Output: output, Args: args,
 		Preview: Preview("ffmpeg.exe", args), DurationSeconds: duration, InputSizeBytes: media.SizeBytes,
-		SourceFingerprint: media.SourceFingerprint,
-		ExpectedOutput:    &core.OutputExpectation{VideoStreams: 1, AudioStreams: len(audioStreams), SubtitleStreams: len(subtitleStreams), VideoCodec: settings.Codec},
-		Trim:              trim,
-		SubtitleAsset:     asset,
-		Encoder:           encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
+		SourceFingerprint:      media.SourceFingerprint,
+		FullDecodeVerification: settings.Recovery != nil,
+		ExpectedOutput:         &core.OutputExpectation{VideoStreams: 1, AudioStreams: len(audioStreams), SubtitleStreams: len(subtitleStreams), VideoCodec: settings.Codec},
+		Trim:                   trim,
+		SubtitleAsset:          asset,
+		Encoder:                encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil
 }
 
 func compileAudio(mode string, streams []core.Stream, ext string, encoders []core.Encoder, bitrate int) ([]string, int, error) {

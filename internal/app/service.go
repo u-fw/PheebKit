@@ -57,6 +57,11 @@ type Service struct {
 	diagnosticsMu      sync.Mutex
 	diagnostics        map[string]diagnosticSnapshot
 	diagnosticSequence uint64
+	healthMu           sync.Mutex
+	health             core.MediaHealth
+	healthCancel       context.CancelFunc
+	healthBusy         atomic.Bool
+	healthWG           sync.WaitGroup
 }
 
 func NewService() *Service {
@@ -81,7 +86,14 @@ func NewService() *Service {
 func (s *Service) Attach(a *application.App) { s.app = a }
 
 //wails:ignore
-func (s *Service) Close() { s.cancel(); s.jobs.Close() }
+func (s *Service) Close() {
+	s.lifecycleMu.Lock()
+	s.exiting = true
+	s.lifecycleMu.Unlock()
+	s.cancel()
+	s.jobs.Close()
+	s.healthWG.Wait()
+}
 
 func (s *Service) GetPlatform() string {
 	log.Printf("bridge GetPlatform: %s", runtime.GOOS)

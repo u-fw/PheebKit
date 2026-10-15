@@ -37,6 +37,7 @@ import { useEditorHistory } from "../hooks/useEditorHistory";
 import { ScenarioPresets } from "./ScenarioPresets";
 import { SubtitleBurnSettings } from "./SubtitleBurnSettings";
 import { segmentProjects } from "../segments";
+import { MediaRecovery } from "./MediaRecovery";
 
 type Props = {
   media: Media | null;
@@ -411,6 +412,19 @@ export function Compress({
             }}
           />
           {compress && (
+            <MediaRecovery
+              key={media.sourceFingerprint}
+              media={media}
+              settings={settings}
+              connected={connected}
+              onChange={(next) => {
+                setSettings(next, "recovery");
+                setAdvancedRevision((v) => v + 1);
+                setActionError("");
+              }}
+            />
+          )}
+          {compress && !settings.recovery && (
             <TrimSettings
               visible={visible}
               media={media}
@@ -448,7 +462,7 @@ export function Compress({
             <AudioEncodingSettings settings={settings} update={update} />
           )}
           <TrackSettings media={media} settings={settings} update={update} />
-          {compress && (
+          {compress && !settings.recovery && (
             <SubtitleBurnSettings
               media={media}
               settings={settings}
@@ -464,7 +478,7 @@ export function Compress({
               update={update}
             />
           )}
-          {compress && (
+          {compress && !settings.recovery && (
             <AdvancedSettings
               key={advancedRevision}
               settings={settings}

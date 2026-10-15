@@ -10,6 +10,9 @@ func (s *Service) CanClose() bool {
 		return true
 	}
 	count := 0
+	if s.healthBusy.Load() {
+		count++
+	}
 	for _, job := range s.jobs.List() {
 		if activeJob(job.State) {
 			count++
