@@ -12,7 +12,17 @@ export function streamLabel(stream: Stream): string {
   const language = stream.language
     ? languages[stream.language] || stream.language
     : "语言未标注";
-  return [stream.codecName.toUpperCase(), language, stream.title]
+  return [
+    stream.codecName.toUpperCase(),
+    stream.codecType === "audio" && stream.sampleRate
+      ? `${stream.sampleRate / 1000} kHz`
+      : "",
+    stream.codecType === "audio" && stream.channels
+      ? `${stream.channels} 声道`
+      : "",
+    language,
+    stream.title,
+  ]
     .filter(Boolean)
     .join(" · ");
 }

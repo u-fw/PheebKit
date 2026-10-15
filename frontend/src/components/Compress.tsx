@@ -38,6 +38,7 @@ import { ScenarioPresets } from "./ScenarioPresets";
 import { SubtitleBurnSettings } from "./SubtitleBurnSettings";
 import { segmentProjects } from "../segments";
 import { MediaRecovery } from "./MediaRecovery";
+import { AudioProcessingSettings } from "./AudioProcessingSettings";
 
 type Props = {
   media: Media | null;
@@ -478,6 +479,15 @@ export function Compress({
               update={update}
             />
           )}
+          {(compress || operation === "extract-audio") &&
+            !settings.recovery && (
+              <AudioProcessingSettings
+                media={media}
+                settings={settings}
+                capabilities={capabilities}
+                update={update}
+              />
+            )}
           {compress && !settings.recovery && (
             <AdvancedSettings
               key={advancedRevision}

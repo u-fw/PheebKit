@@ -58,6 +58,9 @@ func (s *Service) StartSample(p core.Project, seconds float64) (core.Job, error)
 	if err != nil {
 		return core.Job{}, err
 	}
+	if err := compiler.ValidateAudioDuration(p.Settings, selectedDuration); err != nil {
+		return core.Job{}, err
+	}
 	start, end := 0.0, media.DurationSeconds
 	if len(p.Settings.Segments) > 0 {
 		start, end = p.Settings.Segments[0].StartSeconds, p.Settings.Segments[0].EndSeconds
@@ -73,6 +76,10 @@ func (s *Service) StartSample(p core.Project, seconds float64) (core.Job, error)
 	}
 	end = math.Min(end, start+seconds)
 	p = core.CloneProject(p)
+	if p.Settings.AudioProcessing != nil {
+		p.Settings.AudioProcessing.FadeInSeconds = 0
+		p.Settings.AudioProcessing.FadeOutSeconds = 0
+	}
 	if len(p.Settings.Segments) > 0 {
 		p.Settings.Segments = nil
 	}

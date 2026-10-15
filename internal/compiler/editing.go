@@ -180,7 +180,7 @@ func SelectedDuration(s core.Settings, total, rate float64) (float64, error) {
 	return sum, nil
 }
 
-func segmentGraph(s core.Settings, input string, video core.Stream, audio []core.Stream, filter string) ([]string, error) {
+func segmentGraph(s core.Settings, input string, video core.Stream, audio []core.Stream, filter, audioEffect string) ([]string, error) {
 	if len(audio) > 4 {
 		return nil, fmt.Errorf("多片段最多保留 4 条音轨，请先选择所需轨道")
 	}
@@ -225,7 +225,7 @@ func segmentGraph(s core.Settings, input string, video core.Stream, audio []core
 			if s.Recovery != nil && s.Recovery.Mode == "black" {
 				audioFilter += ",aresample=48000:out_chlayout=stereo"
 			}
-			if s.VolumeDB != 0 {
+			if s.VolumeDB != 0 && s.AudioProcessing == nil {
 				audioFilter += ",volume=" + decimal(s.VolumeDB) + "dB"
 			}
 			if replace {
@@ -244,9 +244,18 @@ func segmentGraph(s core.Settings, input string, video core.Stream, audio []core
 		outputs += fmt.Sprintf("[joineda%d]", j)
 	}
 	graph = append(graph, fmt.Sprintf("%sconcat=n=%d:v=1:a=%d%s", labels, len(s.Segments), len(audio), outputs))
+	if audioEffect != "" {
+		for j := range audio {
+			graph = append(graph, fmt.Sprintf("[joineda%d]%s[processeda%d]", j, audioEffect, j))
+		}
+	}
 	args = append(args, "-filter_complex_threads", "1", "-filter_complex", strings.Join(graph, ";"), "-map", "[joinedv]")
 	for j := range audio {
-		args = append(args, "-map", fmt.Sprintf("[joineda%d]", j))
+		label := fmt.Sprintf("[joineda%d]", j)
+		if audioEffect != "" {
+			label = fmt.Sprintf("[processeda%d]", j)
+		}
+		args = append(args, "-map", label)
 		if audio[j].Language != "" {
 			args = append(args, fmt.Sprintf("-metadata:s:a:%d", j), "language="+audio[j].Language)
 		}

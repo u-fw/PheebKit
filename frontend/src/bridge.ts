@@ -33,6 +33,8 @@ export type TimeRange = Core.TimeRange;
 export type SubtitleBurn = Core.SubtitleBurn;
 export type CatalogEntry = Core.CatalogEntry;
 export type MediaHealth = Core.MediaHealth;
+export type AudioProcessing = Core.AudioProcessing;
+export type EqualizerBand = Core.EqualizerBand;
 export type Project = Omit<Core.Project, "inputs" | "settings"> & {
   inputs: Source[];
   settings: Settings;

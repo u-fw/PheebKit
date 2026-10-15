@@ -58,6 +58,14 @@ func verifyOutputMedia(media core.Media, plan core.ExecutionPlan) (*core.OutputV
 			}
 		case "audio":
 			v.AudioStreams++
+			if e := plan.ExpectedOutput; e != nil {
+				if e.AudioSampleRate != 0 && stream.SampleRate != e.AudioSampleRate {
+					return nil, fmt.Errorf("verify output audio: expected %d Hz, found %d", e.AudioSampleRate, stream.SampleRate)
+				}
+				if e.AudioChannels != 0 && stream.Channels != e.AudioChannels {
+					return nil, fmt.Errorf("verify output audio: expected %d channels, found %d", e.AudioChannels, stream.Channels)
+				}
+			}
 		case "subtitle":
 			v.SubtitleStreams++
 		}

@@ -12,26 +12,27 @@ type Project struct {
 }
 
 type Settings struct {
-	Recovery          *Recovery       `json:"recovery,omitempty"`
-	Operation         string          `json:"operation,omitempty"`
-	Codec             string          `json:"codec"`
-	Encoder           string          `json:"encoder"`
-	Quality           int             `json:"quality"`
-	Preset            string          `json:"preset"`
-	Resolution        int             `json:"resolution"`
-	Audio             string          `json:"audio"`
-	AudioBitrateKbps  int             `json:"audioBitrateKbps,omitempty"`
-	Mode              string          `json:"mode"`
-	BitrateKbps       int             `json:"bitrateKbps"`
-	TargetSizeMB      float64         `json:"targetSizeMB"`
-	RawArguments      []string        `json:"rawArguments"`
-	Trim              *TimeRange      `json:"trim,omitempty"`
-	Segments          []TimeRange     `json:"segments,omitempty"`
-	SubtitleBurn      *SubtitleBurn   `json:"subtitleBurn,omitempty"`
-	AudioSelection    *TrackSelection `json:"audioSelection,omitempty"`
-	SubtitleSelection *TrackSelection `json:"subtitleSelection,omitempty"`
-	Transform         *VideoTransform `json:"transform,omitempty"`
-	VolumeDB          float64         `json:"volumeDB,omitempty"`
+	AudioProcessing   *AudioProcessing `json:"audioProcessing,omitempty"`
+	Recovery          *Recovery        `json:"recovery,omitempty"`
+	Operation         string           `json:"operation,omitempty"`
+	Codec             string           `json:"codec"`
+	Encoder           string           `json:"encoder"`
+	Quality           int              `json:"quality"`
+	Preset            string           `json:"preset"`
+	Resolution        int              `json:"resolution"`
+	Audio             string           `json:"audio"`
+	AudioBitrateKbps  int              `json:"audioBitrateKbps,omitempty"`
+	Mode              string           `json:"mode"`
+	BitrateKbps       int              `json:"bitrateKbps"`
+	TargetSizeMB      float64          `json:"targetSizeMB"`
+	RawArguments      []string         `json:"rawArguments"`
+	Trim              *TimeRange       `json:"trim,omitempty"`
+	Segments          []TimeRange      `json:"segments,omitempty"`
+	SubtitleBurn      *SubtitleBurn    `json:"subtitleBurn,omitempty"`
+	AudioSelection    *TrackSelection  `json:"audioSelection,omitempty"`
+	SubtitleSelection *TrackSelection  `json:"subtitleSelection,omitempty"`
+	Transform         *VideoTransform  `json:"transform,omitempty"`
+	VolumeDB          float64          `json:"volumeDB,omitempty"`
 }
 
 // SubtitleBurn identifies editable subtitle intent; compilation freezes its file identity.
@@ -75,6 +76,15 @@ type CropMargins struct {
 
 // CloneSettings isolates editable project, preset and queue snapshots.
 func CloneSettings(settings Settings) Settings {
+	if settings.AudioProcessing != nil {
+		copy := *settings.AudioProcessing
+		copy.Equalizer = append([]EqualizerBand(nil), copy.Equalizer...)
+		if copy.Normalize != nil {
+			n := *copy.Normalize
+			copy.Normalize = &n
+		}
+		settings.AudioProcessing = &copy
+	}
 	if settings.Recovery != nil {
 		copy := *settings.Recovery
 		copy.DamagedRanges = append([]TimeRange(nil), copy.DamagedRanges...)

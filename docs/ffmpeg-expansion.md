@@ -4,6 +4,8 @@ The direction is broad FFmpeg coverage through the existing local Go compiler/ru
 
 ## This increment
 
+Beta.10 additionally implements [typed audio processing](audio-processing.md) for compression/extraction, including single-pass loudness, denoise/EQ/fades/rate/channels. Track mixing and measured two-pass normalization remain future work.
+
 Beta.9 additionally implements [conservative media scans/recovery](media-recovery.md), with mandatory complete decode verification of recovery outputs. Ordinary jobs still use metadata/structure checks. The beta.8 evidence below remains the preceding expansion's dated baseline.
 
 - Inspect the selected local FFmpeg's encoders, decoders, filters, muxers/demuxers, protocols, bitstream filters, pixel/sample formats, channel layouts, colors, devices and hardware backends. Search results and read the binary's own option help. Fixed query categories/name validation, bounded output/time/cache, no shell, no execution of help text. Configuration replacement cannot race an inspection.
@@ -34,4 +36,4 @@ References: [FFmpeg generic options](https://ffmpeg.org/ffmpeg.html#Generic-opti
 
 ## Coverage beyond this increment
 
-Not complete: HDR/tone mapping, arbitrary multi-file timelines/transitions, comprehensive filter graph authoring, network/live/device capture, all codec/muxer workflows, audio normalization/mixing, multiple output profiles, optional full-decode verification for ordinary jobs and unrestricted command execution. These require additional typed intent, resource/privacy policies and real operation-specific verification. The capability explorer provides discovery/help for these areas, not a claim of operational GUI support. Android remains deferred; existing Wails Beta approval remains limited to the Technical Spike.
+Not complete: HDR/tone mapping, arbitrary multi-file timelines/transitions, comprehensive filter graph authoring, network/live/device capture, all codec/muxer workflows, two-pass measured normalization/audio mixing, multiple output profiles, optional full-decode verification for ordinary jobs and unrestricted command execution. These require additional typed intent, resource/privacy policies and real operation-specific verification. The capability explorer provides discovery/help for these areas, not a claim of operational GUI support. Android remains deferred; existing Wails Beta approval remains limited to the Technical Spike.

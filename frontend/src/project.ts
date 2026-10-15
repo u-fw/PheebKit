@@ -1,6 +1,8 @@
 import type { Media, Project, Settings } from "./bridge";
 import { trimError } from "./trim";
 import { subtitleError } from "./subtitles";
+import { audioProcessingErrors } from "./audioProcessing";
+import { selectedDuration as audioSelectedDuration } from "./trim";
 
 export const defaultSettings: Settings = {
   codec: "hevc",
@@ -124,6 +126,7 @@ export function changeOperation(
     operation,
     trim: null,
     recovery: null,
+    audioProcessing: null,
     segments: null,
     subtitleBurn: null,
     transform: null,
@@ -266,6 +269,15 @@ export function validateSettings(
   media?: Pick<Media, "streams" | "durationSeconds">,
 ): string[] {
   const errors: string[] = [];
+  errors.push(
+    ...audioProcessingErrors(
+      settings,
+      media
+        ? audioSelectedDuration(settings, media.durationSeconds)
+        : undefined,
+      media ? selectedTracks(media, "audio", settings).length : undefined,
+    ),
+  );
   if (settings.recovery) {
     if (
       settings.trim ||

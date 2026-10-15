@@ -54,6 +54,8 @@ type FFmpegInspector interface {
 
 // OutputExpectation is compiler intent, checked before publishing a result.
 type OutputExpectation struct {
+	AudioSampleRate int    `json:"audioSampleRate,omitempty"`
+	AudioChannels   int    `json:"audioChannels,omitempty"`
 	VideoStreams    int    `json:"videoStreams"`
 	AudioStreams    int    `json:"audioStreams"`
 	SubtitleStreams int    `json:"subtitleStreams"`

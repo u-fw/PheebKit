@@ -58,3 +58,20 @@ func TestOutputVerificationRejectsUnreadableMedia(t *testing.T) {
 		t.Fatal("nonempty garbage passed output verification")
 	}
 }
+
+func TestOutputVerificationChecksRequestedAudioFormat(t *testing.T) {
+	p := core.ExecutionPlan{ExpectedOutput: &core.OutputExpectation{AudioStreams: 1, AudioSampleRate: 48000, AudioChannels: 2}}
+	m := core.Media{DurationSeconds: 2, Streams: []core.Stream{{CodecType: "audio", CodecName: "aac", SampleRate: 44100, Channels: 2}}}
+	if _, err := verifyOutputMedia(m, p); err == nil {
+		t.Fatal("wrong rate published")
+	}
+	m.Streams[0].SampleRate = 48000
+	m.Streams[0].Channels = 1
+	if _, err := verifyOutputMedia(m, p); err == nil {
+		t.Fatal("wrong channel count published")
+	}
+	m.Streams[0].Channels = 2
+	if _, err := verifyOutputMedia(m, p); err != nil {
+		t.Fatal(err)
+	}
+}

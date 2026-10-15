@@ -38,6 +38,6 @@ No shell, network input, arbitrary filter expression, extra output path, source 
 
 ## Subsequent priorities
 
-After this recovery increment: configurable audio normalization/denoise/EQ/fades/resampling, then image/GIF sequences and encoding controls (two-pass/rate-control details), then explicitly verified HDR/color management. Multi-source timelines/filter authoring and network/capture need separate input/security/resource designs. Broad FFmpeg coverage remains incremental; discovery/help is not implemented execution support.
+Recovery and [opt-in audio processing](audio-processing.md) are implemented. Next: image/GIF sequences and encoding controls (two-pass/rate-control details), followed by explicitly verified HDR/color management. Measured two-pass loudness and mixing remain audio extensions. Multi-source timelines/filter authoring and network/capture need separate input/security/resource designs. Broad FFmpeg coverage remains incremental; discovery/help is not implemented execution support.
 
 Primary semantics: [FFmpeg command options](https://ffmpeg.org/ffmpeg.html), [format error detection](https://ffmpeg.org/ffmpeg-formats.html#Format-Options), [concat/source/audio filters](https://ffmpeg.org/ffmpeg-filters.html).

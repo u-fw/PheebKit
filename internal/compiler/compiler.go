@@ -85,6 +85,10 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	if err != nil {
 		return core.ExecutionPlan{}, err
 	}
+	audioFilter, err := audioProcessingFilter(settings, duration, caps, audioStreams)
+	if err != nil {
+		return core.ExecutionPlan{}, err
+	}
 	if (settings.Trim != nil || len(settings.Segments) > 0) && audio && settings.Audio == "copy" {
 		return core.ExecutionPlan{}, fmt.Errorf("trimming requires AAC/Opus audio encoding for accurate boundaries; copied audio is packet-aligned")
 	}
@@ -158,7 +162,7 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		args = append(args, "-xerror", "-max_error_rate", "0")
 	}
 	if len(settings.Segments) > 0 {
-		graphArgs, err := segmentGraph(settings, input.URI, *video, audioStreams, filter)
+		graphArgs, err := segmentGraph(settings, input.URI, *video, audioStreams, filter, audioFilter)
 		if err != nil {
 			return core.ExecutionPlan{}, err
 		}
@@ -229,7 +233,9 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 	}
 	args = append(args, audioArgs...)
 	args = append(args, subtitleArgs...)
-	if settings.VolumeDB != 0 && len(settings.Segments) == 0 {
+	if audioFilter != "" && len(settings.Segments) == 0 {
+		args = append(args, "-af", audioFilter)
+	} else if settings.VolumeDB != 0 && len(settings.Segments) == 0 {
 		args = append(args, "-af", "volume="+strconv.FormatFloat(settings.VolumeDB, 'f', -1, 64)+"dB")
 	}
 	if ext == ".mp4" {
@@ -252,11 +258,13 @@ func Compile(project core.Project, media core.Media, caps core.Capabilities) (co
 		copy := *settings.Trim
 		trim = &copy
 	}
+	expected := &core.OutputExpectation{VideoStreams: 1, AudioStreams: len(audioStreams), SubtitleStreams: len(subtitleStreams), VideoCodec: settings.Codec}
+	expectAudioProcessing(expected, settings)
 	return core.ExecutionPlan{ProjectID: project.ID, Input: input, Output: output, Args: args,
 		Preview: Preview("ffmpeg.exe", args), DurationSeconds: duration, InputSizeBytes: media.SizeBytes,
 		SourceFingerprint:      media.SourceFingerprint,
 		FullDecodeVerification: settings.Recovery != nil,
-		ExpectedOutput:         &core.OutputExpectation{VideoStreams: 1, AudioStreams: len(audioStreams), SubtitleStreams: len(subtitleStreams), VideoCodec: settings.Codec},
+		ExpectedOutput:         expected,
 		Trim:                   trim,
 		SubtitleAsset:          asset,
 		Encoder:                encoder, EncoderKind: selected.Kind, EncoderLabel: selected.Label, EncoderReason: encoderReason}, nil

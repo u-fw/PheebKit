@@ -147,6 +147,10 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 		if len(subtitles) > 0 {
 			return core.ExecutionPlan{}, fmt.Errorf("audio extraction does not output subtitles")
 		}
+		audioFilter, err := audioProcessingFilter(s, duration, caps, audio)
+		if err != nil {
+			return core.ExecutionPlan{}, err
+		}
 		args = append(args, trackMaps(audio)...)
 		args = append(args, "-vn", "-sn", "-dn", "-map_metadata", "0", "-map_chapters", "-1")
 		audioArgs, selectedEncoder, err := extractAudioArguments(s.Audio, audio[0].CodecName, ext, caps.Encoders)
@@ -167,7 +171,9 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 		if encoder != "copy" {
 			kind, label = "cpu", "音频编码"
 		}
-		if s.VolumeDB != 0 {
+		if audioFilter != "" {
+			args = append(args, "-af", audioFilter)
+		} else if s.VolumeDB != 0 {
 			args = append(args, "-af", "volume="+strconv.FormatFloat(s.VolumeDB, 'f', -1, 64)+"dB")
 		}
 	case "extract-subtitle":
@@ -197,6 +203,7 @@ func compileUtility(project core.Project, media core.Media, caps core.Capabiliti
 		expected.VideoStreams, expected.AudioStreams, expected.SubtitleStreams = 1, len(audio), len(subtitles)
 	case "extract-audio":
 		expected.AudioStreams = 1
+		expectAudioProcessing(expected, s)
 	case "extract-subtitle":
 		expected.SubtitleStreams = 1
 	}

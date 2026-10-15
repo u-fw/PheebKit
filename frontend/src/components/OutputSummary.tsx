@@ -4,6 +4,7 @@ import { codecOptions } from "./EncodingSettings";
 import { Icon } from "./Icon";
 import { formatTimecode, selectedDuration, trimError } from "../trim";
 import { operationLabels, operationOf, selectedTracks } from "../project";
+import { audioProcessingSummary } from "../audioProcessing";
 
 export function OutputSummary({
   media,
@@ -60,6 +61,9 @@ export function OutputSummary({
   return (
     <section className="surface estimate-card">
       <div className="section-eyebrow">输出概览</div>
+      {settings.audioProcessing && (
+        <p>声音处理：{audioProcessingSummary(settings)}</p>
+      )}
       <h2>
         {compress
           ? codecOptions.find((codec) => codec.value === settings.codec)?.title

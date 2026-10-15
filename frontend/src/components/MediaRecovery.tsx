@@ -181,7 +181,7 @@ export function MediaRecovery({
             {mode === "delete"
               ? `同时删除这些区间的画面与音频，预计保留 ${formatTimecode(Math.max(0, media.durationSeconds - removed))}。`
               : "以黑画面与静音替代失败区间；音轨统一为 48 kHz 立体声，预计保留原时长。"}{" "}
-            应用后清除剪辑、字幕和高级参数；源文件不变。请先恢复，再进行其他编辑。
+            应用后清除剪辑、字幕、声音处理和高级参数；源文件不变。请先恢复，再进行其他编辑。
           </p>
           <button
             className="button outlined"
@@ -192,6 +192,7 @@ export function MediaRecovery({
                 trim: null,
                 segments: null,
                 subtitleBurn: null,
+                audioProcessing: null,
                 rawArguments: [],
                 subtitleSelection: { mode: "none", indices: [] },
                 audio:

@@ -21,6 +21,9 @@ type document struct {
 		BitRate    string `json:"bit_rate"`
 	} `json:"format"`
 	Streams []struct {
+		SampleRate       string            `json:"sample_rate"`
+		Channels         int               `json:"channels"`
+		ChannelLayout    string            `json:"channel_layout"`
 		Index            int               `json:"index"`
 		CodecType        string            `json:"codec_type"`
 		CodecName        string            `json:"codec_name"`
@@ -92,6 +95,7 @@ func Parse(data []byte, source core.Source) (core.Media, error) {
 			}
 		}
 		media.Streams = append(media.Streams, core.Stream{Index: raw.Index, CodecType: raw.CodecType,
+			SampleRate: int(integer(raw.SampleRate)), Channels: raw.Channels, ChannelLayout: raw.ChannelLayout,
 			CodecName: raw.CodecName, Width: raw.Width, Height: raw.Height, DisplayRotation: rotation, FrameRate: fps,
 			PixelFormat: raw.PixelFormat, BitDepth: depth, ColorSpace: raw.ColorSpace,
 			ColorTransfer: raw.ColorTransfer, ColorPrimaries: raw.ColorPrimaries, HDR: hdr,

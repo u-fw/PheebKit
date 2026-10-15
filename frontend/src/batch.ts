@@ -71,6 +71,9 @@ export function makeBatchProjects(
       trim: null,
       segments: null,
       recovery: null,
+      audioProcessing: settings.audioProcessing
+        ? structuredClone(settings.audioProcessing)
+        : null,
       subtitleBurn: null,
       rawArguments: [...settings.rawArguments],
       audioSelection: selection(tracks.audio),

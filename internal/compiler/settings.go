@@ -12,6 +12,9 @@ import (
 // ValidateSettings checks intent independent of any particular input file.
 // Compile additionally checks stream indexes, source geometry and mux compatibility.
 func ValidateSettings(settings core.Settings) error {
+	if err := validateAudioProcessing(settings); err != nil {
+		return err
+	}
 	if err := validateEditing(settings); err != nil {
 		return err
 	}
