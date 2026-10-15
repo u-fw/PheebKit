@@ -52,13 +52,25 @@ export function EditorPreferences({
         <h2>编辑与恢复</h2>
         <span className="subtle-label">仅保存在本机</span>
       </div>
-      <label className="toggle-row">
-        <input
-          type="checkbox"
-          checked={form.autosave}
-          onChange={(e) => setForm({ ...form, autosave: e.target.checked })}
-        />
-        自动保存当前项目草稿
+      <label className="preference-switch">
+        <span className="preference-switch-copy">
+          <span>自动保存当前项目草稿</span>
+          <span className="field-hint">保存编辑设置后生效</span>
+        </span>
+        <span className="preference-switch-control">
+          <input
+            type="checkbox"
+            role="switch"
+            aria-label="自动保存当前项目草稿"
+            checked={form.autosave}
+            disabled={busy}
+            onChange={(e) => setForm({ ...form, autosave: e.target.checked })}
+          />
+          <span className="preference-switch-state" aria-hidden="true">
+            {form.autosave ? "已开启" : "已关闭"}
+          </span>
+          <span className="preference-switch-track" aria-hidden="true" />
+        </span>
       </label>
       <div className="field-grid">
         {fields.map((f) => (
