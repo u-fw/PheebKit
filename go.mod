@@ -1,6 +1,6 @@
 module kompeg
 
-go 1.25.0
+go 1.26.0
 
 toolchain go1.27.2
 
@@ -8,7 +8,7 @@ require (
 	github.com/bodgit/sevenzip v1.6.5
 	github.com/nwaples/rardecode/v2 v2.4.2
 	github.com/ulikunitz/xz v0.5.17
-	golang.org/x/sys v0.46.0
+	golang.org/x/sys v0.48.0
 )
 
 require (
@@ -32,8 +32,8 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 )
 
 require (
@@ -51,5 +51,5 @@ require (
 	github.com/stangelandcl/ppmd v0.1.1 // indirect
 	github.com/wailsapp/wails/v2 v2.17.0
 	go4.org v0.0.0-20260112195520-a5071408f32f // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 )

@@ -12,7 +12,7 @@ Beta.11 adds optional configurable audio processing: dynamic single-pass loudnes
 
 ## Windows development
 
-Requires Go 1.25+ with automatic selection of the pinned Go 1.27.2 security toolchain, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Release builds enforce Go 1.27.2 or newer and dependency vulnerability checks. See the [security/performance audit](docs/security-performance-audit.md). Install the exact CLI once:
+Requires Go 1.26+ with automatic selection of the pinned Go 1.27.2 security toolchain, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Release builds enforce Go 1.27.2 or newer and source/final-binary dependency vulnerability checks. See the [security/performance audit](docs/security-performance-audit.md). Install the exact CLI once:
 
 ```powershell
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0

@@ -56,6 +56,9 @@ try {
     $application = Join-Path $payload 'PheebKit.exe'
     & (Join-Path $workspace 'scripts/build-windows.ps1') -OutputPath $application
     if ($LASTEXITCODE -ne 0) { throw 'Native build failed' }
+    # Desktop production tags can link packages absent from ordinary Go tests.
+    # Audit the actual deliverable before it enters either archive.
+    Invoke-Checked go @('run', 'golang.org/x/vuln/cmd/govulncheck@v1.9.0', '-mode=binary', $application)
     $metadata = (Get-Item -LiteralPath $application).VersionInfo
     if ($metadata.ProductVersion -ne $version.version) { throw 'Executable version does not match VERSION' }
     $taskSourceRevision = (git rev-parse HEAD).Trim()

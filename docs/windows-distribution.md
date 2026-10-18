@@ -22,7 +22,7 @@ The installer AppId is permanently `{9D8FAD06-8029-4A58-9497-96C7DA878C63}` acro
 
 ## Build and package locally
 
-Requires native Windows x64, PowerShell 7, stable Go 1.27.2 or newer, Node 24+, the pinned Wails CLI and Inno Setup 7.1.0. The release script runs pinned govulncheck and npm audit before building; network/advisory failures stop packaging. The module retains Go 1.25 language compatibility with an automatic Go 1.27.2 toolchain hint.
+Requires native Windows x64, PowerShell 7, stable Go 1.27.2 or newer, Node 24+, the pinned Wails CLI and Inno Setup 7.1.0. The release script runs pinned source govulncheck and npm audit before building, then audits the actual production EXE before archiving; network/advisory failures stop packaging. The module requires Go 1.26 language compatibility with an automatic Go 1.27.2 toolchain hint.
 
 ```powershell
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
