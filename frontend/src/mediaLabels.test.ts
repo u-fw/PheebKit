@@ -35,5 +35,8 @@ describe("human-readable media information", () => {
   it("explains unspecified language instead of leaking und", () => {
     expect(streamLabel(stream)).toBe("AAC · 语言未标注");
     expect(streamLabel({ ...stream, language: "eng" })).toBe("AAC · 英语");
+    for (const language of ["constructor", "__proto__", "toString"]) {
+      expect(streamLabel({ ...stream, language })).toBe(`AAC · ${language}`);
+    }
   });
 });

@@ -127,6 +127,34 @@ describe("application localization", () => {
         0,
       ),
     ).toBe("Audio track 1 · Chinese · AAC · 设置");
+    for (const language of ["constructor", "__proto__", "toString"]) {
+      expect(
+        trackLabel(
+          {
+            index: 0,
+            codecType: "audio",
+            codecName: "aac",
+            language,
+            title: "",
+          } as Media["streams"][number],
+          0,
+        ),
+      ).toBe(`Audio track 1 · ${language} · AAC`);
+    }
+    setLanguage("zh-CN");
+    expect(
+      trackLabel(
+        {
+          index: 0,
+          codecType: "audio",
+          codecName: "aac",
+          language: "constructor",
+          title: "",
+        } as Media["streams"][number],
+        0,
+      ),
+    ).toBe("音轨 1 · constructor · AAC");
+    setLanguage("en-US");
     const select = renderToStaticMarkup(
       <MaterialSelect
         label="已保存配置"

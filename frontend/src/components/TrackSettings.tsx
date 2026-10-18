@@ -21,7 +21,7 @@ export function trackLabel(stream: Stream, ordinal: number) {
     t(stream.codecType === "audio" ? "音轨 {{0}}" : "字幕 {{0}}", [
       ordinal + 1,
     ]),
-    languages[stream.language]
+    Object.hasOwn(languages, stream.language)
       ? t(languages[stream.language])
       : stream.language || t("语言未标注"),
     stream.codecName.toUpperCase(),

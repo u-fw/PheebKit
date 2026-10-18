@@ -11,7 +11,9 @@ export function streamLabel(stream: Stream): string {
     kor: t("韩语"),
   };
   const language = stream.language
-    ? languages[stream.language] || stream.language
+    ? Object.hasOwn(languages, stream.language)
+      ? languages[stream.language]
+      : stream.language
     : t("语言未标注");
   return [
     stream.codecName.toUpperCase(),
