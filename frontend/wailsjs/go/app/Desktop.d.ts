@@ -101,6 +101,8 @@ export function SaveSettings(arg1:core.Settings,arg2:string):Promise<app.Workspa
 
 export function SetActiveMedia(arg1:Array<string>,arg2:number):Promise<void>;
 
+export function SetLocale(arg1:string):Promise<void>;
+
 export function SetQueuePaused(arg1:boolean):Promise<app.QueueStatus>;
 
 export function SetUnsavedEdits(arg1:boolean,arg2:number):Promise<void>;

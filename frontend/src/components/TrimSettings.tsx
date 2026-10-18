@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import type { Media, Settings } from "../bridge";
 import { formatTimecode, selectedDuration, trimError } from "../trim";
@@ -65,16 +66,16 @@ export function TrimSettings({
       aria-labelledby="trim-heading"
     >
       <div className="section-title">
-        <h2 id="trim-heading">处理范围</h2>
+        <h2 id="trim-heading">{t("处理范围")}</h2>
       </div>
-      <div className="segmented" aria-label="处理范围">
+      <div className="segmented" aria-label={t("处理范围")}>
         <button
           type="button"
           aria-pressed={!trim && !settings.segments?.length}
           className={!trim && !settings.segments?.length ? "selected" : ""}
           onClick={() => enable(false)}
         >
-          完整视频
+          {t("完整视频")}
         </button>
         <button
           type="button"
@@ -83,7 +84,7 @@ export function TrimSettings({
           disabled={!known}
           onClick={() => enable(true)}
         >
-          剪辑并压缩
+          {t("剪辑并压缩")}
         </button>
         <button
           type="button"
@@ -102,13 +103,15 @@ export function TrimSettings({
             })
           }
         >
-          多片段拼接
+          {t("多片段拼接")}
         </button>
       </div>
       <p className="field-hint" id="trim-help">
-        {known
-          ? `源视频总时长 ${formatTimecode(total)}。${settings.segments?.length ? "按列表保留片段并拼接。" : trim ? "仅保留所选片段，在同一次处理中完成压缩。" : "保留完整时长，并按下方设置压缩。"}`
-          : "视频时长未知，暂不支持选择片段。"}
+        {t(
+          known
+            ? `源视频总时长 ${formatTimecode(total)}。${t(settings.segments?.length ? "按列表保留片段并拼接。" : trim ? "仅保留所选片段，在同一次处理中完成压缩。" : "保留完整时长，并按下方设置压缩。")}`
+            : "视频时长未知，暂不支持选择片段。",
+        )}
       </p>
       {Boolean(settings.segments?.length) && (
         <SegmentsEditor
@@ -124,15 +127,23 @@ export function TrimSettings({
         <>
           <div className="action-row">
             <strong>
-              保留{" "}
-              {formatTimecode(Math.max(0, trim.endSeconds - trim.startSeconds))}
+              {t("保留")}
+              {t(" ")}
+              {t(
+                formatTimecode(
+                  Math.max(0, trim.endSeconds - trim.startSeconds),
+                ),
+              )}
             </strong>
             <span className="field-hint">
-              删除{" "}
-              {formatTimecode(
-                Math.max(
-                  0,
-                  total - Math.max(0, trim.endSeconds - trim.startSeconds),
+              {t("删除")}
+              {t(" ")}
+              {t(
+                formatTimecode(
+                  Math.max(
+                    0,
+                    total - Math.max(0, trim.endSeconds - trim.startSeconds),
+                  ),
                 ),
               )}
             </span>
@@ -140,13 +151,13 @@ export function TrimSettings({
               className="button text"
               onClick={() => change("startSeconds", 0)}
             >
-              起点归零
+              {t("起点归零")}
             </button>
             <button
               className="button text"
               onClick={() => change("endSeconds", max)}
             >
-              终点归尾
+              {t("终点归尾")}
             </button>
             <button
               className="button text"
@@ -156,7 +167,7 @@ export function TrimSettings({
                 onChange({ ...settings, trim: next });
               }}
             >
-              重置范围
+              {t("重置范围")}
             </button>
           </div>
           <div className="field-grid trim-fields">
@@ -166,7 +177,7 @@ export function TrimSettings({
               return (
                 <div key={boundary}>
                   <TimePicker
-                    label={label}
+                    label={t(label)}
                     value={trim[boundary]}
                     max={max}
                     onChange={(value) => change(boundary, value)}
@@ -180,9 +191,9 @@ export function TrimSettings({
                     max={max}
                     step="0.001"
                     value={Math.min(max, Math.max(0, trim[boundary]))}
-                    aria-label={`${label}滑块`}
+                    aria-label={t("{{0}}滑块", [label])}
                     aria-valuetext={
-                      formatTimecode(trim[boundary]) || "无效时间"
+                      formatTimecode(trim[boundary]) || t("无效时间")
                     }
                     onChange={(event) =>
                       change(boundary, Number(event.target.value))
@@ -193,24 +204,28 @@ export function TrimSettings({
             })}
           </div>
           <p className="field-hint" id="trim-format">
-            点击数字直接输入时、分、秒，右侧箭头打开候选列表。使用 ±0.1
-            秒按钮微调，滑块保留毫秒精度。实际切点受视频帧和音频采样精度限制。
+            {t(
+              "点击数字直接输入时、分、秒，右侧箭头打开候选列表。使用 ±0.1 秒按钮微调，滑块保留毫秒精度。实际切点受视频帧和音频采样精度限制。",
+            )}
           </p>
           {error ? (
             <p id="trim-error" className="inline-error" role="alert">
-              {error}
+              {t(error)}
             </p>
           ) : (
             <p className="trim-duration" role="status">
-              保留时长{" "}
+              {t("保留时长")}
+              {t(" ")}
               <strong>
-                {formatTimecode(selectedDuration(settings, total))}
+                {t(formatTimecode(selectedDuration(settings, total)))}
               </strong>
             </p>
           )}
           {hasAudio && (
             <p className="field-hint">
-              剪辑时使用 AAC / Opus 对齐音频；从 Copy 切入时自动选择 AAC。
+              {t(
+                "剪辑时使用 AAC / Opus 对齐音频；从 Copy 切入时自动选择 AAC。",
+              )}
             </p>
           )}
           <ClipPreview

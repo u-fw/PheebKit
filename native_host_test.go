@@ -1,7 +1,7 @@
 package main
 
 import (
-	"kompeg/internal/app"
+	"pheebkit/internal/app"
 	"os"
 	"path/filepath"
 	"testing"

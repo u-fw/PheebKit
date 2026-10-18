@@ -2,7 +2,7 @@ package app
 
 import (
 	"errors"
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 const mediaCacheLimit = 128

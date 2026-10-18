@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"kompeg/internal/capabilities"
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
+	"pheebkit/internal/capabilities"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
 )
 
 type encoderPolicy struct {

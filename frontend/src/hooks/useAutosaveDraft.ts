@@ -3,6 +3,7 @@ import { API, type EditorPreferences } from "../bridge";
 import type { Draft } from "../draft";
 import { draftFingerprint } from "../draft";
 import { errorMessage } from "../format";
+import { getLanguage, t } from "../i18n";
 
 export function useAutosaveDraft(
   draft: Draft | null,
@@ -14,7 +15,7 @@ export function useAutosaveDraft(
   const mounted = useRef(true);
   const inFlight = useRef(false);
   const lastFingerprint = useRef("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<string | number>("");
   const [error, setError] = useState("");
   const nextRevision = () =>
     (revision.current = Math.max(Date.now(), revision.current + 1));
@@ -64,7 +65,7 @@ export function useAutosaveDraft(
             if (revision.current === request) {
               lastFingerprint.current = fingerprint;
               if (mounted.current) {
-                setMessage(`最近自动保存：${new Date().toLocaleTimeString()}`);
+                setMessage(Date.now());
                 setError("");
               }
             }
@@ -86,7 +87,12 @@ export function useAutosaveDraft(
     message: !preferences
       ? "正在读取恢复设置…"
       : preferences.autosave
-        ? message || `自动草稿：每 ${preferences.intervalSeconds} 秒检查修改`
+        ? (typeof message === "number"
+            ? t("最近自动保存：{{0}}", [
+                new Date(message).toLocaleTimeString(getLanguage()),
+              ])
+            : message) ||
+          `自动草稿：每 ${preferences.intervalSeconds} 秒检查修改`
         : "自动草稿已关闭",
     error,
   };

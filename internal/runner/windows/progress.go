@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func readProgress(reader io.Reader, duration float64, emit func(core.Progress)) error {

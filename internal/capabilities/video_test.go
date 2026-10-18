@@ -3,7 +3,7 @@ package capabilities
 import (
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestAutomaticSelectionRequiresRuntimeQualificationAndDepth(t *testing.T) {

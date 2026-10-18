@@ -2,6 +2,6 @@
 
 package windows
 
-import "kompeg/internal/core"
+import "pheebkit/internal/core"
 
 func detectGPUs() []core.GPU { return []core.GPU{} }

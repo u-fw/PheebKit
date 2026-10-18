@@ -1,4 +1,5 @@
 ; Build only through scripts/release-windows.ps1, from one verified payload.
+#include "legacy.iss"
 #ifndef AppVersion
   #error AppVersion must be supplied by the release script
 #endif
@@ -38,7 +39,7 @@ AllowNoIcons=yes
 DisableProgramGroupPage=no
 CloseApplications=no
 RestartApplications=no
-AppMutex=Local\kompeg-application-running
+AppMutex=Local\PheebKit-application-running,{#LegacyRunningMutex}
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
@@ -75,7 +76,7 @@ chinesesimplified.WebView2Missing=菲比工具箱已安装。启动前请从微�
 [Code]
 function InitializeUninstall: Boolean;
 begin
-  Result := not CheckForMutexes('Local\kompeg-application-running');
+  Result := not (CheckForMutexes('Local\PheebKit-application-running') or CheckForMutexes('{#LegacyRunningMutex}'));
   if not Result then
     SuppressibleMsgBox(ExpandConstant('{cm:UninstallBlocked}'), mbError, MB_OK, IDOK);
 end;

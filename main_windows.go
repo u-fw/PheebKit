@@ -2,18 +2,32 @@
 
 package main
 
-import "golang.org/x/sys/windows"
+import (
+	"golang.org/x/sys/windows"
+	"pheebkit/internal/compat"
+)
 
 // Presence only: multiple application windows remain allowed. Installers use
 // this mutex to avoid replacing binaries while media work could be running.
 func holdInstallerGuard() (func(), error) {
-	name, err := windows.UTF16PtrFromString(`Local\kompeg-application-running`)
-	if err != nil {
-		return nil, err
+	var handles []windows.Handle
+	closeHandles := func() {
+		for _, handle := range handles {
+			windows.CloseHandle(handle)
+		}
 	}
-	handle, err := windows.CreateMutex(nil, false, name)
-	if err != nil && err != windows.ERROR_ALREADY_EXISTS {
-		return nil, err
+	for _, value := range []string{`Local\PheebKit-application-running`, compat.LegacyRunningMutex} {
+		name, err := windows.UTF16PtrFromString(value)
+		if err != nil {
+			closeHandles()
+			return nil, err
+		}
+		handle, err := windows.CreateMutex(nil, false, name)
+		if err != nil && err != windows.ERROR_ALREADY_EXISTS {
+			closeHandles()
+			return nil, err
+		}
+		handles = append(handles, handle)
 	}
-	return func() { windows.CloseHandle(handle) }, nil
+	return closeHandles, nil
 }

@@ -12,9 +12,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	"kompeg/internal/runner/windows"
+	"pheebkit/internal/compat"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	"pheebkit/internal/runner/windows"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
-	r := windows.New(os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE"))
+	r := windows.New(compat.BinaryEnvironment("ffmpeg", os.Getenv), compat.BinaryEnvironment("ffprobe", os.Getenv))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	src := core.Source{URI: *input, DisplayName: filepath.Base(*input), Kind: core.SourceLocalFile}

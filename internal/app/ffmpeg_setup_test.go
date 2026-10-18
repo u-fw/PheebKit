@@ -18,12 +18,12 @@ func TestFFmpegSetupSourceValidation(t *testing.T) {
 }
 
 func TestExplicitOverrideBlocksDownloadsAndPathWrites(t *testing.T) {
-	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+	for _, variable := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Run(variable, func(t *testing.T) {
 			directory := t.TempDir()
 			t.Setenv("APPDATA", directory)
 			t.Setenv("LOCALAPPDATA", directory)
-			for _, name := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+			for _, name := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 				t.Setenv(name, "")
 			}
 			t.Setenv(variable, filepath.Join(directory, "missing.exe"))
@@ -52,13 +52,13 @@ func TestExplicitOverrideBlocksDownloadsAndPathWrites(t *testing.T) {
 }
 
 func TestRealFFmpegSetupReadinessGuard(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to verify guards with real PATH binaries")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to verify guards with real PATH binaries")
 	}
 	makeIntegrationPATHAvailable(t)
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
-	for _, name := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+	for _, name := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Setenv(name, "")
 	}
 	service := NewService()
@@ -108,14 +108,14 @@ func TestDownloadedArchitectureRejectsInvalidBinaries(t *testing.T) {
 }
 
 func TestRealCustomFFmpegSetup(t *testing.T) {
-	if os.Getenv("KOMPEG_SETUP_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_SETUP_INTEGRATION=1 for a real custom ZIP download")
+	if os.Getenv("PHEEBKIT_SETUP_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_SETUP_INTEGRATION=1 for a real custom ZIP download")
 	}
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("LOCALAPPDATA", directory)
 	t.Setenv("PATH", "")
-	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+	for _, variable := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Setenv(variable, "")
 	}
 	service := NewService()
@@ -156,14 +156,14 @@ func TestRealCustomFFmpegSetup(t *testing.T) {
 }
 
 func TestRealCustom7zFFmpegSetup(t *testing.T) {
-	if os.Getenv("KOMPEG_SETUP_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_SETUP_INTEGRATION=1 for a real custom 7z download")
+	if os.Getenv("PHEEBKIT_SETUP_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_SETUP_INTEGRATION=1 for a real custom 7z download")
 	}
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("LOCALAPPDATA", directory)
 	t.Setenv("PATH", "")
-	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+	for _, variable := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Setenv(variable, "")
 	}
 	service := NewService()
@@ -204,8 +204,8 @@ func TestRealCustom7zFFmpegSetup(t *testing.T) {
 }
 
 func TestRealFFmpegSetup(t *testing.T) {
-	if os.Getenv("KOMPEG_SETUP_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_SETUP_INTEGRATION=1 to download and verify both real packages")
+	if os.Getenv("PHEEBKIT_SETUP_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_SETUP_INTEGRATION=1 to download and verify both real packages")
 	}
 	for _, source := range []string{"cn", "stable"} {
 		t.Run(source, func(t *testing.T) {
@@ -213,7 +213,7 @@ func TestRealFFmpegSetup(t *testing.T) {
 			t.Setenv("APPDATA", directory)
 			t.Setenv("LOCALAPPDATA", directory)
 			t.Setenv("PATH", "")
-			for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+			for _, variable := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 				t.Setenv(variable, "")
 			}
 			service := NewService()

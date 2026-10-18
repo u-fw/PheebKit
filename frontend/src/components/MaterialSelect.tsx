@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { Icon } from "./Icon";
@@ -11,7 +12,7 @@ import type { SelectOption } from "./selectNavigation";
 export function MaterialSelect({
   label,
   value,
-  options,
+  options: rawOptions,
   onChange,
   disabled = false,
   describedBy,
@@ -29,6 +30,15 @@ export function MaterialSelect({
   accessibleLabel?: string;
   editable?: boolean;
 }) {
+  const options = rawOptions.map((option) =>
+    option.translate === false
+      ? option
+      : {
+          ...option,
+          label: t(option.label),
+          description: option.description ? t(option.description) : undefined,
+        },
+  );
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -159,7 +169,7 @@ export function MaterialSelect({
           className={`material-select-editable ${invalid || inputError ? "invalid" : ""}`}
         >
           <label className="material-select-copy" htmlFor={`${id}-input`}>
-            <span className="material-field-label">{label}</span>
+            <span className="material-field-label">{t(label)}</span>
             <input
               ref={input}
               id={`${id}-input`}
@@ -169,7 +179,7 @@ export function MaterialSelect({
               spellCheck={false}
               value={text}
               disabled={disabled}
-              aria-label={accessibleLabel || label}
+              aria-label={t(accessibleLabel || label)}
               aria-invalid={invalid || inputError || undefined}
               aria-describedby={
                 `${describedBy || ""}${inputError ? ` ${id}-error` : ""}`.trim() ||
@@ -205,7 +215,7 @@ export function MaterialSelect({
             ref={trigger}
             type="button"
             className="time-part-toggle"
-            aria-label={`${accessibleLabel || label}候选列表`}
+            aria-label={t("{{0}}候选列表", [accessibleLabel || label])}
             aria-haspopup="listbox"
             aria-expanded={open}
             aria-controls={open ? `${id}-listbox` : undefined}
@@ -233,7 +243,7 @@ export function MaterialSelect({
           aria-invalid={invalid || undefined}
           aria-expanded={open}
           aria-controls={open ? `${id}-listbox` : undefined}
-          aria-label={accessibleLabel}
+          aria-label={accessibleLabel ? t(accessibleLabel) : undefined}
           aria-labelledby={
             accessibleLabel ? undefined : `${id}-label ${id}-value`
           }
@@ -249,10 +259,10 @@ export function MaterialSelect({
         >
           <span className="material-select-copy">
             <span className="material-field-label" id={`${id}-label`}>
-              {label}
+              {t(label)}
             </span>
             <span id={`${id}-value`}>
-              {options[selected]?.label || "请选择"}
+              {options[selected]?.label || t("请选择")}
             </span>
           </span>
           <Icon name="chevron" />
@@ -260,14 +270,15 @@ export function MaterialSelect({
       )}
       {inputError && (
         <small id={`${id}-error`} className="inline-error" role="status">
-          请输入 {options[0]?.label}–{options.at(-1)?.label} 的整数
+          {t("请输入")} {t(options[0]?.label)}–{t(options.at(-1)?.label)}{" "}
+          {t("的整数")}
         </small>
       )}
       {open && (
         <div
           role="listbox"
           id={`${id}-listbox`}
-          aria-label={accessibleLabel || label}
+          aria-label={t(accessibleLabel || label)}
           className={`material-select-menu ${above ? "above" : ""}`}
           style={{ maxHeight: menuHeight }}
         >

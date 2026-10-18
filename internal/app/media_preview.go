@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/sourcefile"
 )
 
 func (s *Service) importedMedia(uri string) (core.Media, error) {

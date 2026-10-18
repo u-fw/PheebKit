@@ -3,9 +3,9 @@
 package app
 
 import (
-	"kompeg/internal/core"
-	androidrunner "kompeg/internal/runner/android"
 	"os/exec"
+	"pheebkit/internal/core"
+	androidrunner "pheebkit/internal/runner/android"
 )
 
 func newPlatformRunner(_ Environment) core.Runner { return androidrunner.New() }

@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/jobs"
-	"kompeg/internal/runner/windows"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/jobs"
+	"pheebkit/internal/runner/windows"
+	"pheebkit/internal/sourcefile"
 )
 
 type probeMutationRunner struct{ mutate func() }
@@ -51,8 +51,8 @@ func TestProbeRejectsMutationBeforeCaching(t *testing.T) {
 }
 
 func TestIntegrationReplacementNeedsExplicitReimport(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 for real media replacement regression")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 for real media replacement regression")
 	}
 	directory := t.TempDir()
 	input, replacement := filepath.Join(directory, "源视频.mp4"), filepath.Join(directory, "replacement.mp4")
@@ -178,7 +178,7 @@ func TestIntegrationReplacementNeedsExplicitReimport(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, entry := range entries {
-			if strings.HasPrefix(entry.Name(), ".kompeg-") {
+			if strings.HasPrefix(entry.Name(), ".pheebkit-") {
 				t.Fatal("preflight rejection created a scratch directory")
 			}
 		}

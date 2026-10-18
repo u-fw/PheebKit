@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"kompeg/internal/core"
-	"kompeg/internal/jobs"
+	"pheebkit/internal/core"
+	"pheebkit/internal/jobs"
 )
 
 type QueueStatus jobs.QueueStatus

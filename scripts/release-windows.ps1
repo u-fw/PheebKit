@@ -1,4 +1,4 @@
-param([string]$InnoCompiler = $env:KOMPEG_ISCC, [string]$StableEvidence)
+param([string]$InnoCompiler = $env:PHEEBKIT_ISCC, [string]$StableEvidence)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -32,7 +32,7 @@ if (-not $InnoCompiler) {
         if (Test-Path -LiteralPath $candidate) { $InnoCompiler = $candidate; break }
     }
 }
-if (-not $InnoCompiler -or -not (Test-Path -LiteralPath $InnoCompiler)) { throw 'Install verified Inno Setup 7.1.0 or supply -InnoCompiler / KOMPEG_ISCC.' }
+if (-not $InnoCompiler -or -not (Test-Path -LiteralPath $InnoCompiler)) { throw 'Install verified Inno Setup 7.1.0 or supply -InnoCompiler / PHEEBKIT_ISCC.' }
 $InnoCompiler = (Resolve-Path -LiteralPath $InnoCompiler).Path
 New-Item -ItemType Directory -Force -Path $releaseRoot | Out-Null
 $stage = Join-Path $releaseRoot ('.stage-' + [guid]::NewGuid().ToString('N'))

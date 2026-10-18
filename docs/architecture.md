@@ -21,6 +21,8 @@ flowchart TD
 
 ## Boundaries
 
+`locales/en.json` is shared by the React external-store translator and native dialog adapter. Locale changes preserve editor state; dialogs await validated locale synchronization. `internal/compat` isolates persisted legacy identities while current public names use `pheebkit` / `PHEEBKIT_*`. See [languages](i18n.md) and [compatibility](compatibility.md).
+
 - Since 2026-10-18, the desktop shell uses stable Wails v2.17.0. `NativeHost` isolates native dialogs/events/quit, while the bound `Desktop` exposes only `DesktopAPI`. Internal lifecycle/asset methods are not renderer-callable. Generated Wails JS/TypeScript lives in `frontend/wailsjs`; nullable JSON and timestamp types are declared by model tags without changing serialization.
 - `internal/core` owns the shared models and runner interface. It imports neither Wails nor platform process APIs.
 - `internal/probe` parses ffprobe JSON. `internal/capabilities` parses actual FFmpeg encoder capabilities.

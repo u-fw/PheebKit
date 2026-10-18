@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
 )
 
-// Run explicitly: $env:KOMPEG_INTEGRATION='1'; go test ./internal/runner/windows -run Integration -v
+// Run explicitly: $env:PHEEBKIT_INTEGRATION='1'; go test ./internal/runner/windows -run Integration -v
 func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
 	}
-	runner := New(os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE"))
+	runner := New(os.Getenv("PHEEBKIT_FFMPEG"), os.Getenv("PHEEBKIT_FFPROBE"))
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 	dir := t.TempDir()
@@ -108,7 +108,7 @@ func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
 				if _, err := os.Stat(candidate.Output.URI); !os.IsNotExist(err) {
 					t.Fatalf("failed postflight published output: %v", err)
 				}
-				matches, err := filepath.Glob(filepath.Join(dir, ".kompeg-*"))
+				matches, err := filepath.Glob(filepath.Join(dir, ".pheebkit-*"))
 				if err != nil || len(matches) != 0 {
 					t.Fatalf("scratch files leaked: %v %v", matches, err)
 				}
@@ -200,7 +200,7 @@ func TestIntegrationRealHEVCProbeProgressAndCancellation(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, entry := range entries {
-			if strings.HasPrefix(entry.Name(), ".kompeg-") {
+			if strings.HasPrefix(entry.Name(), ".pheebkit-") {
 				t.Fatalf("cancellation leaked scratch directory %s", entry.Name())
 			}
 		}

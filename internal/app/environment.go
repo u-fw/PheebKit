@@ -13,7 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/compat"
+	"pheebkit/internal/core"
 )
 
 type BinaryStatus struct {
@@ -46,7 +47,7 @@ func configFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "kompeg", "ffmpeg.json"), nil
+	return filepath.Join(compat.ConfigDirectory(dir), "ffmpeg.json"), nil
 }
 
 func readBinaryConfig() (binaryConfig, error) {
@@ -111,7 +112,7 @@ func writeBinaryConfig(config binaryConfig) error {
 }
 
 func selectBinary(name, saved string, getenv func(string) string) BinaryStatus {
-	for _, variable := range []string{"KOMPEG_" + strings.ToUpper(name), strings.ToUpper(name) + "_PATH"} {
+	for _, variable := range compat.BinaryVariables(name) {
 		if value := strings.TrimSpace(getenv(variable)); value != "" {
 			return BinaryStatus{Path: binaryPath(value, name), Source: variable}
 		}
@@ -322,7 +323,7 @@ func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, 
 }
 
 func explicitFFmpegOverride() string {
-	for _, variable := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+	for _, variable := range append(compat.BinaryVariables("ffmpeg"), compat.BinaryVariables("ffprobe")...) {
 		if strings.TrimSpace(os.Getenv(variable)) != "" {
 			return variable
 		}

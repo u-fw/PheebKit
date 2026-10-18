@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestRealHealthAndRecoveryQueue(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
 		t.Skip("real FFmpeg opt-in")
 	}
 	t.Setenv("APPDATA", t.TempDir())

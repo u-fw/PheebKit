@@ -6,7 +6,7 @@ Local source fingerprints are checked around probe, before preview, before queue
 
 ## Windows
 
-The adapter starts `exec.CommandContext(binary, args...)`; no `cmd.exe /c`, PowerShell invocation or shell concatenation exists in the execution path. Preview is a separately escaped PowerShell display command using the discovered executable path. Discovery prefers `KOMPEG_FFMPEG`/`KOMPEG_FFPROBE`, then `FFMPEG_PATH`/`FFPROBE_PATH`, saved application paths and PATH. Recognized Scoop shims resolve to the actual executable so cancellation owns FFmpeg rather than only a launcher. Environment status validates both binaries with bounded `-version` calls and supplies a configuration prompt if either is missing. Saved configuration is updated atomically; the queue's stable runner proxy allows idle reconfiguration without losing job history. Queued/running jobs block path changes.
+The adapter starts `exec.CommandContext(binary, args...)`; no `cmd.exe /c`, PowerShell invocation or shell concatenation exists in the execution path. Preview is a separately escaped PowerShell display command using the discovered executable path. Discovery prefers `PHEEBKIT_FFMPEG`/`PHEEBKIT_FFPROBE`, then `FFMPEG_PATH`/`FFPROBE_PATH`, saved application paths and PATH. Recognized Scoop shims resolve to the actual executable so cancellation owns FFmpeg rather than only a launcher. Environment status validates both binaries with bounded `-version` calls and supplies a configuration prompt if either is missing. Saved configuration is updated atomically; the queue's stable runner proxy allows idle reconfiguration without losing job history. Queued/running jobs block path changes.
 
 Probe uses `-v error -show_format -show_streams -show_chapters -show_programs -of json`. Go decodes JSON and derives rational frame rate, bit depth and common HDR signaling. ffprobe exposes other structures but the first Media Card projects stream and format data only.
 
@@ -20,7 +20,7 @@ Encoding uses `-progress pipe:1 -nostats`, parses key/value packets on stdout an
 
 The compiler maps the first motion video by its absolute stream index and optional audio streams. Attached cover art and timed thumbnails are excluded from motion encoding. Subtitles and data streams are not transferred by the compression spike. AAC/Opus encoding or audio copy is validated against the container. Explicit resolution choices are honored, including upscaling. Target size uses decimal MB and a one-pass bitrate budget with 2% muxing allowance; it is an estimate, not an exact size guarantee. If audio exists, size mode requires AAC/Opus because Copy does not provide a known audio budget in this model. The UI explains this at the audio control and beside Start, with an explicit AAC correction action. HDR can be probed and displayed, but compression rejects HDR until tone mapping or metadata preservation has been verified.
 
-Existing output paths and identical input/output paths are refused. Encoding writes to an owned `.kompeg-*` directory adjacent to the requested output. On success, Windows `MoveFile` publishes the result without replacing an existing destination, even if another process created it during encoding. Cancellation/failure removes only the runner's temporary directory; the requested output remains absent and can be retried. Preview shows the logical output path; the adapter substitutes the temporary path internally and preserves every other argv element.
+Existing output paths and identical input/output paths are refused. Encoding writes to an owned `.pheebkit-*` directory adjacent to the requested output. On success, Windows `MoveFile` publishes the result without replacing an existing destination, even if another process created it during encoding. Cancellation/failure removes only the runner's temporary directory; the requested output remains absent and can be retried. Preview shows the logical output path; the adapter substitutes the temporary path internally and preserves every other argv element.
 
 Before publication, beta.5 re-probes the temporary output with a cancellable 30-second timeout and bounded response capture. Compiler intent supplies expected motion-video/audio/subtitle counts and compression codec; invalid/unknown codecs, invalid video geometry or missing/unexpected tracks fail the task before publication. Duration differences and unknown audio/video duration produce review warnings, not false claims of corruption. Result history records observed structure; legacy records have no verification badge. This metadata check is not a complete decode scan; [workflow policy and evidence](workflows.md) describe the limits.
 
@@ -37,7 +37,7 @@ Codec-private parameter strings additionally require exact `key=value` entries f
 Run the Windows integration check from PowerShell:
 
 ```powershell
-$env:KOMPEG_INTEGRATION = '1'
+$env:PHEEBKIT_INTEGRATION = '1'
 go test ./internal/runner/windows -v
 ```
 

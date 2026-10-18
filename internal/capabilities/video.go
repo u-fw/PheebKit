@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 // Order is deterministic: prefer a qualified discrete GPU, then Intel QSV,

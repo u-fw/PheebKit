@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 type projectProbeRunner struct{ count int }

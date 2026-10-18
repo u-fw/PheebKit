@@ -12,10 +12,10 @@ foreach ($name in @('ffmpeg', 'ffprobe')) {
     if (-not [IO.Path]::GetFullPath($path).StartsWith([IO.Path]::GetFullPath($Directory) + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Test binary escaped tools directory' }
     if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $manifest."$($name)SHA256") { throw 'Test binary digest mismatch' }
 }
-$env:KOMPEG_FFMPEG = $manifest.ffmpeg
-$env:KOMPEG_FFPROBE = $manifest.ffprobe
+$env:PHEEBKIT_FFMPEG = $manifest.ffmpeg
+$env:PHEEBKIT_FFPROBE = $manifest.ffprobe
 if ($env:GITHUB_ENV) {
-    "KOMPEG_FFMPEG=$($manifest.ffmpeg)" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
-    "KOMPEG_FFPROBE=$($manifest.ffprobe)" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
+    "PHEEBKIT_FFMPEG=$($manifest.ffmpeg)" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
+    "PHEEBKIT_FFPROBE=$($manifest.ffprobe)" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
 }
 Write-Host "Test tools verified: $($manifest.version). Not included in application packages."

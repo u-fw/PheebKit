@@ -1,10 +1,10 @@
 package compiler
 
 import (
-	"kompeg/internal/core"
 	"math"
 	"os"
 	"path/filepath"
+	"pheebkit/internal/core"
 	"strings"
 	"testing"
 )

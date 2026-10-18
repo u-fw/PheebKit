@@ -1,4 +1,6 @@
+import { t } from "../i18n";
 import { useState } from "react";
+import { legacyBinaryVariables } from "../legacy";
 import type { EnvironmentStatus, FFmpegSetupStatus } from "../bridge";
 import { errorMessage, formatBytes } from "../format";
 import { MaterialSelect } from "./MaterialSelect";
@@ -14,10 +16,11 @@ export function explicitEnvironmentOverride(
     if (
       binary &&
       [
-        "KOMPEG_FFMPEG",
-        "KOMPEG_FFPROBE",
+        "PHEEBKIT_FFMPEG",
+        "PHEEBKIT_FFPROBE",
         "FFMPEG_PATH",
         "FFPROBE_PATH",
+        ...legacyBinaryVariables,
       ].includes(binary.source)
     )
       return binary.source;
@@ -118,9 +121,9 @@ export function FFmpegDownload({
   return (
     <div className="ffmpeg-download">
       <div>
-        <h3>一键补全</h3>
+        <h3>{t("一键补全")}</h3>
         <p className="field-hint">
-          安装到 菲比工具箱 私有目录，无需管理员权限。保留现有系统 PATH。
+          {t("安装到 菲比工具箱 私有目录，无需管理员权限。保留现有系统 PATH。")}
         </p>
       </div>
       {blockedReason && (
@@ -129,11 +132,11 @@ export function FFmpegDownload({
           className="field-hint"
           role="status"
         >
-          {blockedReason}
+          {t(blockedReason)}
         </p>
       )}
       <MaterialSelect
-        label="下载来源"
+        label={t("下载来源")}
         value={source}
         onChange={setSource}
         disabled={!canDownload || busy || active || requestBusy}
@@ -166,38 +169,42 @@ export function FFmpegDownload({
         />
       ) : (
         <p className="field-hint">
-          稳定版约 246 MiB；国内备用约 56
-          MiB，版本较旧，部分编码器可能不可用。默认先从官网推荐的 Gyan
-          下载，再尝试同版本 GitHub
-          备用线路；失败后可手动选择国内镜像或自定义链接。
+          {t(
+            "稳定版约 246 MiB；国内备用约 56 MiB，版本较旧，部分编码器可能不可用。默认先从官网推荐的 Gyan 下载，再尝试同版本 GitHub 备用线路；失败后可手动选择国内镜像或自定义链接。",
+          )}
         </p>
       )}
       {status?.stage && (
         <div className="download-status">
           <p role="status" aria-live="polite">
-            {stages[status.stage] || status.stage}
+            {t(stages[status.stage] || status.stage)}{" "}
             {status.version ? ` · ${status.version}` : ""}
           </p>
-          {status.package && <p className="field-hint">{status.package}</p>}
+          {status.package && <p className="field-hint">{t(status.package)}</p>}
           {active && (
-            <progress aria-label="FFmpeg 下载进度" max={100} value={progress} />
+            <progress
+              aria-label={t("FFmpeg 下载进度")}
+              max={100}
+              value={progress}
+            />
           )}
           {status.stage === "downloading" && (
             <p className="field-hint">
-              {progress !== undefined ? `${progress.toFixed(1)}% · ` : ""}
-              {formatBytes(status.received)} /{" "}
-              {status.total > 0 ? formatBytes(status.total) : "未知大小"} ·{" "}
-              {formatBytes(status.speed)}/s
+              {t(progress !== undefined ? `${progress.toFixed(1)}% · ` : "")}{" "}
+              {t(formatBytes(status.received))} /{t(" ")}
+              {t(status.total > 0 ? formatBytes(status.total) : "未知大小")} ·
+              {t(" ")}
+              {t(formatBytes(status.speed))}/s
             </p>
           )}
           {status.source && (
             <p className="download-source">
-              线路：{new URL(status.source).hostname}
+              {t("线路：")} {new URL(status.source).hostname}
             </p>
           )}
           {status.error && (
             <p className="inline-error" role="alert">
-              {status.error}
+              {t(status.error)}
             </p>
           )}
         </div>
@@ -213,7 +220,7 @@ export function FFmpegDownload({
             }
             onClick={() => void perform(cancel)}
           >
-            取消下载
+            {t("取消下载")}
           </button>
         ) : (
           <button
@@ -224,21 +231,23 @@ export function FFmpegDownload({
             }
             onClick={() => void perform(startDownload)}
           >
-            {blockedReason
-              ? environment?.ready
-                ? "已就绪，无需下载"
-                : "下载暂不可用"
-              : requestBusy
-                ? "正在开始…"
-                : status?.stage === "failed" || status?.stage === "cancelled"
-                  ? "重试下载"
-                  : "下载并配置"}
+            {t(
+              blockedReason
+                ? environment?.ready
+                  ? "已就绪，无需下载"
+                  : "下载暂不可用"
+                : requestBusy
+                  ? "正在开始…"
+                  : status?.stage === "failed" || status?.stage === "cancelled"
+                    ? "重试下载"
+                    : "下载并配置",
+            )}
           </button>
         )}
       </div>
       {error && (
         <p className="inline-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
     </div>

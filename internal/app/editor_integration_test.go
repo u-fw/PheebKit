@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/localstore"
+	"pheebkit/internal/core"
+	"pheebkit/internal/localstore"
 )
 
 func TestRealRecoveredDraftReprobesAndProcessesOnlyAfterExplicitStart(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1")
 	}
 	t.Setenv("APPDATA", t.TempDir())
 	s := NewService()

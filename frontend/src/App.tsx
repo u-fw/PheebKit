@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { t, useI18n, saveLocalPreference } from "./i18n";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { UnsavedDialog } from "./components/UnsavedDialog";
 import type { Draft } from "./draft";
 import { Compress } from "./components/Compress";
@@ -6,10 +14,10 @@ import { Home } from "./components/Home";
 import { Icon } from "./components/Icon";
 import type { IconName } from "./components/Icon";
 import { Queue } from "./components/Queue";
-import { SettingsPage } from "./components/SettingsPage";
 import { WindowControls } from "./components/WindowControls";
 import { useStudio } from "./hooks/useStudio";
 import { BRAND_NAME, BRAND_ENGLISH } from "./brand";
+import { legacyThemeKey } from "./legacy";
 import { BrandLogo } from "./components/BrandLogo";
 import { API } from "./bridge";
 import { ExitDialog } from "./components/ExitDialog";
@@ -20,6 +28,12 @@ import { ProjectLibrary } from "./components/ProjectLibrary";
 import { EditorPreferences } from "./components/EditorPreferences";
 import { useAutosaveDraft } from "./hooks/useAutosaveDraft";
 import type { ProjectLibrary as Library, LoadedProject } from "./bridge";
+
+const SettingsPage = lazy(() =>
+  import("./components/SettingsPage").then((module) => ({
+    default: module.SettingsPage,
+  })),
+);
 
 type Page = "home" | "compress" | "queue" | "settings";
 const navigation: {
@@ -35,12 +49,22 @@ const navigation: {
 ];
 
 function initialTheme(): "light" | "dark" {
-  const stored = localStorage.getItem("kompeg-theme");
+  const stored = (() => {
+    try {
+      return (
+        localStorage.getItem("pheebkit-theme") ??
+        localStorage.getItem(legacyThemeKey)
+      );
+    } catch {
+      return null;
+    }
+  })();
   if (stored === "light" || stored === "dark") return stored;
   return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export default function App() {
+  const { language } = useI18n();
   const [page, setPage] = useState<Page>("home");
   const [compressVisited, setCompressVisited] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(initialTheme);
@@ -59,6 +83,15 @@ export default function App() {
   }, []);
   const studio = useStudio(protect);
   const { connected, setError } = studio;
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.title =
+      language === "en-US" ? "PheebKit" : "菲比工具箱 · PheebKit";
+    if (!connected) return;
+    void API.setLocale(language).catch((cause: unknown) =>
+      setError(`语言设置同步失败：${String(cause)}`),
+    );
+  }, [language, connected, setError]);
   const refreshLibrary = useCallback(async () => {
     const value = await API.getProjectLibrary();
     setLibrary(value);
@@ -130,7 +163,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("kompeg-theme", theme);
+    saveLocalPreference("pheebkit-theme", theme);
   }, [theme]);
   const toggleTheme = () =>
     setTheme((value) => (value === "light" ? "dark" : "light"));
@@ -158,9 +191,9 @@ export default function App() {
       className={`app-shell ${studio.connected && studio.platform === "windows" ? "desktop-native" : ""}`}
     >
       <a className="skip-link" href="#workspace">
-        跳到工作区
+        {t("跳到工作区")}
       </a>
-      <aside className="sidebar glass" aria-label="工作空间侧栏">
+      <aside className="sidebar glass" aria-label={t("工作空间侧栏")}>
         <a
           className="brand"
           href="#home"
@@ -168,18 +201,18 @@ export default function App() {
             event.preventDefault();
             navigate("home");
           }}
-          aria-label={`${BRAND_NAME} 工作台`}
+          aria-label={t("{{0}} 工作台", [t(BRAND_NAME)])}
         >
           <span className="brand-mark">
             <BrandLogo />
           </span>
           <span>
-            <strong>{BRAND_NAME}</strong>
-            <small>{BRAND_ENGLISH}</small>
+            <strong>{t(BRAND_NAME)}</strong>
+            <small>{t(BRAND_ENGLISH)}</small>
           </span>
         </a>
-        <div className="sidebar-label">工作空间</div>
-        <nav aria-label="主导航">
+        <div className="sidebar-label">{t("工作空间")}</div>
+        <nav aria-label={t("主导航")}>
           {navigation.map((item) => (
             <button
               key={item.id}
@@ -188,11 +221,11 @@ export default function App() {
               onClick={() => navigate(item.id)}
             >
               <Icon name={item.icon} />
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
               {item.id === "queue" && activeCount > 0 && (
                 <span
                   className="nav-count"
-                  aria-label={`${activeCount} 个进行中的任务`}
+                  aria-label={t("{{0}} 个进行中的任务", [activeCount])}
                 >
                   {activeCount}
                 </span>
@@ -203,10 +236,10 @@ export default function App() {
         <div className="sidebar-bottom">
           <div className="local-badge">
             <span className="tiny-dot" />
-            离线工作空间
+            {t("离线工作空间")}
           </div>
           <div className="build-tag">
-            {BRAND_ENGLISH} <span>{__KOMPEG_VERSION__}</span>
+            {t(BRAND_ENGLISH)} <span>{t(__PHEEBKIT_VERSION__)}</span>
           </div>
         </div>
       </aside>
@@ -214,19 +247,21 @@ export default function App() {
         <header className="topbar glass">
           <div className="workspace-title">
             <BrandLogo />
-            <strong>{currentNav?.label}</strong>
+            <strong>{t(currentNav?.label)}</strong>
           </div>
           <div className="topbar-actions">
             <span
               className={`platform-badge ${studio.connected ? "connected" : ""}`}
             >
               <span className="tiny-dot" />
-              {studio.connected ? "本地处理" : "界面预览"}
+              {t(studio.connected ? "本地处理" : "界面预览")}
             </span>
             <button
               className="icon-button"
               onClick={toggleTheme}
-              aria-label={theme === "light" ? "切换深色主题" : "切换浅色主题"}
+              aria-label={t(
+                theme === "light" ? "切换深色主题" : "切换浅色主题",
+              )}
             >
               <Icon name={theme === "light" ? "moon" : "sun"} />
             </button>
@@ -243,24 +278,24 @@ export default function App() {
               <div className="environment-alert" role="alert">
                 <Icon name="info" />
                 <div>
-                  <strong>需要配置 FFmpeg</strong>
-                  <p>{studio.environment.message}</p>
+                  <strong>{t("需要配置 FFmpeg")}</strong>
+                  <p>{t(studio.environment.message)}</p>
                 </div>
                 <button
                   className="button outlined"
                   onClick={() => navigate("settings")}
                 >
-                  前往设置
+                  {t("前往设置")}
                 </button>
               </div>
             )}
           {(studio.error || guardError) && (
             <div className="app-alert" role="alert">
               <Icon name="info" />
-              <span>{studio.error || guardError}</span>
+              <span>{t(studio.error || guardError)}</span>
               <button
                 className="icon-button"
-                aria-label="关闭提示"
+                aria-label={t("关闭提示")}
                 onClick={() => {
                   studio.setError("");
                   setGuardError("");
@@ -273,10 +308,10 @@ export default function App() {
           {studio.notice && (
             <div className="surface import-progress" role="status">
               <Icon name="info" />
-              <span>{studio.notice}</span>
+              <span>{t(studio.notice)}</span>
               <button
                 className="icon-button"
-                aria-label="关闭操作提示"
+                aria-label={t("关闭操作提示")}
                 onClick={() => studio.setNotice("")}
               >
                 <Icon name="close" />
@@ -286,29 +321,31 @@ export default function App() {
           {studio.busy && studio.importProgress.total > 0 && (
             <div className="surface import-progress" role="status">
               <span>
-                分析媒体 {studio.importProgress.completed} /{" "}
+                {t("分析媒体")} {studio.importProgress.completed} /{t(" ")}
                 {studio.importProgress.total}
               </span>
               <progress
                 value={studio.importProgress.completed}
                 max={studio.importProgress.total}
-                aria-label="媒体分析进度"
+                aria-label={t("媒体分析进度")}
               />
               <button className="button text" onClick={studio.stopImport}>
-                停止后续分析
+                {t("停止后续分析")}
               </button>
             </div>
           )}
           {(page === "home" || page === "compress") && (
             <section
               className="surface media-collection"
-              aria-label="已导入媒体与项目"
+              aria-label={t("已导入媒体与项目")}
             >
               <div className="section-title">
                 <h2>
-                  {studio.mediaList.length > 1
-                    ? `已导入 ${studio.mediaList.length} 个文件`
-                    : "媒体与项目"}
+                  {t(
+                    studio.mediaList.length > 1
+                      ? `已导入 ${studio.mediaList.length} 个文件`
+                      : "媒体与项目",
+                  )}
                 </h2>
                 <div className="action-row">
                   <button
@@ -320,14 +357,14 @@ export default function App() {
                         : protect(() => studio.chooseMedia())
                     }
                   >
-                    添加媒体
+                    {t("添加媒体")}
                   </button>
                   <button
                     className="button text"
                     disabled={studio.busy || !studio.connected}
                     onClick={() => void loadProject()}
                   >
-                    打开项目
+                    {t("打开项目")}
                   </button>
                 </div>
               </div>
@@ -355,8 +392,9 @@ export default function App() {
               )}
               {studio.mediaList.length > 1 && (
                 <p className="field-hint">
-                  选择一个文件查看和单独处理；媒体处理页下方可整批提交，最多 32
-                  个文件。
+                  {t(
+                    "选择一个文件查看和单独处理；媒体处理页下方可整批提交，最多 32 个文件。",
+                  )}
                 </p>
               )}
             </section>
@@ -482,42 +520,50 @@ export default function App() {
             </>
           )}
           {page === "settings" && (
-            <SettingsPage
-              editorSettings={
-                library && (
-                  <EditorPreferences
-                    key={JSON.stringify(library.preferences)}
-                    value={library.preferences}
-                    save={async (value) => {
-                      await API.saveEditorPreferences(value);
-                      await refreshLibrary();
-                      studio.setNotice("编辑与恢复设置已保存并生效。");
-                    }}
-                  />
-                )
+            <Suspense
+              fallback={
+                <div className="page" role="status">
+                  {t("正在加载设置…")}
+                </div>
               }
-              platform={studio.platform}
-              connected={studio.connected}
-              capabilities={studio.capabilities}
-              capabilityError={studio.capabilityError}
-              environment={studio.environment}
-              environmentBusy={
-                studio.environmentBusy || Boolean(studio.ffmpegSetup?.active)
-              }
-              ffmpegSetup={studio.ffmpegSetup}
-              startFFmpegSetup={studio.startFFmpegSetup}
-              startCustomFFmpegSetup={studio.startCustomFFmpegSetup}
-              cancelFFmpegSetup={studio.cancelFFmpegSetup}
-              refreshEnvironment={studio.refreshEnvironment}
-              chooseFFmpeg={studio.chooseFFmpeg}
-              configureFFmpeg={studio.configureFFmpeg}
-              theme={theme}
-              toggleTheme={toggleTheme}
-            />
+            >
+              <SettingsPage
+                editorSettings={
+                  library && (
+                    <EditorPreferences
+                      key={JSON.stringify(library.preferences)}
+                      value={library.preferences}
+                      save={async (value) => {
+                        await API.saveEditorPreferences(value);
+                        await refreshLibrary();
+                        studio.setNotice("编辑与恢复设置已保存并生效。");
+                      }}
+                    />
+                  )
+                }
+                platform={studio.platform}
+                connected={studio.connected}
+                capabilities={studio.capabilities}
+                capabilityError={studio.capabilityError}
+                environment={studio.environment}
+                environmentBusy={
+                  studio.environmentBusy || Boolean(studio.ffmpegSetup?.active)
+                }
+                ffmpegSetup={studio.ffmpegSetup}
+                startFFmpegSetup={studio.startFFmpegSetup}
+                startCustomFFmpegSetup={studio.startCustomFFmpegSetup}
+                cancelFFmpegSetup={studio.cancelFFmpegSetup}
+                refreshEnvironment={studio.refreshEnvironment}
+                chooseFFmpeg={studio.chooseFFmpeg}
+                configureFFmpeg={studio.configureFFmpeg}
+                theme={theme}
+                toggleTheme={toggleTheme}
+              />
+            </Suspense>
           )}
         </main>
       </div>
-      <nav className="bottom-nav glass" aria-label="移动端主导航">
+      <nav className="bottom-nav glass" aria-label={t("移动端主导航")}>
         {navigation.map((item) => (
           <button
             key={item.id}
@@ -531,7 +577,7 @@ export default function App() {
                 <span className="mobile-count">{activeCount}</span>
               )}
             </span>
-            <span>{item.label}</span>
+            <span>{t(item.label)}</span>
           </button>
         ))}
       </nav>

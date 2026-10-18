@@ -2,6 +2,6 @@
 
 package app
 
-import "kompeg/internal/core"
+import "pheebkit/internal/core"
 
 func openOutput(string, bool) error { return core.ErrUnsupported }

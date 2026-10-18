@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"kompeg/internal/ffmpegsetup"
+	"pheebkit/internal/ffmpegsetup"
 )
 
 type manifest struct {

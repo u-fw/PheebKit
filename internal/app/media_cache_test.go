@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 	"testing"
 )
 

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { draftFingerprint, inOutputDirectory, type Draft } from "../draft";
 import { directoryOf } from "../batch";
@@ -304,21 +305,21 @@ export function Compress({
       <div className="page">
         <header className="page-heading">
           <div>
-            <h1>媒体处理</h1>
-            <p>导入媒体，选择压缩、转封装或提取轨道。</p>
+            <h1>{t("媒体处理")}</h1>
+            <p>{t("导入媒体，选择压缩、转封装或提取轨道。")}</p>
           </div>
         </header>
         <section className="empty-state surface">
           <Icon name="compress" />
-          <h2>先选择源媒体</h2>
-          <p>处理设置与执行参数会根据媒体信息生成。</p>
+          <h2>{t("先选择源媒体")}</h2>
+          <p>{t("处理设置与执行参数会根据媒体信息生成。")}</p>
           <button
             className="button primary"
             disabled={!connected}
             onClick={chooseMedia}
           >
             <Icon name="plus" />
-            选择媒体文件
+            {t("选择媒体文件")}
           </button>
         </section>
       </div>
@@ -328,20 +329,20 @@ export function Compress({
     <div className="page compress-page">
       <header className="page-heading">
         <div>
-          <h1>{operationLabels[operation] ?? "媒体处理"}</h1>
-          <p>本地处理媒体，选择需要保留的内容与输出格式。</p>
+          <h1>{t(operationLabels[operation] ?? "媒体处理")}</h1>
+          <p>{t("本地处理媒体，选择需要保留的内容与输出格式。")}</p>
         </div>
         <span className="chip accent-chip">
           <Icon name="video" />
-          本地处理
+          {t("本地处理")}
         </span>
       </header>
       <MediaCard media={media} compact />
-      <div className="action-row editor-history" aria-label="编辑历史">
+      <div className="action-row editor-history" aria-label={t("编辑历史")}>
         <button
           className="button outlined"
           disabled={!editor.canUndo || starting || choosingOutput}
-          title="Ctrl+Z（输入框使用文字撤销）"
+          title={t("Ctrl+Z（输入框使用文字撤销）")}
           onClick={() => {
             editor.undo();
             setAdvancedRevision((v) => v + 1);
@@ -349,7 +350,7 @@ export function Compress({
             setActionError("");
           }}
         >
-          撤销
+          {t("撤销")}
         </button>
         <button
           className="button outlined"
@@ -362,10 +363,11 @@ export function Compress({
             setActionError("");
           }}
         >
-          重做
+          {t("重做")}
         </button>
         <span className="field-hint">
-          当前文件最多保留 {undoLimit} 步；仅还原编辑设置，不撤回已提交任务。
+          {t("当前文件最多保留")} {undoLimit}{" "}
+          {t("步；仅还原编辑设置，不撤回已提交任务。")}
         </span>
       </div>
       <div className="compress-layout">
@@ -378,7 +380,7 @@ export function Compress({
           />
           {settingsNotice && (
             <p className="field-hint" role="status">
-              {settingsNotice}
+              {t(settingsNotice)}
             </p>
           )}
           {projectActions?.(
@@ -497,11 +499,11 @@ export function Compress({
           )}
           <section className="surface output-card">
             <div className="section-title">
-              <h2>保存到</h2>
+              <h2>{t("保存到")}</h2>
               <Icon name="folder" />
             </div>
             <MaterialSelect
-              label="输出文件格式"
+              label={t("输出文件格式")}
               value={output.split(".").pop()?.toLowerCase() ?? ""}
               options={operationExtensions(settings).map((extension) => ({
                 value: extension,
@@ -517,7 +519,7 @@ export function Compress({
               }}
             />
             <label className="field-label" htmlFor="output-path">
-              输出文件
+              {t("输出文件")}
             </label>
             <div className="output-field">
               <input
@@ -534,11 +536,11 @@ export function Compress({
                 onClick={() => void chooseOutput()}
                 disabled={choosingOutput || !connected}
               >
-                {choosingOutput ? "选择中…" : "浏览"}
+                {t(choosingOutput ? "选择中…" : "浏览")}
               </button>
             </div>
             <p className="field-hint">
-              最终文件名：{output.split(/[\\/]/).pop() || "尚未设置"}
+              {t("最终文件名：")} {output.split(/[\\/]/).pop() || t("尚未设置")}
             </p>
             <div className="action-row">
               <button
@@ -556,10 +558,12 @@ export function Compress({
                   }
                 }}
               >
-                自动避开重名
+                {t("自动避开重名")}
               </button>
               <span className="field-hint">
-                不会覆盖源文件或已有结果。上次选择的输出文件夹会用于下次导入。
+                {t(
+                  "不会覆盖源文件或已有结果。上次选择的输出文件夹会用于下次导入。",
+                )}
               </span>
             </div>
           </section>

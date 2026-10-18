@@ -3,7 +3,7 @@ package compiler
 import (
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestGPUPlansUseVendorRateControlAndPresets(t *testing.T) {

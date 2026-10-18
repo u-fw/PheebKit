@@ -1,4 +1,5 @@
 import type { AudioProcessing, Settings } from "./bridge";
+import { t } from "./i18n";
 
 export const audioSampleRates = [
   8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 64000, 88200,
@@ -92,18 +93,18 @@ export function audioProcessingSummary(s: Settings): string {
   const p = s.audioProcessing;
   if (!p) return "";
   return [
-    p.normalize ? "动态响度归一化" : "",
-    p.denoiseReductionDB > 0 ? `降噪 ${p.denoiseReductionDB} dB` : "",
-    (p.equalizer ?? []).some((b) => b.gainDB !== 0) ? "均衡器" : "",
+    p.normalize ? t("动态响度归一化") : "",
+    p.denoiseReductionDB > 0 ? t("降噪 {{0}} dB", [p.denoiseReductionDB]) : "",
+    (p.equalizer ?? []).some((b) => b.gainDB !== 0) ? t("均衡器") : "",
     p.fadeInSeconds || p.fadeOutSeconds
-      ? `淡入/出 ${p.fadeInSeconds}/${p.fadeOutSeconds} 秒`
+      ? t("淡入/出 {{0}}/{{1}} 秒", [p.fadeInSeconds, p.fadeOutSeconds])
       : "",
     `${(p.sampleRate || 48000) / 1000} kHz`,
     p.channels === "mono"
-      ? "单声道"
+      ? t("单声道")
       : p.channels === "stereo"
-        ? "立体声"
-        : "保留声道",
+        ? t("立体声")
+        : t("保留声道"),
   ]
     .filter(Boolean)
     .join(" · ");

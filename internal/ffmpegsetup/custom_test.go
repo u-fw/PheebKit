@@ -75,7 +75,7 @@ func TestCustomArchiveRedirectExtractionAndSecretRedaction(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(filepath.Dir(result.FFmpeg), "avcodec.dll")); err != nil {
 		t.Fatal("sidecar lost", err)
 	}
-	notice, err := os.ReadFile(filepath.Join(result.Directory, "kompeg-download.txt"))
+	notice, err := os.ReadFile(filepath.Join(result.Directory, "pheebkit-download.txt"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Media, Settings } from "../bridge";
 import { operationOf, selectedTracks, videoDisplaySize } from "../project";
 import type { UpdateSettings } from "./EncodingSettings";
@@ -36,14 +37,14 @@ export function TransformSettings({
   return (
     <details className="surface advanced-card transform-settings">
       <summary>
-        <span>{compress ? "画面与声音调整" : "声音调整"}</span>
-        <span>可选</span>
+        <span>{t(compress ? "画面与声音调整" : "声音调整")}</span>
+        <span>{t("可选")}</span>
       </summary>
       <div className="advanced-content">
         {compress && (
           <>
             <MaterialSelect
-              label="旋转画面"
+              label={t("旋转画面")}
               value={String(transform.rotation)}
               options={[
                 { value: "0", label: "保持方向" },
@@ -69,7 +70,7 @@ export function TransformSettings({
                     }
                   />
                   <span>
-                    {key === "flipHorizontal" ? "左右镜像" : "上下翻转"}
+                    {t(key === "flipHorizontal" ? "左右镜像" : "上下翻转")}
                   </span>
                 </label>
               ))}
@@ -87,7 +88,7 @@ export function TransformSettings({
                   })
                 }
               />
-              <span>裁剪画面边缘</span>
+              <span>{t("裁剪画面边缘")}</span>
             </label>
             {transform.crop && (
               <>
@@ -95,7 +96,7 @@ export function TransformSettings({
                   {(Object.keys(cropLabels) as (keyof typeof cropLabels)[]).map(
                     (key) => (
                       <label className="field-label" key={key}>
-                        {cropLabels[key]} (px)
+                        {t(cropLabels[key])} (px)
                         <input
                           type="number"
                           min="0"
@@ -122,11 +123,13 @@ export function TransformSettings({
                   )}
                 </div>
                 <p className="field-hint">
-                  按原片显示方向裁剪，再旋转和缩放。边距使用偶数像素。
-                  {video
-                    ? `源画面 ${videoDisplaySize(video).width} × ${videoDisplaySize(video).height}。`
-                    : ""}
-                  预览仍展示原片，调整将在输出中生效。
+                  {t("按原片显示方向裁剪，再旋转和缩放。边距使用偶数像素。")}{" "}
+                  {t(
+                    video
+                      ? `源画面 ${videoDisplaySize(video).width} × ${videoDisplaySize(video).height}。`
+                      : "",
+                  )}{" "}
+                  {t("预览仍展示原片，调整将在输出中生效。")}
                 </p>
               </>
             )}
@@ -134,7 +137,7 @@ export function TransformSettings({
         )}
         {hasAudio && (
           <label className="field-label">
-            音量调整 (dB)
+            {t("音量调整 (dB)")}
             <input
               type="number"
               min="-60"
@@ -146,7 +149,7 @@ export function TransformSettings({
               }
             />
             <span className="field-hint">
-              0 保持原音量；负值减小，正值增大。需要重新编码音频。
+              {t("0 保持原音量；负值减小，正值增大。需要重新编码音频。")}
             </span>
           </label>
         )}
@@ -155,19 +158,21 @@ export function TransformSettings({
           (settings.volumeDB ?? 0) !== 0 && (
             <div className="field-notice error-notice" role="alert">
               <div>
-                <p>保留原音频不能调整音量。改为 AAC，或把音量调整设回 0。</p>
+                <p>
+                  {t("保留原音频不能调整音量。改为 AAC，或把音量调整设回 0。")}
+                </p>
                 <button
                   type="button"
                   className="button outlined"
                   onClick={() => update("audio", "aac")}
                 >
-                  切换为 AAC
+                  {t("切换为 AAC")}
                 </button>
               </div>
             </div>
           )}
         {!compress && !hasAudio && (
-          <p className="field-hint">先选择一条音轨。</p>
+          <p className="field-hint">{t("先选择一条音轨。")}</p>
         )}
       </div>
     </details>

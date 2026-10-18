@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/jobs"
+	"pheebkit/internal/core"
+	"pheebkit/internal/jobs"
 )
 
 type healthTestRunner struct {

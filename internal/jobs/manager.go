@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 const (

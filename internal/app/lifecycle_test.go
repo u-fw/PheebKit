@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"kompeg/internal/core"
-	"kompeg/internal/jobs"
+	"pheebkit/internal/core"
+	"pheebkit/internal/jobs"
 )
 
 type lifecycleRunner struct{ started chan struct{} }

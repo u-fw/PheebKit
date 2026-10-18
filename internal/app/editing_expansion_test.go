@@ -1,9 +1,9 @@
 package app
 
 import (
-	"kompeg/internal/core"
-	projectfile "kompeg/internal/project"
 	"path/filepath"
+	"pheebkit/internal/core"
+	projectfile "pheebkit/internal/project"
 	"testing"
 )
 

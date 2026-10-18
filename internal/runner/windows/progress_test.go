@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestProgressParsesMachineProtocolAndMicroseconds(t *testing.T) {

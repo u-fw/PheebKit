@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 // ValidateSettings checks intent independent of any particular input file.

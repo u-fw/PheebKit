@@ -40,7 +40,7 @@ Scheduling pause stops new starts; current work continues. Waiting tasks have ke
 
 `.pheebpreset` contains one schema-1 named configuration, at most 1 MiB. Paths, trim, selected indexes and crop are omitted; generic all/none track policies, rotation, audio/volume and encoding can remain. Import validates safe advanced argv, rejects unknown/trailing data and duplicate names, preserves defaults/current intent and never executes. Apply remains explicit; the 20-preset bound remains.
 
-Optional schema-1 additions retain old defaults; older strict readers need updating. Existing AppData/environment keys, installer identity and GPL-3.0-only license remain unchanged.
+Optional schema-1 additions retain old defaults; older strict readers need updating. Existing data stays compatible through the [isolated migration layer](compatibility.md); current public environment names use `PHEEBKIT_*`. Installer identity and GPL-3.0-only license are unchanged.
 
 ## Acceptance evidence
 

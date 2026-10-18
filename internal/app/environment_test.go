@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestBinarySelectionPrecedence(t *testing.T) {
-	values := map[string]string{"KOMPEG_FFMPEG": "explicit-ffmpeg", "FFMPEG_PATH": "alias-ffmpeg"}
+	values := map[string]string{"PHEEBKIT_FFMPEG": "explicit-ffmpeg", "FFMPEG_PATH": "alias-ffmpeg"}
 	getenv := func(key string) string { return values[key] }
-	if selected := selectBinary("ffmpeg", "saved-ffmpeg", getenv); selected.Source != "KOMPEG_FFMPEG" || selected.Path != "explicit-ffmpeg" {
+	if selected := selectBinary("ffmpeg", "saved-ffmpeg", getenv); selected.Source != "PHEEBKIT_FFMPEG" || selected.Path != "explicit-ffmpeg" {
 		t.Fatalf("explicit env lost precedence: %+v", selected)
 	}
-	delete(values, "KOMPEG_FFMPEG")
+	delete(values, "PHEEBKIT_FFMPEG")
 	if selected := selectBinary("ffmpeg", "saved-ffmpeg", getenv); selected.Source != "FFMPEG_PATH" {
 		t.Fatalf("alias env lost precedence: %+v", selected)
 	}
@@ -69,14 +69,14 @@ func TestConfigurationRejectsPendingJobs(t *testing.T) {
 }
 
 func TestRealConfigurationReloadWithoutRestart(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to run real FFmpeg integration")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to run real FFmpeg integration")
 	}
 	makeIntegrationPATHAvailable(t)
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("XDG_CONFIG_HOME", directory)
-	for _, name := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+	for _, name := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Setenv(name, "")
 	}
 	service := NewService()
@@ -113,14 +113,14 @@ func TestRealConfigurationReloadWithoutRestart(t *testing.T) {
 }
 
 func TestRealSharedConfigurationStaysConsistentWithEachInstance(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to test shared real FFmpeg configuration")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to test shared real FFmpeg configuration")
 	}
 	makeIntegrationPATHAvailable(t)
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("XDG_CONFIG_HOME", directory)
-	for _, name := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+	for _, name := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
 		t.Setenv(name, "")
 	}
 	first, second := NewService(), NewService()
@@ -303,11 +303,11 @@ func TestMissingExplicitEnvironmentIsActionable(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	missing := filepath.Join(t.TempDir(), "missing.exe")
-	environment := validateEnvironment(ctx, Environment{FFmpeg: BinaryStatus{Path: missing, Source: "KOMPEG_FFMPEG"}, FFprobe: BinaryStatus{Path: missing, Source: "PATH"}})
+	environment := validateEnvironment(ctx, Environment{FFmpeg: BinaryStatus{Path: missing, Source: "PHEEBKIT_FFMPEG"}, FFprobe: BinaryStatus{Path: missing, Source: "PATH"}})
 	if environment.Ready || environment.FFmpeg.Available {
 		t.Fatal("missing binary reported ready")
 	}
-	if !strings.Contains(environment.Message, "KOMPEG_FFMPEG") || !strings.Contains(environment.Message, "重新启动菲比工具箱") || strings.Contains(environment.Message, "kompeg 会") {
+	if !strings.Contains(environment.Message, "PHEEBKIT_FFMPEG") || !strings.Contains(environment.Message, "重新启动菲比工具箱") {
 		t.Fatalf("missing explicit env is not actionable: %s", environment.Message)
 	}
 }

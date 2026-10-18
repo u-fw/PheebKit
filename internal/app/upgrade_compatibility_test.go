@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"pheebkit/internal/compat"
 	"testing"
 )
 
 func TestPreEditorWorkspaceLoadsWithoutRewritingLegacyFiles(t *testing.T) {
 	t.Setenv("APPDATA", t.TempDir())
-	directory := filepath.Join(os.Getenv("APPDATA"), "kompeg")
+	directory := compat.LegacyConfigDirectory(os.Getenv("APPDATA"))
 	if err := os.MkdirAll(directory, 0700); err != nil {
 		t.Fatal(err)
 	}

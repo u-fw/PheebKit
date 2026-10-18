@@ -1,6 +1,6 @@
 package app
 
-import "kompeg/internal/core"
+import "pheebkit/internal/core"
 
 // NativeHost keeps framework APIs out of the media service and its tests.
 type NativeHost interface {
@@ -71,6 +71,7 @@ type DesktopAPI interface {
 	SaveSettings(settings core.Settings, name string) (WorkspacePreferences, error)
 	SetActiveMedia(uris []string, revision uint64) error
 	SetQueuePaused(paused bool) (QueueStatus, error)
+	SetLocale(language string) error
 	SetUnsavedEdits(unsaved bool, revision uint64)
 	Start(p core.Project) (core.Job, error)
 	StartBatch(projects []core.Project) ([]core.Job, error)

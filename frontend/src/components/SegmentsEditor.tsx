@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useId, useState } from "react";
 import type { Media, Settings, TimeRange } from "../bridge";
 import { formatTimecode, selectedDuration, trimError } from "../trim";
@@ -48,8 +49,9 @@ export function SegmentsEditor({
   return (
     <div className="segments-editor">
       <p className="field-hint" id={helpID}>
-        按列表顺序拼接并重新编码；重复或重叠区间会重复保留。最多 16 段、4
-        条音轨。软字幕请移除或改用烧录。
+        {t(
+          "按列表顺序拼接并重新编码；重复或重叠区间会重复保留。最多 16 段、4 条音轨。软字幕请移除或改用烧录。",
+        )}
       </p>
       {selectedTracks(media, "subtitle", settings).length > 0 && (
         <button
@@ -61,7 +63,7 @@ export function SegmentsEditor({
             })
           }
         >
-          移除软字幕轨道以启用拼接
+          {t("移除软字幕轨道以启用拼接")}
         </button>
       )}
       <ol className="segment-list">
@@ -72,42 +74,43 @@ export function SegmentsEditor({
               aria-pressed={index === i}
               onClick={() => setActive(i)}
             >
-              片段 {i + 1} · {formatTimecode(range.startSeconds)} →{" "}
-              {formatTimecode(range.endSeconds)}
+              {t("片段")} {i + 1} · {t(formatTimecode(range.startSeconds))} →
+              {t(" ")}
+              {t(formatTimecode(range.endSeconds))}
             </button>
             <div className="action-row">
               <button
                 className="button text"
-                aria-label={`片段 ${i + 1} 上移`}
+                aria-label={t("片段 {{0}} 上移", [i + 1])}
                 disabled={i === 0}
                 onClick={() => {
                   change(moveSegment(ranges, i, -1));
                   setActive(i - 1);
                 }}
               >
-                上移
+                {t("上移")}
               </button>
               <button
                 className="button text"
-                aria-label={`片段 ${i + 1} 下移`}
+                aria-label={t("片段 {{0}} 下移", [i + 1])}
                 disabled={i === ranges.length - 1}
                 onClick={() => {
                   change(moveSegment(ranges, i, 1));
                   setActive(i + 1);
                 }}
               >
-                下移
+                {t("下移")}
               </button>
               <button
                 className="button text"
-                aria-label={`删除片段 ${i + 1}`}
+                aria-label={t("删除片段 {{0}}", [i + 1])}
                 disabled={ranges.length === 1}
                 onClick={() => {
                   change(ranges.filter((_, j) => i !== j));
                   setActive(Math.max(0, i - 1));
                 }}
               >
-                删除
+                {t("删除")}
               </button>
             </div>
           </li>
@@ -128,14 +131,16 @@ export function SegmentsEditor({
           setActive(ranges.length);
         }}
       >
-        添加片段
+        {t("添加片段")}
       </button>
       {selected && (
         <>
-          <h3>编辑片段 {index + 1}</h3>
+          <h3>
+            {t("编辑片段")} {index + 1}
+          </h3>
           <div className="field-grid trim-fields">
             <TimePicker
-              label="片段开始时间"
+              label={t("片段开始时间")}
               value={selected.startSeconds}
               max={max}
               onChange={(v) => boundary("startSeconds", v)}
@@ -143,7 +148,7 @@ export function SegmentsEditor({
               describedBy={helpID}
             />
             <TimePicker
-              label="片段结束时间"
+              label={t("片段结束时间")}
               value={selected.endSeconds}
               max={max}
               onChange={(v) => boundary("endSeconds", v)}
@@ -163,13 +168,16 @@ export function SegmentsEditor({
       )}
       {error ? (
         <p className="inline-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       ) : (
         <p className="field-hint">
-          合计保留{" "}
-          {formatTimecode(selectedDuration(settings, media.durationSeconds))}
-          。右侧开始按钮将输出一个拼接文件。
+          {t("合计保留")}
+          {t(" ")}
+          {t(
+            formatTimecode(selectedDuration(settings, media.durationSeconds)),
+          )}{" "}
+          {t("。右侧开始按钮将输出一个拼接文件。")}
         </p>
       )}
       <button
@@ -177,11 +185,12 @@ export function SegmentsEditor({
         disabled={!canExport || !exportParts || Boolean(error)}
         onClick={exportParts}
       >
-        分别导出 {ranges.length} 个片段
+        {t("分别导出")} {ranges.length} {t("个片段")}
       </button>
       <p className="field-hint">
-        分别导出时使用 -part-01
-        等文件名；全部预检通过后加入队列。目标体积按各段时长分摊。
+        {t(
+          "分别导出时使用 -part-01 等文件名；全部预检通过后加入队列。目标体积按各段时长分摊。",
+        )}
       </p>
     </div>
   );

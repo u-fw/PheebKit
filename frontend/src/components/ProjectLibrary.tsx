@@ -1,3 +1,4 @@
+import { t, getLanguage } from "../i18n";
 import { useState } from "react";
 import type { ProjectLibrary as Library } from "../bridge";
 import { API } from "../bridge";
@@ -34,7 +35,7 @@ export function ProjectLibrary({
   return (
     <section className="surface preferences-card project-library">
       <div className="section-title">
-        <h2>继续工作</h2>
+        <h2>{t("继续工作")}</h2>
         <button
           className="button text"
           disabled={!connected || busy}
@@ -43,17 +44,19 @@ export function ProjectLibrary({
             void refresh().catch((cause) => setError(errorMessage(cause)));
           }}
         >
-          刷新
+          {t("刷新")}
         </button>
       </div>
       {(error || library?.error) && (
         <p className="inline-error" role="alert">
-          {error || library?.error}
+          {t(error || library?.error)}
         </p>
       )}
-      <h3>自动草稿</h3>
+      <h3>{t("自动草稿")}</h3>
       <p className="field-hint">
-        恢复后先检查设置并保存项目。活动窗口的草稿不能恢复或删除；这里只保留当前文件的有效项目设置。
+        {t(
+          "恢复后先检查设置并保存项目。活动窗口的草稿不能恢复或删除；这里只保留当前文件的有效项目设置。",
+        )}
       </p>
       {library?.drafts.length ? (
         <ul className="project-library-list">
@@ -61,11 +64,11 @@ export function ProjectLibrary({
             <li key={d.id}>
               <div>
                 <strong title={d.source}>
-                  {d.source.split(/[\\/]/).pop() || "未命名媒体"}
+                  {d.source.split(/[\\/]/).pop() || t("未命名媒体")}
                 </strong>
                 <small>
-                  {new Date(d.updatedAt).toLocaleString()}
-                  {d.active ? " · 其他窗口正在编辑" : ""}
+                  {new Date(d.updatedAt).toLocaleString(getLanguage())}{" "}
+                  {t(d.active ? " · 其他窗口正在编辑" : "")}
                 </small>
               </div>
               <div className="action-row">
@@ -74,23 +77,23 @@ export function ProjectLibrary({
                   disabled={busy || !connected || d.active}
                   onClick={() => restore(d.id)}
                 >
-                  恢复草稿
+                  {t("恢复草稿")}
                 </button>
                 <button
                   className="button text"
                   disabled={busy || !connected || d.active}
                   onClick={() => void remove(d.id)}
                 >
-                  删除草稿
+                  {t("删除草稿")}
                 </button>
               </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="field-hint">没有待恢复的历史草稿。</p>
+        <p className="field-hint">{t("没有待恢复的历史草稿。")}</p>
       )}
-      <h3>最近项目</h3>
+      <h3>{t("最近项目")}</h3>
       {library?.recent.length ? (
         <>
           <ul className="project-library-list">
@@ -105,7 +108,7 @@ export function ProjectLibrary({
                   disabled={busy || !connected}
                   onClick={() => openRecent(p.id)}
                 >
-                  打开项目
+                  {t("打开项目")}
                 </button>
               </li>
             ))}
@@ -115,11 +118,13 @@ export function ProjectLibrary({
             disabled={busy || !connected}
             onClick={() => void remove()}
           >
-            清空最近项目记录
+            {t("清空最近项目记录")}
           </button>
         </>
       ) : (
-        <p className="field-hint">打开或保存 .ffproject 后会记录在这里。</p>
+        <p className="field-hint">
+          {t("打开或保存 .ffproject 后会记录在这里。")}
+        </p>
       )}
     </section>
   );

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"kompeg/internal/ffmpegsetup"
+	"pheebkit/internal/ffmpegsetup"
 )
 
 type FFmpegSetupStatus struct {
@@ -89,7 +89,7 @@ func (s *Service) startFFmpegSetup(packages []ffmpegsetup.Package, custom bool) 
 	ctx, cancel := context.WithTimeout(s.ctx, 30*time.Minute)
 	s.setupCancel = cancel
 	s.setupStatus = FFmpegSetupStatus{Active: true, Progress: ffmpegsetup.Progress{Stage: "selecting"}}
-	go s.runFFmpegSetup(ctx, cancel, filepath.Join(cache, "kompeg", "tools"), packages, custom)
+	go s.runFFmpegSetup(ctx, cancel, filepath.Join(cache, "PheebKit", "tools"), packages, custom)
 	return s.setupStatus, nil
 }
 

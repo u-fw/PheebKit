@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/localstore"
+	"pheebkit/internal/core"
+	"pheebkit/internal/localstore"
 )
 
 func TestHistoryRecoveryAndMerge(t *testing.T) {

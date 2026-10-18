@@ -4,6 +4,7 @@ import {
   OnFileDropOff,
 } from "../wailsjs/runtime/runtime";
 import * as Service from "../wailsjs/go/app/Desktop";
+import { getLanguage } from "./i18n";
 import type { core as Core, app as Models } from "../wailsjs/go/models";
 type FFmpegSetupStatus = Models.FFmpegSetupStatus;
 export type { FFmpegSetupStatus };
@@ -258,7 +259,14 @@ function capabilityView(caps: Core.Capabilities): Capabilities {
   };
 }
 
+async function localizedDialog<T>(action: () => Promise<T>): Promise<T> {
+  await Service.SetLocale(getLanguage());
+  return action();
+}
+
 export const API = {
+  setLocale: (language: "zh-CN" | "en-US"): Promise<void> =>
+    Service.SetLocale(language),
   startMediaHealthScan: (
     uri: string,
     windowSeconds: number,
@@ -270,14 +278,15 @@ export const API = {
     (await Service.GetFFmpegCatalog(category)) ?? [],
   getFFmpegOptionHelp: (category: string, name: string): Promise<string> =>
     Service.GetFFmpegOptionHelp(category, name),
-  chooseSubtitleFile: (): Promise<string> => Service.ChooseSubtitleFile(),
+  chooseSubtitleFile: (): Promise<string> =>
+    localizedDialog(Service.ChooseSubtitleFile),
   getDiagnosticPreview: (
     includeRecentJobs: boolean,
     jobLimit: number,
   ): Promise<{ token: string; json: string }> =>
     Service.GetDiagnosticPreview({ includeRecentJobs, jobLimit }),
   exportDiagnosticReport: (token: string): Promise<string> =>
-    Service.ExportDiagnosticReport(token),
+    localizedDialog(() => Service.ExportDiagnosticReport(token)),
   getProjectLibrary: async (): Promise<ProjectLibrary> => {
     const value = await Service.GetProjectLibrary();
     return { ...value, drafts: value.drafts ?? [], recent: value.recent ?? [] };
@@ -292,7 +301,9 @@ export const API = {
     Service.RemoveRecoveryDraft(id),
   clearRecentProjects: (): Promise<void> => Service.ClearRecentProjects(),
   openRecentProject: async (id: string): Promise<LoadedProject | null> =>
-    loadedProjectView(await Service.OpenRecentProject(id)),
+    loadedProjectView(
+      await localizedDialog(() => Service.OpenRecentProject(id)),
+    ),
   restoreRecoveryDraft: async (id: string): Promise<LoadedProject | null> =>
     loadedProjectView(await Service.RestoreRecoveryDraft(id)),
   setActiveMedia: (uris: string[], revision: number): Promise<void> =>
@@ -304,9 +315,9 @@ export const API = {
   suggestOutputPath: (path: string): Promise<string> =>
     Service.SuggestOutputPath(path),
   chooseMediaPaths: async (): Promise<string[]> =>
-    (await Service.ChooseMediaPaths()) ?? [],
+    (await localizedDialog(Service.ChooseMediaPaths)) ?? [],
   chooseOutputDirectory: async (suggested: string): Promise<string> =>
-    Service.ChooseOutputDirectory(suggested),
+    localizedDialog(() => Service.ChooseOutputDirectory(suggested)),
   startBatch: async (projects: Project[]): Promise<Job[]> =>
     ((await Service.StartBatch(projects)) ?? []).map(jobView),
   queueStatus: async (): Promise<QueueStatus> => {
@@ -326,15 +337,16 @@ export const API = {
       callback({ ...status, pendingIDs: status.pendingIDs ?? [] }),
     ),
   saveProject: async (project: Project): Promise<string> =>
-    Service.SaveProject(project),
+    localizedDialog(() => Service.SaveProject(project)),
   loadProject: async (): Promise<LoadedProject | null> => {
-    return loadedProjectView(await Service.LoadProject());
+    return loadedProjectView(await localizedDialog(Service.LoadProject));
   },
   importPreset: async (): Promise<WorkspacePreferences | null> => {
-    const value = await Service.ImportPreset();
+    const value = await localizedDialog(Service.ImportPreset);
     return value ? preferencesView(value) : null;
   },
-  exportPreset: async (id: string): Promise<string> => Service.ExportPreset(id),
+  exportPreset: async (id: string): Promise<string> =>
+    localizedDialog(() => Service.ExportPreset(id)),
   startSample: async (project: Project, seconds: number): Promise<Job> =>
     jobView(await Service.StartSample(project, seconds)),
   getSampleComparison: async (id: string): Promise<SampleComparison> => {
@@ -405,11 +417,11 @@ export const API = {
   ): Promise<EnvironmentStatus> =>
     Service.ConfigureFFmpeg(ffmpegPath, ffprobePath),
   chooseFFmpeg: async (): Promise<EnvironmentStatus | null> =>
-    Service.ChooseFFmpeg(),
+    localizedDialog(Service.ChooseFFmpeg),
   getThumbnail: async (uri: string): Promise<Thumbnail> =>
     Service.GetThumbnail(uri),
   chooseMedia: async (): Promise<Media | null> => {
-    const media = await Service.ChooseMedia();
+    const media = await localizedDialog(Service.ChooseMedia);
     return media ? mediaView(media) : null;
   },
   probe: async (path: string): Promise<Media> =>
@@ -429,7 +441,7 @@ export const API = {
   },
   jobs: async (): Promise<Job[]> => ((await Service.Jobs()) ?? []).map(jobView),
   chooseOutput: async (suggested: string): Promise<string> =>
-    Service.ChooseOutput(suggested),
+    localizedDialog(() => Service.ChooseOutput(suggested)),
   subscribeJobs: (callback: (job: Job) => void): (() => void) =>
     EventsOn("job:updated", (job: Core.Job) => callback(jobView(job))),
   subscribeMedia: (callback: (media: Media) => void): (() => void) =>

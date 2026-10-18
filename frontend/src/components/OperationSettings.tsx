@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Media, Settings } from "../bridge";
 import { operationLabels, operationOf, type Operation } from "../project";
 import { MaterialSelect } from "./MaterialSelect";
@@ -15,10 +16,10 @@ export function OperationSettings({
   return (
     <section className="surface settings-card">
       <div className="section-title">
-        <h2>处理任务</h2>
+        <h2>{t("处理任务")}</h2>
       </div>
       <MaterialSelect
-        label="你想处理什么"
+        label={t("你想处理什么")}
         value={operation}
         onChange={(value) => onChange(value as Operation)}
         options={[
@@ -51,19 +52,25 @@ export function OperationSettings({
         ]}
       />
       <p className="field-hint">
-        切换任务会清除剪辑、多片段、字幕烧录、画面调整、音量调整和附加参数，并更新输出扩展名。源文件保持原样。
+        {t(
+          "切换任务会清除剪辑、多片段、字幕烧录、画面调整、音量调整和附加参数，并更新输出扩展名。源文件保持原样。",
+        )}
       </p>
       {operation === "remux" && (
         <div className="field-notice">
           <p>
-            转换封装不会重新编码。音频、视频和字幕必须与目标容器兼容；不兼容时会说明原因，请改选容器或使用压缩任务。
+            {t(
+              "转换封装不会重新编码。音频、视频和字幕必须与目标容器兼容；不兼容时会说明原因，请改选容器或使用压缩任务。",
+            )}
           </p>
         </div>
       )}
       {operation === "extract-subtitle" && (
         <div className="field-notice">
           <p>
-            支持文字字幕。图片字幕需要识别文字，当前不能转换；改变字幕格式可能影响样式。
+            {t(
+              "支持文字字幕。图片字幕需要识别文字，当前不能转换；改变字幕格式可能影响样式。",
+            )}
           </p>
         </div>
       )}

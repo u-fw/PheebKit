@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestPauseReorderAndCancelPreserveRunningTask(t *testing.T) {

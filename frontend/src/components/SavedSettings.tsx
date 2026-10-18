@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useState } from "react";
 import { API } from "../bridge";
 import type { Settings, WorkspacePreferences } from "../bridge";
@@ -85,7 +86,11 @@ export function SavedSettings({
         if (path) setMessage(`配置已导出：${path}`);
       }
     } catch (cause) {
-      setMessage(`${importing ? "导入" : "导出"}失败：${errorMessage(cause)}`);
+      setMessage(
+        importing
+          ? `导入失败：${errorMessage(cause)}`
+          : `导出失败：${errorMessage(cause)}`,
+      );
     } finally {
       setBusy(false);
     }
@@ -93,8 +98,8 @@ export function SavedSettings({
   return (
     <section className="surface settings-card saved-settings">
       <div className="section-title">
-        <h2>常用设置</h2>
-        <span className="subtle-label">保存在本机</span>
+        <h2>{t("常用设置")}</h2>
+        <span className="subtle-label">{t("保存在本机")}</span>
       </div>
       <div className="action-row">
         <button
@@ -102,7 +107,7 @@ export function SavedSettings({
           onClick={() => void save(false)}
           disabled={busy}
         >
-          将当前设置设为默认
+          {t("将当前设置设为默认")}
         </button>
         <button
           className="button text"
@@ -111,16 +116,20 @@ export function SavedSettings({
             if (preferences.lastSettings) apply(preferences.lastSettings);
           }}
         >
-          应用默认设置
+          {t("应用默认设置")}
         </button>
       </div>
       <div className="saved-settings-row">
         <MaterialSelect
-          label="已保存配置"
+          label={t("已保存配置")}
           value={selected}
           options={[
             { value: "", label: "选择常用配置" },
-            ...preferences.presets.map((p) => ({ value: p.id, label: p.name })),
+            ...preferences.presets.map((p) => ({
+              value: p.id,
+              label: p.name,
+              translate: false,
+            })),
           ]}
           onChange={setSelected}
         />
@@ -132,18 +141,18 @@ export function SavedSettings({
             if (preset) apply(preset.settings);
           }}
         >
-          应用
+          {t("应用")}
         </button>
         <button
           className="button text"
           disabled={!selected || busy}
           onClick={() => void remove()}
         >
-          删除配置
+          {t("删除配置")}
         </button>
       </div>
       <label className="field-label" htmlFor="preset-name">
-        配置名称
+        {t("配置名称")}
       </label>
       <div className="saved-settings-row">
         <input
@@ -151,18 +160,20 @@ export function SavedSettings({
           value={name}
           maxLength={40}
           onChange={(event) => setName(event.target.value)}
-          placeholder="例如：聊天分享 · 1080p"
+          placeholder={t("例如：聊天分享 · 1080p")}
         />
         <button
           className="button outlined"
           disabled={busy || !name.trim()}
           onClick={() => void save(true)}
         >
-          保存配置
+          {t("保存配置")}
         </button>
       </div>
       <p className="field-hint">
-        保存处理方式、编码、音量与旋转等通用设置。剪辑、多片段、字幕烧录、轨道编号、裁剪边距及文件路径不保存到配置；这些编辑可保存到项目文件。
+        {t(
+          "保存处理方式、编码、音量与旋转等通用设置。剪辑、多片段、字幕烧录、轨道编号、裁剪边距及文件路径不保存到配置；这些编辑可保存到项目文件。",
+        )}
       </p>
       <div className="action-row">
         <button
@@ -170,19 +181,19 @@ export function SavedSettings({
           disabled={busy}
           onClick={() => void share(true)}
         >
-          导入配置
+          {t("导入配置")}
         </button>
         <button
           className="button text"
           disabled={busy || !selected}
           onClick={() => void share(false)}
         >
-          导出所选配置
+          {t("导出所选配置")}
         </button>
       </div>
       {message && (
         <p role="status" className="field-hint">
-          {message}
+          {t(message)}
         </p>
       )}
     </section>

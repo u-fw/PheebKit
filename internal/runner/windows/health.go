@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/sourcefile"
 )
 
 // Each independently sought window includes the decoder's reference preroll.

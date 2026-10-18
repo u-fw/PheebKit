@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { MaterialSelect } from "./MaterialSelect";
 
 export function customDownloadError(
@@ -51,7 +52,7 @@ export function CustomDownloadFields({
   return (
     <div className="custom-download-fields">
       <MaterialSelect
-        label="自定义包类型"
+        label={t("自定义包类型")}
         value={otherBuild ? "other" : "mirror"}
         disabled={disabled}
         onChange={(value) => onOtherBuild(value === "other")}
@@ -61,7 +62,7 @@ export function CustomDownloadFields({
         ]}
       />
       <label className="field-label">
-        压缩包下载链接
+        {t("压缩包下载链接")}
         <input
           type="url"
           value={link}
@@ -74,10 +75,9 @@ export function CustomDownloadFields({
         />
       </label>
       <p id="custom-download-help" className="field-hint">
-        支持 ZIP、7z、RAR、tar、tar.gz / tgz、tar.xz、tar.bz2 /
-        tbz2，按文件内容自动识别。 包内需有同目录的 ffmpeg.exe 和
-        ffprobe.exe；顶层文件夹和 bin 子目录会自动识别。 源码、Linux
-        构建、加密、分卷、自解压包和下载页面不适用。
+        {t(
+          "支持 ZIP、7z、RAR、tar、tar.gz / tgz、tar.xz、tar.bz2 / tbz2，按文件内容自动识别。 包内需有同目录的 ffmpeg.exe 和 ffprobe.exe；顶层文件夹和 bin 子目录会自动识别。 源码、Linux 构建、加密、分卷、自解压包和下载页面不适用。",
+        )}
       </p>
       {otherBuild ? (
         <>
@@ -87,7 +87,7 @@ export function CustomDownloadFields({
               value={sha256}
               onChange={(event) => onSHA256(event.target.value)}
               disabled={disabled}
-              placeholder="发布者提供的 64 位十六进制校验值"
+              placeholder={t("发布者提供的 64 位十六进制校验值")}
               spellCheck={false}
               autoComplete="off"
               maxLength={64}
@@ -95,8 +95,9 @@ export function CustomDownloadFields({
             />
           </label>
           <p id="custom-hash-help" className="field-hint">
-            从发布者处获取校验值。SHA-256
-            检查文件一致性，不证明来源可信；验证时会运行包中的程序。
+            {t(
+              "从发布者处获取校验值。SHA-256 检查文件一致性，不证明来源可信；验证时会运行包中的程序。",
+            )}
           </p>
           <label className="custom-download-trust">
             <input
@@ -105,13 +106,16 @@ export function CustomDownloadFields({
               disabled={disabled}
               onChange={(event) => onTrusted(event.target.checked)}
             />
-            <span>我信任此来源，允许运行下载包中的 FFmpeg 和 ffprobe。</span>
+            <span>
+              {t("我信任此来源，允许运行下载包中的 FFmpeg 和 ffprobe。")}
+            </span>
           </label>
         </>
       ) : (
         <p className="field-hint">
-          无需填写校验值，但文件必须与内置 Gyan 9.0.2 完整版 ZIP
-          完全一致。其他版本或构建请选择“其他 Windows x64 构建”。
+          {t(
+            "无需填写校验值，但文件必须与内置 Gyan 9.0.2 完整版 ZIP 完全一致。其他版本或构建请选择“其他 Windows x64 构建”。",
+          )}
         </p>
       )}
     </div>

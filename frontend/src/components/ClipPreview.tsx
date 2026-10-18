@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import { API } from "../bridge";
 import type { Media, Thumbnail } from "../bridge";
@@ -43,18 +44,18 @@ function PositionFrame({
     <figure className="position-frame">
       <div className="frame-image">
         {current?.image ? (
-          <img src={current.image.dataUrl} alt={`${label}画面`} />
+          <img src={current.image.dataUrl} alt={t("{{0}}画面", [label])} />
         ) : (
-          <span>{current?.error ? "画面读取失败" : "正在读取画面…"}</span>
+          <span>{t(current?.error ? "画面读取失败" : "正在读取画面…")}</span>
         )}
       </div>
       <figcaption>
-        {label}
-        <span>{formatTimecode(seconds)}</span>
+        {t(label)}
+        <span>{t(formatTimecode(seconds))}</span>
       </figcaption>
       {current?.error && (
         <p className="field-hint" role="status">
-          {current.error}
+          {t(current.error)}
         </p>
       )}
     </figure>
@@ -132,8 +133,8 @@ export function ClipPreview({
   return (
     <div className="clip-preview">
       <div className="section-title">
-        <h3>剪辑预览</h3>
-        <span className="subtle-label">原视频 · 不改变输出</span>
+        <h3>{t("剪辑预览")}</h3>
+        <span className="subtle-label">{t("原视频 · 不改变输出")}</span>
       </div>
       {source && !failed ? (
         <video
@@ -141,7 +142,7 @@ export function ClipPreview({
           src={source}
           preload={visible ? "metadata" : "none"}
           playsInline
-          aria-label="源视频剪辑预览"
+          aria-label={t("源视频剪辑预览")}
           onLoadedMetadata={() => seek(position)}
           onTimeUpdate={(event) => {
             const player = event.currentTarget;
@@ -168,13 +169,13 @@ export function ClipPreview({
         <PositionFrame
           uri={media.source.uri}
           seconds={position}
-          label="当前位置"
+          label={t("当前位置")}
           visible={visible}
         />
       )}
       {failed && (
         <p className="field-hint" role="status">
-          {failed}仍可拖动定位并设置起止时间。
+          {t(failed)} {t("仍可拖动定位并设置起止时间。")}
         </p>
       )}
       <div className="action-row">
@@ -183,21 +184,21 @@ export function ClipPreview({
           disabled={!source || Boolean(failed)}
           onClick={() => void togglePlay()}
         >
-          {playing ? "暂停" : "播放"}
+          {t(playing ? "暂停" : "播放")}
         </button>
         <button
           className="button outlined"
           disabled={!source || Boolean(failed) || start >= end}
           onClick={() => void playSelection()}
         >
-          播放所选片段
+          {t("播放所选片段")}
         </button>
         <strong>
-          {formatTimecode(position)} / {formatTimecode(total)}
+          {t(formatTimecode(position))} / {t(formatTimecode(total))}
         </strong>
       </div>
       <label className="field-label" htmlFor="clip-position">
-        预览位置
+        {t("预览位置")}
       </label>
       <input
         id="clip-position"
@@ -217,7 +218,7 @@ export function ClipPreview({
             onBoundary("startSeconds", Math.floor(position * 1000) / 1000)
           }
         >
-          当前位置设为起点
+          {t("当前位置设为起点")}
         </button>
         <button
           className="button outlined"
@@ -226,31 +227,33 @@ export function ClipPreview({
             onBoundary("endSeconds", Math.floor(position * 1000) / 1000)
           }
         >
-          当前位置设为终点
+          {t("当前位置设为终点")}
         </button>
         <button className="button text" onClick={() => seek(start)}>
-          定位起点
+          {t("定位起点")}
         </button>
         <button className="button text" onClick={() => seek(end)}>
-          定位终点
+          {t("定位终点")}
         </button>
       </div>
       <div className="boundary-frames">
         <PositionFrame
           uri={media.source.uri}
           seconds={Math.max(0, Math.min(total, start))}
-          label="开始位置"
+          label={t("开始位置")}
           visible={visible}
         />
         <PositionFrame
           uri={media.source.uri}
           seconds={Math.max(0, Math.min(total, end))}
-          label="结束边界附近"
+          label={t("结束边界附近")}
           visible={visible}
         />
       </div>
       <p className="field-hint">
-        结束时间为不包含的边界；下方显示结束边界附近画面。预览用于定位，实际切点受帧率影响。
+        {t(
+          "结束时间为不包含的边界；下方显示结束边界附近画面。预览用于定位，实际切点受帧率影响。",
+        )}
       </p>
     </div>
   );

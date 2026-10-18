@@ -1,3 +1,5 @@
+import { t, useI18n } from "../i18n";
+import { MaterialSelect } from "./MaterialSelect";
 import { useState, type ReactNode } from "react";
 import type {
   BinaryStatus,
@@ -21,26 +23,26 @@ function BinaryDetails({
   return (
     <div className="binary-details">
       <div className="binary-heading">
-        <h3>{label}</h3>
+        <h3>{t(label)}</h3>
         <span className={`status-pill ${binary?.available ? "connected" : ""}`}>
-          {binary?.available ? "已就绪" : "未找到或不可用"}
+          {t(binary?.available ? "已就绪" : "未找到或不可用")}
         </span>
       </div>
       <dl>
         <div>
-          <dt>实际路径</dt>
-          <dd>{binary?.path || "尚未配置"}</dd>
+          <dt>{t("实际路径")}</dt>
+          <dd>{binary?.path || t("尚未配置")}</dd>
         </div>
         <div>
-          <dt>来源</dt>
+          <dt>{t("来源")}</dt>
           <dd>
             {binary?.source === "config"
-              ? "菲比工具箱 本机配置"
+              ? t("菲比工具箱 本机配置")
               : binary?.source === "PATH"
-                ? "PATH 环境变量"
+                ? t("PATH 环境变量")
                 : binary?.source
-                  ? `环境变量 ${binary.source}`
-                  : "未发现"}
+                  ? t("环境变量 {{0}}", [binary.source])
+                  : t("未发现")}
           </dd>
         </div>
       </dl>
@@ -93,6 +95,7 @@ export function SettingsPage({
   toggleTheme: () => void;
 }) {
   const [ffmpegPath, setFFmpegPath] = useState<string | null>(null);
+  const { language, setLanguage, persistent } = useI18n();
   const [ffprobePath, setFFprobePath] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
   const [actionStatus, setActionStatus] = useState("");
@@ -116,27 +119,30 @@ export function SettingsPage({
     <div className="page settings-page">
       <header className="page-heading">
         <div>
-          <h1>设置</h1>
-          <p>外观、FFmpeg 路径与设备编码能力。</p>
+          <h1>{t("设置")}</h1>
+          <p>{t("外观、FFmpeg 路径与设备编码能力。")}</p>
         </div>
       </header>
       {editorSettings}
       <section className="surface preferences-card">
         <div className="section-title">
-          <h2>FFmpeg 环境</h2>
+          <h2>{t("FFmpeg 环境")}</h2>
           <span
             className={`status-pill ${environment?.ready ? "connected" : ""}`}
           >
-            {environmentBusy || !environment
-              ? "检测中…"
-              : environment.ready
-                ? "可以处理媒体"
-                : "需要补全"}
+            {t(
+              environmentBusy || !environment
+                ? "检测中…"
+                : environment.ready
+                  ? "可以处理媒体"
+                  : "需要补全",
+            )}
           </span>
         </div>
         <p className="settings-description">
-          使用环境变量或已配置的 FFmpeg 和
-          ffprobe；缺少时可一键下载或选择本机文件补全。
+          {t(
+            "使用环境变量或已配置的 FFmpeg 和 ffprobe；缺少时可一键下载或选择本机文件补全。",
+          )}
         </p>
         <div className="binary-grid">
           <BinaryDetails label="FFmpeg" binary={environment?.ffmpeg} />
@@ -148,7 +154,7 @@ export function SettingsPage({
             role={environment.ready ? undefined : "alert"}
           >
             <Icon name="info" />
-            <p>{environment.message}</p>
+            <p>{t(environment.message)}</p>
           </div>
         )}
         <div className="settings-actions">
@@ -158,7 +164,7 @@ export function SettingsPage({
             onClick={() => void perform(chooseFFmpeg, "")}
           >
             <Icon name="folder" />
-            选择 FFmpeg…
+            {t("选择 FFmpeg…")}
           </button>
           <button
             className="button outlined"
@@ -170,7 +176,7 @@ export function SettingsPage({
               )
             }
           >
-            {environmentBusy ? "正在检测…" : "重新检测"}
+            {t(environmentBusy ? "正在检测…" : "重新检测")}
           </button>
         </div>
         <FFmpegDownload
@@ -183,31 +189,32 @@ export function SettingsPage({
           cancel={cancelFFmpegSetup}
         />
         <details className="manual-environment">
-          <summary>手动填写路径</summary>
+          <summary>{t("手动填写路径")}</summary>
           <div className="manual-fields">
             <label className="field-label">
-              FFmpeg 可执行文件
+              {t("FFmpeg 可执行文件")}
               <input
                 value={ffmpegPath ?? environment?.ffmpeg.path ?? ""}
                 onChange={(event) => setFFmpegPath(event.target.value)}
-                placeholder="C:\工具\ffmpeg\bin\ffmpeg.exe"
+                placeholder={t("C:\\工具\\ffmpeg\\bin\\ffmpeg.exe")}
                 spellCheck={false}
                 disabled={!configurable || environmentBusy}
               />
             </label>
             <label className="field-label">
-              ffprobe 可执行文件
+              {t("ffprobe 可执行文件")}
               <input
                 value={ffprobePath ?? environment?.ffprobe.path ?? ""}
                 onChange={(event) => setFFprobePath(event.target.value)}
-                placeholder="C:\工具\ffmpeg\bin\ffprobe.exe"
+                placeholder={t("C:\\工具\\ffmpeg\\bin\\ffprobe.exe")}
                 spellCheck={false}
                 disabled={!configurable || environmentBusy}
               />
             </label>
             <p className="field-hint">
-              仅保存到 菲比工具箱 本机配置。环境变量仍具有更高优先级。留空
-              ffprobe 时查找 FFmpeg 同目录下的 ffprobe。
+              {t(
+                "仅保存到 菲比工具箱 本机配置。环境变量仍具有更高优先级。留空 ffprobe 时查找 FFmpeg 同目录下的 ffprobe。",
+              )}
             </p>
             <button
               className="button outlined"
@@ -227,33 +234,35 @@ export function SettingsPage({
                 )
               }
             >
-              验证并保存
+              {t("验证并保存")}
             </button>
           </div>
         </details>
         <p className="field-hint discovery-hint">
-          查找顺序：KOMPEG_FFMPEG / KOMPEG_FFPROBE → FFMPEG_PATH / FFPROBE_PATH
-          → 本机配置 → PATH。
+          {t(
+            "查找顺序：PHEEBKIT_FFMPEG / PHEEBKIT_FFPROBE → FFMPEG_PATH / FFPROBE_PATH → 本机配置 → PATH。",
+          )}
         </p>
         {actionError && (
           <p className="inline-error" role="alert">
-            {actionError}
+            {t(actionError)}
           </p>
         )}
         {actionStatus && (
           <p className="settings-status" role="status">
-            {actionStatus}
+            {t(actionStatus)}
           </p>
         )}
       </section>
       <section className="surface preferences-card">
         <div className="section-title">
-          <h2>GPU 与编码器</h2>
-          <span className="subtle-label">自动模式优先 GPU</span>
+          <h2>{t("GPU 与编码器")}</h2>
+          <span className="subtle-label">{t("自动模式优先 GPU")}</span>
         </div>
         <p className="settings-description">
-          GPU 编码器通过实际编码测试后才会启用。自动模式会在 GPU 不可用时选用
-          CPU，压缩页显示最终使用方式。
+          {t(
+            "GPU 编码器通过实际编码测试后才会启用。自动模式会在 GPU 不可用时选用 CPU，压缩页显示最终使用方式。",
+          )}
         </p>
         {capabilities ? (
           <>
@@ -264,25 +273,27 @@ export function SettingsPage({
                     <Icon name="video" />
                     <div>
                       <strong>{gpu.name}</strong>
-                      <span>{gpu.vendor}</span>
+                      <span>{t(gpu.vendor)}</span>
                     </div>
                   </div>
                 ))
               ) : (
                 <p className="field-hint">
-                  没有检测到 GPU 设备信息；编码器可用性仍以实际测试为准。
+                  {t("没有检测到 GPU 设备信息；编码器可用性仍以实际测试为准。")}
                 </p>
               )}
             </div>
             <details className="encoder-disclosure">
               <summary>
-                编码器实测结果 ·{" "}
+                {t("编码器实测结果 ·")}
+                {t(" ")}
                 {
                   capabilities.videoEncoders.filter(
                     (encoder) => encoder.kind === "gpu" && encoder.available,
                   ).length
-                }{" "}
-                个 GPU 编码器可用
+                }
+                {t(" ")}
+                {t("个 GPU 编码器可用")}
               </summary>
               <div className="gpu-encoders">
                 {capabilities.videoEncoders
@@ -293,19 +304,21 @@ export function SettingsPage({
                       key={encoder.name}
                     >
                       <div>
-                        <strong>{encoder.label}</strong>
+                        <strong>{t(encoder.label)}</strong>
                         <code>{encoder.name}</code>
                       </div>
                       <span
                         className={`status-pill ${encoder.available ? "connected" : ""}`}
                       >
-                        {encoder.available ? "可用" : "不可用"}
+                        {t(encoder.available ? "可用" : "不可用")}
                       </span>
                       <p>
-                        {encoder.reason ||
-                          (encoder.available
-                            ? "实际编码测试通过"
-                            : "当前设备或驱动不支持")}
+                        {t(
+                          encoder.reason ||
+                            (encoder.available
+                              ? "实际编码测试通过"
+                              : "当前设备或驱动不支持"),
+                        )}
                       </p>
                     </div>
                   ))}
@@ -313,47 +326,70 @@ export function SettingsPage({
             </details>
             <details className="encoder-disclosure">
               <summary>
-                全部 FFmpeg 编码器 · {capabilities.encoders.length}
+                {t("全部 FFmpeg 编码器 ·")} {capabilities.encoders.length}
               </summary>
               <div className="encoder-chips">
                 {capabilities.encoders.map((encoder) => (
                   <span key={encoder} className="chip">
-                    {encoder}
+                    {t(encoder)}
                   </span>
                 ))}
               </div>
               <pre className="version-text">
-                {capabilities.version || "未返回版本信息"}
+                {capabilities.version || t("未返回版本信息")}
               </pre>
             </details>
           </>
         ) : (
           <div className="notice">
             <Icon name="info" />
-            <p>{capabilityError || "正在检测设备和可用编码器…"}</p>
+            <p>{t(capabilityError || "正在检测设备和可用编码器…")}</p>
           </div>
         )}
       </section>
       <section className="surface preferences-card">
         <div className="section-title">
-          <h2>外观</h2>
+          <h2>{t("外观")}</h2>
           <Icon name="sun" />
         </div>
+        <MaterialSelect
+          label={t("界面语言")}
+          value={language}
+          options={[
+            { value: "zh-CN", label: "简体中文", translate: false },
+            { value: "en-US", label: "English", translate: false },
+          ]}
+          onChange={(value) => {
+            if (value === "zh-CN" || value === "en-US") setLanguage(value);
+          }}
+        />
+        {!persistent && (
+          <p className="inline-error" role="status">
+            {t(
+              "当前环境无法保存本机偏好，本次切换仍有效。重启后将使用系统语言。",
+            )}
+          </p>
+        )}
+        <p className="field-hint">
+          {t(
+            "语言立即生效并保存在本机，不会重置当前编辑。FFmpeg 原始日志与用户文件名保持原样。",
+          )}
+        </p>
         <div className="preference-row">
           <div>
-            <h3>主题</h3>
-            <p>使用明亮或深色工作台。</p>
+            <h3>{t("主题")}</h3>
+            <p>{t("使用明亮或深色工作台。")}</p>
           </div>
           <button className="button outlined" onClick={toggleTheme}>
             <Icon name={theme === "light" ? "moon" : "sun"} />
-            {theme === "light" ? "切换深色" : "切换浅色"}
+            {t(theme === "light" ? "切换深色" : "切换浅色")}
           </button>
         </div>
       </section>
       {platform === "android" && (
         <div className="notice">
           <Icon name="info" />
-          <p>Android 媒体处理仍在开发中，当前版本暂不可执行压缩任务。</p>
+          <p>{t("Android 媒体处理仍在开发中，当前版本暂不可执行压缩任务。")}</p>
         </div>
       )}
       <DiagnosticsPanel connected={connected} />
@@ -362,8 +398,9 @@ export function SettingsPage({
         connected={connected}
       />
       <p className="field-hint">
-        菲比工具箱 · PheebKit {__KOMPEG_VERSION__} · Windows{" "}
-        {__KOMPEG_VERSION__.includes("-") ? "候选版" : "正式版"} · Android 暂缓
+        {t("菲比工具箱 · PheebKit")} {t(__PHEEBKIT_VERSION__)} · Windows{t(" ")}
+        {t(__PHEEBKIT_VERSION__.includes("-") ? "候选版" : "正式版")}{" "}
+        {t("· Android 暂缓")}
       </p>
     </div>
   );

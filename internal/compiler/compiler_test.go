@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func fixture(t *testing.T) (core.Project, core.Media, core.Capabilities) {

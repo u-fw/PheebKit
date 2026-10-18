@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {
   WindowIsMaximised,
   WindowMinimise,
@@ -48,27 +49,27 @@ export function WindowControls({
   }
 
   return (
-    <div className="window-controls" role="group" aria-label="窗口控制">
+    <div className="window-controls" role="group" aria-label={t("窗口控制")}>
       <button
         className="window-button"
-        aria-label="最小化窗口"
-        title="最小化"
+        aria-label={t("最小化窗口")}
+        title={t("最小化")}
         onClick={() => void control("minimise")}
       >
         <Icon name="minimise" />
       </button>
       <button
         className="window-button"
-        aria-label={maximised ? "还原窗口" : "最大化窗口"}
-        title={maximised ? "还原" : "最大化"}
+        aria-label={t(maximised ? "还原窗口" : "最大化窗口")}
+        title={t(maximised ? "还原" : "最大化")}
         onClick={() => void control("maximise")}
       >
         <Icon name={maximised ? "restore" : "maximise"} />
       </button>
       <button
         className="window-button window-close"
-        aria-label="关闭窗口"
-        title="关闭"
+        aria-label={t("关闭窗口")}
+        title={t("关闭")}
         onClick={() => void control("close")}
       >
         <Icon name="close" />

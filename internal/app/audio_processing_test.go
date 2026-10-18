@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"kompeg/internal/core"
-	projectfile "kompeg/internal/project"
+	"pheebkit/internal/core"
+	projectfile "pheebkit/internal/project"
 )
 
 func TestAudioProcessingSnapshotsPersistenceAndSamplePolicy(t *testing.T) {

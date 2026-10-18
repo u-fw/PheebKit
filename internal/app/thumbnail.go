@@ -15,9 +15,9 @@ import (
 	"strconv"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/sourcefile"
 )
 
 type Thumbnail struct {

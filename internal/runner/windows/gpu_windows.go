@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 type displayDevice struct {

@@ -18,7 +18,7 @@ Opening a `.ffproject` whose source no longer exists prompts a native file selec
 
 Evidence: real compiler → runner → FFmpeg → ffprobe → publication checks for compression, remux, WAV and SRT; missing-track, unavailable-probe, cancellation, unreadable-file and immutable-history regressions. A disposable browser fixture verified the failed filter, retry navigation, dirty-to-saved transition, 99% final phase and 375px light/dark layout without console errors. Fixture/server/tab were removed after verification. Native file-dialog click-through remains manual; the browser fixture does not establish native IPC behavior.
 
-The beta.5 source checks passed with Go 1.27.2 and Node 24.19.0: `KOMPEG_INTEGRATION=1 go test ./...`, `go vet ./...`, 96 frontend tests in 17 files, TypeScript, ESLint and Prettier. Packaging additionally enforces dependency audits and a production Wails build. Native dialog selection, Windows 10/clean-machine smoke tests and signing remain publication checks; Android remains deferred.
+The beta.5 source checks passed with Go 1.27.2 and Node 24.19.0: `PHEEBKIT_INTEGRATION=1 go test ./...`, `go vet ./...`, 96 frontend tests in 17 files, TypeScript, ESLint and Prettier. Packaging additionally enforces dependency audits and a production Wails build. Native dialog selection, Windows 10/clean-machine smoke tests and signing remain publication checks; Android remains deferred.
 
 The beta.4 workflow foundation below remains in place. Current batch/scheduling, tracks, remux/extraction, transforms, sample comparison and project/preset sharing are documented in [media tools](media-tools.md). Presets now exclude selected track indexes and crop margins in addition to trim/paths, while retaining generic all/none track policies.
 
@@ -41,7 +41,7 @@ Evidence: idle-dirty close/stale-update Go regression; real filesystem numbering
 
 The pinned Wails Windows asset writer buffers each response. Video GET ranges are therefore capped to 2MiB per response, single ranges only; large unbounded GETs are refused and playback can fall back to position frames. Small sources may be served in full. HEAD responses do not read the body. Range limiting/overflow/suffix handling has dedicated regressions, and native WebView2's subsequent-range behavior remains part of the manual playback check.
 
-`%APPDATA%/kompeg/preferences.json` and `history.json` use version 1 and retain compatibility with existing FFmpeg configuration. Updates hold an OS file lock across read/merge/write, write a temporary file, flush it and atomically replace the owned JSON file. Reads/writes have a 24MiB bound. Malformed/unknown-version files are preserved, with a visible error rather than silent resetting. Local history contains file paths and diagnostics; it is not uploaded. Uninstall keeps AppData.
+`%APPDATA%/PheebKit/preferences.json` and `history.json` use version 1 and retain compatibility with existing FFmpeg configuration. Updates hold an OS file lock across read/merge/write, write a temporary file, flush it and atomically replace the owned JSON file. Reads/writes have a 24MiB bound. Malformed/unknown-version files are preserved, with a visible error rather than silent resetting. Local history contains file paths and diagnostics; it is not uploaded. Uninstall keeps AppData.
 
 History is persisted at state transitions, including queued/running/completed/failed/cancelled. Progress is live in memory; an interrupted record can therefore show only the last persisted transition's progress. PID liveness conservatively excludes another running process's tasks from the current instance; PID reuse can delay classification until that process exits. This is restartable task history, not process pause/resume.
 
@@ -57,3 +57,5 @@ History is persisted at state transitions, including queued/running/completed/fa
 | Keyboard and responsive UI | Modal safe initial focus, Esc and restored trigger focus; Material preset keyboard selection; 375px dark/200% font shows no component overflow. |
 
 The former native-launch automatic approval rejection was not retried through another launch mechanism. This release's browser component checks and headless FFmpeg tests do not claim native end-to-end coverage. Android remains deferred.
+
+New installations use the current directory above; existing legacy stores are reused in place. See [compatibility](compatibility.md).

@@ -68,7 +68,7 @@ jobs:
       - name: Real FFmpeg and process-interruption checks
         shell: pwsh
         run: |
-          $env:KOMPEG_INTEGRATION = '1'
+          $env:PHEEBKIT_INTEGRATION = '1'
           go test ./... -count=1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build optional previous-version upgrade candidate

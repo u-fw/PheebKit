@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import { API } from "../bridge";
 import type { Job, Media, Settings } from "../bridge";
@@ -103,7 +104,8 @@ export function BatchPanel({
         : []),
       ...tracks.map((stream, index) => ({
         value: String(stream.index),
-        label: `${kind === "audio" ? "音轨" : "字幕"} ${index + 1} · ${stream.title || stream.language || stream.codecName}`,
+        label: `${t(kind === "audio" ? "音轨" : "字幕")} ${index + 1} · ${stream.title || stream.language || stream.codecName}`,
+        translate: false,
       })),
       ...(extracting && !tracks.length
         ? [{ value: "none", label: "没有可提取的轨道" }]
@@ -113,19 +115,21 @@ export function BatchPanel({
   return (
     <section className="surface settings-card batch-panel">
       <div className="section-title">
-        <h2>批量处理</h2>
+        <h2>{t("批量处理")}</h2>
         <span className="subtle-label">
-          {selected.length} / {files.length} 个文件
+          {selected.length} / {files.length} {t("个文件")}
         </span>
       </div>
       <p className="field-hint">
-        使用上面的{operationLabels[operation]}
-        通用设置，处理每个文件的完整时长。剪辑、多片段、字幕烧录和裁剪边距只用于当前单文件；每个文件的音轨、软字幕在下面单独选择。
+        {t("使用上面的")} {t(operationLabels[operation])}{" "}
+        {t(
+          "通用设置，处理每个文件的完整时长。剪辑、多片段、字幕烧录和裁剪边距只用于当前单文件；每个文件的音轨、软字幕在下面单独选择。",
+        )}
       </p>
       <div className="field-grid">
         <div>
           <label className="field-label" htmlFor="batch-directory">
-            输出文件夹
+            {t("输出文件夹")}
           </label>
           <input
             id="batch-directory"
@@ -135,7 +139,7 @@ export function BatchPanel({
         </div>
         <div>
           <label className="field-label" htmlFor="batch-suffix">
-            文件名后缀
+            {t("文件名后缀")}
           </label>
           <input
             id="batch-suffix"
@@ -150,7 +154,7 @@ export function BatchPanel({
         disabled={busy || !connected}
         onClick={() => void chooseDirectory()}
       >
-        选择输出文件夹
+        {t("选择输出文件夹")}
       </button>
       <div className="batch-files">
         {files.map((file) => {
@@ -187,7 +191,7 @@ export function BatchPanel({
                   <div className="field-grid">
                     {operation !== "extract-subtitle" && (
                       <MaterialSelect
-                        label={`${file.name} 的音轨`}
+                        label={t("{{0}} 的音轨", [file.name])}
                         value={tracks.audio}
                         options={trackOptions(file, "audio")}
                         onChange={(value) => setTrack("audio", value)}
@@ -195,7 +199,7 @@ export function BatchPanel({
                     )}
                     {operation !== "extract-audio" && (
                       <MaterialSelect
-                        label={`${file.name} 的字幕`}
+                        label={t("{{0}} 的字幕", [file.name])}
                         value={tracks.subtitle}
                         options={trackOptions(file, "subtitle")}
                         onChange={(value) => setTrack("subtitle", value)}
@@ -203,7 +207,7 @@ export function BatchPanel({
                     )}
                   </div>
                   <p className="field-hint batch-output">
-                    输出：{output || "请修正文件名"}
+                    {t("输出：")} {output || t("请修正文件名")}
                   </p>
                 </>
               )}
@@ -213,12 +217,12 @@ export function BatchPanel({
       </div>
       {(namingError || issues.length > 0) && (
         <p className="inline-error" role="alert">
-          {namingError || issues.slice(0, 3).join("；")}
+          {t(namingError || issues.slice(0, 3).join("；"))}
         </p>
       )}
       {message && (
         <p className="inline-error" role="alert">
-          {message}
+          {t(message)}
         </p>
       )}
       <button
@@ -232,10 +236,12 @@ export function BatchPanel({
         }
         onClick={() => void submit()}
       >
-        {busy ? "检查并提交中…" : `将 ${selected.length} 个文件加入队列`}
+        {t(busy ? "检查并提交中…" : `将 ${selected.length} 个文件加入队列`)}
       </button>
       <p className="field-hint">
-        提交前检查整批格式、轨道和路径。已存在的文件不会覆盖；当前任务按队列顺序逐个处理。
+        {t(
+          "提交前检查整批格式、轨道和路径。已存在的文件不会覆盖；当前任务按队列顺序逐个处理。",
+        )}
       </p>
     </section>
   );

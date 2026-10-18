@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useState } from "react";
 import { API, type CatalogEntry } from "../bridge";
 import { errorMessage } from "../format";
@@ -79,14 +80,15 @@ export function FFmpegExplorer({ connected }: { connected: boolean }) {
   return (
     <section className="surface preferences-card ffmpeg-explorer">
       <details onToggle={(event) => setOpen(event.currentTarget.open)}>
-        <summary>FFmpeg 能力与参数帮助</summary>
+        <summary>{t("FFmpeg 能力与参数帮助")}</summary>
         <p className="field-hint">
-          来自当前选定 FFmpeg 的实际目录。列出表示构建中包含此功能，不代表
-          GPU、设备或处理流程已经验证；也不代表界面已提供该功能的执行入口。
+          {t(
+            "来自当前选定 FFmpeg 的实际目录。列出表示构建中包含此功能，不代表 GPU、设备或处理流程已经验证；也不代表界面已提供该功能的执行入口。",
+          )}
         </p>
         <div className="field-grid">
           <MaterialSelect
-            label="能力类别"
+            label={t("能力类别")}
             value={category}
             options={catalogCategories}
             disabled={helpBusy}
@@ -99,7 +101,7 @@ export function FFmpegExplorer({ connected }: { connected: boolean }) {
             }}
           />
           <label className="field-label">
-            搜索名称或说明
+            {t("搜索名称或说明")}
             <input
               type="search"
               value={query}
@@ -107,7 +109,7 @@ export function FFmpegExplorer({ connected }: { connected: boolean }) {
                 setQuery(event.target.value);
                 setPage(0);
               }}
-              placeholder="例如 subtitles、loudnorm、libx264"
+              placeholder={t("例如 subtitles、loudnorm、libx264")}
             />
           </label>
         </div>
@@ -120,38 +122,39 @@ export function FFmpegExplorer({ connected }: { connected: boolean }) {
               setHelp(null);
             }}
           >
-            重新读取目录
+            {t("重新读取目录")}
           </button>
           <button
             className="button text"
             disabled={!connected || helpBusy}
             onClick={() => void readHelp("", "full")}
           >
-            查看完整参数帮助
+            {t("查看完整参数帮助")}
           </button>
         </div>
         {!connected ? (
-          <p className="field-hint">连接桌面服务后可读取本机能力。</p>
+          <p className="field-hint">{t("连接桌面服务后可读取本机能力。")}</p>
         ) : busy ? (
-          <p role="status">正在读取本机 FFmpeg…</p>
+          <p role="status">{t("正在读取本机 FFmpeg…")}</p>
         ) : result.error ? (
           <p className="inline-error" role="alert">
-            {result.error}
+            {t(result.error)}
           </p>
         ) : (
           <>
             <p className="field-hint" role="status">
-              匹配 {found.length} / {entries.length} 项，每页最多显示 50 项。
+              {t("匹配")} {found.length} / {entries.length}{" "}
+              {t("项，每页最多显示 50 项。")}
             </p>
             <ul className="catalog-list">
               {found.slice(current * 50, (current + 1) * 50).map((entry) => (
                 <li key={entry.name}>
                   <div>
                     <code>{entry.name}</code>
-                    <p>{entry.description || "当前构建提供此项目"}</p>
+                    <p>{t(entry.description || "当前构建提供此项目")}</p>
                     {entry.flags && (
                       <small className="field-hint">
-                        构建标记：{entry.flags}
+                        {t("构建标记：")} {t(entry.flags)}
                       </small>
                     )}
                   </div>
@@ -159,10 +162,10 @@ export function FFmpegExplorer({ connected }: { connected: boolean }) {
                     <button
                       className="button text"
                       disabled={helpBusy}
-                      aria-label={`查看 ${entry.name} 参数`}
+                      aria-label={t("查看 {{0}} 参数", [entry.name])}
                       onClick={() => void readHelp(entry.name)}
                     >
-                      参数帮助
+                      {t("参数帮助")}
                     </button>
                   )}
                 </li>
@@ -174,39 +177,42 @@ export function FFmpegExplorer({ connected }: { connected: boolean }) {
                 disabled={current === 0}
                 onClick={() => setPage(current - 1)}
               >
-                上一页
+                {t("上一页")}
               </button>
               <span>
-                第 {current + 1} / {Math.max(1, Math.ceil(found.length / 50))}{" "}
-                页
+                {t("第")} {current + 1} /{" "}
+                {Math.max(1, Math.ceil(found.length / 50))}
+                {t(" ")}
+                {t("页")}
               </span>
               <button
                 className="button outlined"
                 disabled={(current + 1) * 50 >= found.length}
                 onClick={() => setPage(current + 1)}
               >
-                下一页
+                {t("下一页")}
               </button>
             </div>
           </>
         )}
-        {helpBusy && <p role="status">正在读取参数帮助…</p>}
+        {helpBusy && <p role="status">{t("正在读取参数帮助…")}</p>}
         {helpError && (
           <p className="inline-error" role="alert">
-            {helpError}
+            {t(helpError)}
           </p>
         )}
         {help && (
           <>
             <h3>{help.name}</h3>
             <p className="field-hint">
-              以下为本机 FFmpeg
-              原始帮助，可能为英文。参数的实际使用仍需要对应流程和校验。
+              {t(
+                "以下为本机 FFmpeg 原始帮助，可能为英文。参数的实际使用仍需要对应流程和校验。",
+              )}
             </p>
             <pre
               className="diagnostic-preview"
               tabIndex={0}
-              aria-label="FFmpeg 参数帮助"
+              aria-label={t("FFmpeg 参数帮助")}
             >
               {help.text}
             </pre>

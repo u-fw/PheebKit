@@ -7,9 +7,9 @@ import (
 	"sort"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	"kompeg/internal/localstore"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	"pheebkit/internal/localstore"
 )
 
 type historyEntry struct {

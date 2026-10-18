@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 export default defineConfig({
   plugins: [react()],
   define: {
-    __KOMPEG_VERSION__: JSON.stringify(
+    __PHEEBKIT_VERSION__: JSON.stringify(
       readFileSync(new URL("../VERSION", import.meta.url), "utf8").trim(),
     ),
   },

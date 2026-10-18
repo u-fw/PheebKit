@@ -11,8 +11,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
-	"kompeg/internal/app"
-	"kompeg/internal/buildinfo"
+	"pheebkit/internal/app"
+	"pheebkit/internal/buildinfo"
 )
 
 //go:embed all:frontend/dist
@@ -40,7 +40,7 @@ func main() {
 		BackgroundColour: options.NewRGB(15, 22, 23),
 		AssetServer:      &assetserver.Options{Assets: assets, Middleware: service.AssetHandler},
 		Bind:             []interface{}{&app.Desktop{DesktopAPI: service}},
-		OnStartup:        func(ctx context.Context) { service.Attach(&wailsHost{ctx: ctx}) },
+		OnStartup:        func(ctx context.Context) { service.Attach(&wailsHost{ctx: ctx, locale: service.Locale}) },
 		OnBeforeClose:    func(context.Context) bool { return !service.CanClose() },
 		DragAndDrop:      &options.DragAndDrop{EnableFileDrop: true, DisableWebViewDrop: true},
 		Windows:          &windows.Options{WindowClassName: "PheebKitWindow", DLLSearchPaths: windows.DLLSearchApplicationDir | windows.DLLSearchSystem32},

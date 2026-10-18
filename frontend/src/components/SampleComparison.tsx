@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useState } from "react";
 import { API } from "../bridge";
 import type { SampleComparison as Comparison, Thumbnail } from "../bridge";
@@ -79,17 +80,18 @@ export function SampleComparison({
   return (
     <section
       className="surface settings-card sample-comparison"
-      aria-label="样片画面比较"
+      aria-label={t("样片画面比较")}
     >
       <div className="section-title">
-        <h2>样片画面比较</h2>
+        <h2>{t("样片画面比较")}</h2>
         <button className="button text" onClick={close}>
-          关闭比较
+          {t("关闭比较")}
         </button>
       </div>
       <p className="field-hint">
-        对照相同时间位置的画面。预览缩小到 512
-        像素，细节与音质请打开样片文件检查。
+        {t(
+          "对照相同时间位置的画面。预览缩小到 512 像素，细节与音质请打开样片文件检查。",
+        )}
       </p>
       {data && (
         <>
@@ -102,33 +104,37 @@ export function SampleComparison({
                 {visibleFrames ? (
                   <img
                     src={visibleFrames.original.dataUrl}
-                    alt={`原片 ${formatDuration(data.startSeconds + position)} 的画面`}
+                    alt={t("原片 {{0}} 的画面", [
+                      formatDuration(data.startSeconds + position),
+                    ])}
                   />
                 ) : (
-                  <span>正在读取原片画面…</span>
+                  <span>{t("正在读取原片画面…")}</span>
                 )}
               </div>
-              <figcaption>原片 · {data.original.name}</figcaption>
+              <figcaption>
+                {t("原片 ·")} {data.original.name}
+              </figcaption>
             </figure>
             <figure className="position-frame">
               <div className="frame-image">
                 {visibleFrames ? (
                   <img
                     src={visibleFrames.output.dataUrl}
-                    alt={`样片 ${formatDuration(position)} 的画面`}
+                    alt={t("样片 {{0}} 的画面", [formatDuration(position)])}
                   />
                 ) : (
-                  <span>正在读取样片画面…</span>
+                  <span>{t("正在读取样片画面…")}</span>
                 )}
               </div>
               <figcaption>
-                样片 · {formatBytes(data.output.sizeBytes)}
+                {t("样片 ·")} {formatBytes(data.output.sizeBytes)}
               </figcaption>
             </figure>
           </div>
           <label className="field-label" htmlFor="sample-position">
-            比较位置 · {formatDuration(position)} /{" "}
-            {formatDuration(data.durationSeconds)}
+            {t("比较位置 ·")} {t(formatDuration(position))} /{t(" ")}
+            {t(formatDuration(data.durationSeconds))}
           </label>
           <input
             id="sample-position"
@@ -143,12 +149,12 @@ export function SampleComparison({
       )}
       {loading && (
         <p role="status" className="field-hint">
-          正在读取画面…
+          {t("正在读取画面…")}
         </p>
       )}
       {error && (
         <p className="inline-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
     </section>

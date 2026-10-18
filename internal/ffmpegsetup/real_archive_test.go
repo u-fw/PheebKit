@@ -12,9 +12,9 @@ import (
 
 // Replay a real publisher-hashed archive without repeatedly downloading it.
 func TestRealPublisherSevenZipArchive(t *testing.T) {
-	path := os.Getenv("KOMPEG_SEVENZIP_ARCHIVE")
+	path := os.Getenv("PHEEBKIT_SEVENZIP_ARCHIVE")
 	if path == "" {
-		t.Skip("set KOMPEG_SEVENZIP_ARCHIVE to the verified Gyan 9.0.2 full archive")
+		t.Skip("set PHEEBKIT_SEVENZIP_ARCHIVE to the verified Gyan 9.0.2 full archive")
 	}
 	file, err := os.Open(path)
 	if err != nil {

@@ -3,6 +3,7 @@ export interface SelectOption {
   label: string;
   description?: string;
   disabled?: boolean;
+  translate?: boolean;
 }
 
 export function nextEnabled(

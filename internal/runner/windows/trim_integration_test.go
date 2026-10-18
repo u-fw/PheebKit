@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
 )
 
 func TestIntegrationTrimExactNonKeyframeRange(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 for installed FFmpeg")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 for installed FFmpeg")
 	}
-	r := New(os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE"))
+	r := New(os.Getenv("PHEEBKIT_FFMPEG"), os.Getenv("PHEEBKIT_FFPROBE"))
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 	dir := t.TempDir()

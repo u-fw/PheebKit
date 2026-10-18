@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 // VideoArguments is shared with the runner's real GPU smoke tests, so a device

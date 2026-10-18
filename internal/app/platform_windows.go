@@ -3,9 +3,9 @@
 package app
 
 import (
-	"kompeg/internal/core"
-	"kompeg/internal/runner/windows"
 	"os/exec"
+	"pheebkit/internal/core"
+	"pheebkit/internal/runner/windows"
 	"syscall"
 )
 

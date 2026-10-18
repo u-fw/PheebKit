@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { AudioProcessing, Capabilities, Media, Settings } from "../bridge";
 import {
   audioProcessingErrors,
@@ -48,12 +49,14 @@ export function AudioProcessingSettings({
   return (
     <details className="surface advanced-card audio-processing">
       <summary>
-        <span>声音处理</span>
-        <span>{p ? "已启用" : "可选"}</span>
+        <span>{t("声音处理")}</span>
+        <span>{t(p ? "已启用" : "可选")}</span>
       </summary>
       <div className="advanced-content">
         <p className="field-hint">
-          分别处理每条选中音轨；拼接任务在拼接后统一处理，独立导出则逐个文件处理。
+          {t(
+            "分别处理每条选中音轨；拼接任务在拼接后统一处理，独立导出则逐个文件处理。",
+          )}
         </p>
         <label className="track-choice">
           <input
@@ -66,20 +69,22 @@ export function AudioProcessingSettings({
               )
             }
           />
-          <span>启用声音处理</span>
+          <span>{t("启用声音处理")}</span>
         </label>
         {p && (
           <>
             <p className="field-hint">
-              选中 {tracks.length} 条音轨
-              {tracks[0]?.sampleRate
-                ? ` · 首轨 ${tracks[0].sampleRate / 1000} kHz / ${tracks[0].channels || "未知"} 声道`
-                : ""}
-              。启用后默认输出 48 kHz，可自行调整。
+              {t("选中")} {tracks.length} {t("条音轨")}{" "}
+              {t(
+                tracks[0]?.sampleRate
+                  ? ` · 首轨 ${tracks[0].sampleRate / 1000} kHz / ${tracks[0].channels || "未知"} 声道`
+                  : "",
+              )}{" "}
+              {t("。启用后默认输出 48 kHz，可自行调整。")}
             </p>
             <div className="field-grid">
               <MaterialSelect
-                label="输出采样率"
+                label={t("输出采样率")}
                 value={String(p.sampleRate)}
                 onChange={(v) => edit("sampleRate", Number(v))}
                 options={[
@@ -99,7 +104,7 @@ export function AudioProcessingSettings({
                 ]}
               />
               <MaterialSelect
-                label="输出声道"
+                label={t("输出声道")}
                 value={p.channels || "source"}
                 onChange={(v) => edit("channels", v)}
                 options={[
@@ -122,7 +127,7 @@ export function AudioProcessingSettings({
                   )
                 }
               />
-              <span>动态响度归一化 · 单遍</span>
+              <span>{t("动态响度归一化 · 单遍")}</span>
             </label>
             {p.normalize && (
               <>
@@ -153,7 +158,7 @@ export function AudioProcessingSettings({
                     ] as const
                   ).map((field) => (
                     <label className="field-label" key={field.key}>
-                      {field.label}
+                      {t(field.label)}
                       <input
                         type="number"
                         min={field.min}
@@ -171,7 +176,9 @@ export function AudioProcessingSettings({
                   ))}
                 </div>
                 <p className="field-hint">
-                  自动平衡响度，可能改变动态。目标不等于编码后实测值；样片与整片可能不同，请试听确认。
+                  {t(
+                    "自动平衡响度，可能改变动态。目标不等于编码后实测值；样片与整片可能不同，请试听确认。",
+                  )}
                 </p>
               </>
             )}
@@ -183,12 +190,12 @@ export function AudioProcessingSettings({
                   edit("denoiseReductionDB", event.target.checked ? 12 : 0)
                 }
               />
-              <span>FFT 降噪</span>
+              <span>{t("FFT 降噪")}</span>
             </label>
             <>
               <div className="field-grid">
                 <label className="field-label">
-                  降噪强度 (dB)
+                  {t("降噪强度 (dB)")}
                   <input
                     type="number"
                     min="0"
@@ -204,7 +211,7 @@ export function AudioProcessingSettings({
                   />
                 </label>
                 <label className="field-label">
-                  噪声底 (dB)
+                  {t("噪声底 (dB)")}
                   <input
                     type="number"
                     min="-80"
@@ -218,17 +225,22 @@ export function AudioProcessingSettings({
                 </label>
               </div>
               <p className="field-hint">
-                强度 0 关闭降噪，输入正值即启用；参数保持可编辑，支持 0.01–97
-                dB。
+                {t(
+                  "强度 0 关闭降噪，输入正值即启用；参数保持可编辑，支持 0.01–97 dB。",
+                )}
               </p>
             </>
             <div className="section-title">
-              <h3>均衡器</h3>
-              <span className="field-hint">最多 8 段；增益 0 为旁路</span>
+              <h3>{t("均衡器")}</h3>
+              <span className="field-hint">
+                {t("最多 8 段；增益 0 为旁路")}
+              </span>
             </div>
             {(p.equalizer ?? []).map((band, index) => (
               <fieldset className="audio-eq-band" key={index}>
-                <legend>频段 {index + 1}</legend>
+                <legend>
+                  {t("频段")} {index + 1}
+                </legend>
                 <div className="audio-parameter-grid">
                   {(
                     [
@@ -250,7 +262,7 @@ export function AudioProcessingSettings({
                     ] as const
                   ).map((field) => (
                     <label className="field-label" key={field.key}>
-                      频段 {index + 1} {field.label}
+                      {t("频段")} {index + 1} {t(field.label)}
                       <input
                         type="number"
                         min={field.min}
@@ -284,7 +296,7 @@ export function AudioProcessingSettings({
                     )
                   }
                 >
-                  移除频段 {index + 1}
+                  {t("移除频段")} {index + 1}
                 </button>
               </fieldset>
             ))}
@@ -299,15 +311,16 @@ export function AudioProcessingSettings({
                 ])
               }
             >
-              添加均衡频段
+              {t("添加均衡频段")}
             </button>
             <p className="field-hint">
-              Q
-              越高，影响频带越窄。有效中心频率必须小于输出采样率的一半。大幅增益可能产生失真。
+              {t(
+                "Q 越高，影响频带越窄。有效中心频率必须小于输出采样率的一半。大幅增益可能产生失真。",
+              )}
             </p>
             <div className="field-grid">
               <label className="field-label">
-                输出开头淡入 (秒)
+                {t("输出开头淡入 (秒)")}
                 <input
                   type="number"
                   min="0"
@@ -320,7 +333,7 @@ export function AudioProcessingSettings({
                 />
               </label>
               <label className="field-label">
-                输出结尾淡出 (秒)
+                {t("输出结尾淡出 (秒)")}
                 <input
                   type="number"
                   min="0"
@@ -334,7 +347,9 @@ export function AudioProcessingSettings({
               </label>
             </div>
             <p className="field-hint">
-              0 为关闭；淡入淡出总长不能超过输出时长。样片不应用整片淡入淡出。
+              {t(
+                "0 为关闭；淡入淡出总长不能超过输出时长。样片不应用整片淡入淡出。",
+              )}
             </p>
             <button
               type="button"
@@ -343,7 +358,7 @@ export function AudioProcessingSettings({
                 update("audioProcessing", defaultAudioProcessing())
               }
             >
-              重置声音处理参数
+              {t("重置声音处理参数")}
             </button>
             {(settings.audio === "copy" || settings.audio === "none") && (
               <button
@@ -359,7 +374,7 @@ export function AudioProcessingSettings({
                   )
                 }
               >
-                切换到可处理的音频编码
+                {t("切换到可处理的音频编码")}
               </button>
             )}
           </>
@@ -368,11 +383,12 @@ export function AudioProcessingSettings({
           <div className="field-notice error-notice" role="alert">
             <div>
               {errors.map((e) => (
-                <p key={e}>{e}</p>
+                <p key={e}>{t(e)}</p>
               ))}
               {missing.length > 0 && (
                 <p>
-                  当前 FFmpeg 缺少滤镜：{missing.join("、")}。请切换完整构建。
+                  {t("当前 FFmpeg 缺少滤镜：")} {t(missing.join("、"))}{" "}
+                  {t("。请切换完整构建。")}
                 </p>
               )}
             </div>

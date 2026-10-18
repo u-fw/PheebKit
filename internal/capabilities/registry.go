@@ -4,7 +4,7 @@ package capabilities
 import (
 	"strings"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 type Definition struct {

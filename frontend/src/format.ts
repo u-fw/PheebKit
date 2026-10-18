@@ -1,5 +1,6 @@
+import { t } from "./i18n";
 export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes < 0) return "未知";
+  if (!Number.isFinite(bytes) || bytes < 0) return t("未知");
   if (bytes === 0) return "0 B";
   const units = ["B", "KiB", "MiB", "GiB", "TiB"];
   const exponent = Math.min(
@@ -10,7 +11,7 @@ export function formatBytes(bytes: number): string {
 }
 
 export function formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return "未知";
+  if (!Number.isFinite(seconds) || seconds < 0) return t("未知");
   const total = Math.floor(seconds);
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor((total % 3600) / 60);
@@ -21,7 +22,7 @@ export function formatDuration(seconds: number): string {
 }
 
 export function formatBitrate(bitsPerSecond: number): string {
-  if (!Number.isFinite(bitsPerSecond) || bitsPerSecond <= 0) return "未知";
+  if (!Number.isFinite(bitsPerSecond) || bitsPerSecond <= 0) return t("未知");
   return bitsPerSecond >= 1_000_000
     ? `${(bitsPerSecond / 1_000_000).toFixed(2)} Mbps`
     : `${Math.round(bitsPerSecond / 1000)} kbps`;
@@ -44,7 +45,10 @@ export function suggestedOutput(
 }
 
 export function savedPercent(input: number, output: number): string {
-  if (input <= 0 || output < 0) return "未知";
+  if (input <= 0 || output < 0) return t("未知");
   const saved = (1 - output / input) * 100;
-  return `${saved >= 0 ? "节省" : "增加"} ${Math.abs(saved).toFixed(1)}%`;
+  return t("{{0}} {{1}}%", [
+    t(saved >= 0 ? "节省" : "增加"),
+    Math.abs(saved).toFixed(1),
+  ]);
 }

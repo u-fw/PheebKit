@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import type { Capabilities, ExecutionPlan, Media, Settings } from "../bridge";
 import { parseRawArguments, targetSizeAudioError } from "../project";
@@ -20,20 +21,22 @@ function AudioBitrate({
   if (settings.audio !== "aac" && settings.audio !== "opus") return null;
   return (
     <label className="field-label">
-      音频码率 (kbps / 每条音轨)
+      {t("音频码率 (kbps / 每条音轨)")}
       <input
         type="number"
         min="32"
         max="320"
         step="1"
         value={settings.audioBitrateKbps || ""}
-        placeholder={settings.audio === "aac" ? "默认 192" : "默认 128"}
+        placeholder={t(settings.audio === "aac" ? "默认 192" : "默认 128")}
         onChange={(event) =>
           update("audioBitrateKbps", Number(event.target.value))
         }
       />
       <span className="field-hint">
-        可填 32–320；留空使用默认值。目标体积模式会按所选音轨数量扣除音频预算。
+        {t(
+          "可填 32–320；留空使用默认值。目标体积模式会按所选音轨数量扣除音频预算。",
+        )}
       </span>
     </label>
   );
@@ -79,10 +82,10 @@ export function AudioEncodingSettings({
   return (
     <section className="surface settings-card">
       <div className="section-title">
-        <h2>音频输出设置</h2>
+        <h2>{t("音频输出设置")}</h2>
       </div>
       <MaterialSelect
-        label="音频格式"
+        label={t("音频格式")}
         value={settings.audio}
         options={[
           ...audioOptions.filter((option) => option.value !== "none"),
@@ -101,8 +104,9 @@ export function AudioEncodingSettings({
         onChange={(value) => update("audio", value)}
       />
       <p className="field-hint">
-        保留原音频保存为 MKA；其他格式会重新编码。格式支持以当前 FFmpeg
-        检查结果为准。
+        {t(
+          "保留原音频保存为 MKA；其他格式会重新编码。格式支持以当前 FFmpeg 检查结果为准。",
+        )}
       </p>
       <AudioBitrate settings={settings} update={update} />
     </section>
@@ -159,10 +163,10 @@ export function EncodingSettings({
   return (
     <section className="surface settings-card">
       <div className="section-title">
-        <h2>输出设置</h2>
+        <h2>{t("输出设置")}</h2>
       </div>
       <fieldset>
-        <legend>视频编码</legend>
+        <legend>{t("视频编码")}</legend>
         <div className="codec-options">
           {codecOptions.map((codec) => {
             const available = capabilities?.videoEncoders.some(
@@ -182,9 +186,11 @@ export function EncodingSettings({
                   {settings.codec === codec.value && <Icon name="check" />}
                 </span>
                 <small>
-                  {capabilities !== null && !available
-                    ? "当前构建不可用"
-                    : codec.note}
+                  {t(
+                    capabilities !== null && !available
+                      ? "当前构建不可用"
+                      : codec.note,
+                  )}
                 </small>
               </button>
             );
@@ -192,7 +198,7 @@ export function EncodingSettings({
         </div>
       </fieldset>
       <fieldset>
-        <legend>压缩模式</legend>
+        <legend>{t("压缩模式")}</legend>
         <div className="segmented mode-options">
           {modes.map((mode) => (
             <button
@@ -203,14 +209,14 @@ export function EncodingSettings({
               onClick={() => update("mode", mode.value)}
             >
               {settings.mode === mode.value && <Icon name="check" />}
-              {mode.label}
+              {t(mode.label)}
             </button>
           ))}
         </div>
       </fieldset>
       {settings.mode === "quality" ? (
         <fieldset>
-          <legend>画质</legend>
+          <legend>{t("画质")}</legend>
           <div className="segmented quality-options">
             {qualities.map((quality) => (
               <button
@@ -221,20 +227,22 @@ export function EncodingSettings({
                 onClick={() => update("quality", quality.value)}
               >
                 {settings.quality === quality.value && <Icon name="check" />}
-                {quality.label}
+                {t(quality.label)}
               </button>
             ))}
           </div>
           <div className="field-hint split-hint">
-            <span>更轻巧</span>
-            <span>保留更多细节</span>
+            <span>{t("更轻巧")}</span>
+            <span>{t("保留更多细节")}</span>
           </div>
         </fieldset>
       ) : (
         <label className="field-label target-field">
-          {settings.mode === "bitrate"
-            ? "目标视频码率 (kbps)"
-            : "目标文件大小 (MB，十进制)"}
+          {t(
+            settings.mode === "bitrate"
+              ? "目标视频码率 (kbps)"
+              : "目标文件大小 (MB，十进制)",
+          )}
           <input
             type="number"
             min="1"
@@ -251,15 +259,17 @@ export function EncodingSettings({
             }
           />
           <span className="field-hint">
-            {settings.mode === "size"
-              ? `1 MB = 1,000,000 字节。${Number.isFinite(settings.targetSizeMB) && settings.targetSizeMB > 0 ? `${settings.targetSizeMB} MB ≈ ${formatBytes(settings.targetSizeMB * 1_000_000)}。` : ""}按时长分配视频和音频码率，实际大小可能有差异。`
-              : "音频和容器开销会计入最终文件大小。"}
+            {t(
+              settings.mode === "size"
+                ? `1 MB = 1,000,000 字节。${Number.isFinite(settings.targetSizeMB) && settings.targetSizeMB > 0 ? `${settings.targetSizeMB} MB ≈ ${formatBytes(settings.targetSizeMB * 1_000_000)}。` : ""}按时长分配视频和音频码率，实际大小可能有差异。`
+                : "音频和容器开销会计入最终文件大小。",
+            )}
           </span>
         </label>
       )}
       <div className="field-grid">
         <MaterialSelect
-          label="分辨率"
+          label={t("分辨率")}
           value={customResolution ? "custom" : String(settings.resolution)}
           options={resolutions}
           onChange={(value) => {
@@ -269,7 +279,7 @@ export function EncodingSettings({
           }}
         />
         <MaterialSelect
-          label="音频"
+          label={t("音频")}
           value={settings.audio}
           options={audioOptions.map((option) =>
             option.value === "copy" &&
@@ -295,13 +305,13 @@ export function EncodingSettings({
         >
           <Icon name="info" />
           <div>
-            <p>{audioError}</p>
+            <p>{t(audioError)}</p>
             <button
               type="button"
               className="button outlined"
               onClick={() => update("audio", "aac")}
             >
-              切换为 AAC
+              {t("切换为 AAC")}
             </button>
           </div>
         </div>
@@ -309,7 +319,7 @@ export function EncodingSettings({
       <AudioBitrate settings={settings} update={update} />
       {customResolution && (
         <label className="field-label">
-          输出高度 (px)
+          {t("输出高度 (px)")}
           <input
             type="number"
             min="2"
@@ -320,12 +330,14 @@ export function EncodingSettings({
               update("resolution", Number(event.target.value))
             }
           />
-          <span className="field-hint">保持宽高比；宽度由编码器自动计算。</span>
+          <span className="field-hint">
+            {t("保持宽高比；宽度由编码器自动计算。")}
+          </span>
         </label>
       )}
       <div className="processing-field">
         <MaterialSelect
-          label="处理方式"
+          label={t("处理方式")}
           value={settings.encoder}
           options={encoderOptions}
           onChange={(value) => update("encoder", value)}
@@ -336,19 +348,23 @@ export function EncodingSettings({
         <Icon name="info" />
         <div>
           <strong>
-            {plan
-              ? `${plan.encoderKind === "gpu" ? "GPU" : "CPU"} · ${plan.encoderLabel}`
-              : settings.encoder === "auto"
-                ? "自动选择可用编码器"
-                : settings.encoder === "cpu"
-                  ? "CPU 软件编码"
-                  : "指定 GPU 编码器"}
+            {t(
+              plan
+                ? `${plan.encoderKind === "gpu" ? "GPU" : "CPU"} · ${plan.encoderLabel}`
+                : settings.encoder === "auto"
+                  ? "自动选择可用编码器"
+                  : settings.encoder === "cpu"
+                    ? "CPU 软件编码"
+                    : "指定 GPU 编码器",
+            )}
           </strong>
           <span>
-            {plan?.encoderReason ||
-              (capabilities
-                ? "以完成设备检测后的执行方案为准。"
-                : "正在检测 FFmpeg 编码器和设备支持…")}
+            {t(
+              plan?.encoderReason ||
+                (capabilities
+                  ? "以完成设备检测后的执行方案为准。"
+                  : "正在检测 FFmpeg 编码器和设备支持…"),
+            )}
           </span>
         </div>
       </div>
@@ -371,17 +387,17 @@ export function AdvancedSettings({
       <summary>
         <div>
           <Icon name="settings" />
-          <span>高级设置</span>
+          <span>{t("高级设置")}</span>
         </div>
         <span>
-          质量 · 速度 · 更多参数
+          {t("质量 · 速度 · 更多参数")}
           <Icon name="chevron" />
         </span>
       </summary>
       <div className="advanced-content">
         <div className="field-grid">
           <label className="field-label">
-            {settings.encoder === "cpu" ? "质量参数 · CRF" : "质量参数"}
+            {t(settings.encoder === "cpu" ? "质量参数 · CRF" : "质量参数")}
             <input
               type="number"
               min="0"
@@ -392,23 +408,25 @@ export function AdvancedSettings({
               }
             />
             <span className="field-hint">
-              {settings.encoder === "cpu"
-                ? "仅质量模式使用 CRF。数值越低，质量越高。"
-                : "仅质量模式使用。CPU 使用 CRF，GPU 使用对应编码器的质量参数；数值越低，质量越高。"}
+              {t(
+                settings.encoder === "cpu"
+                  ? "仅质量模式使用 CRF。数值越低，质量越高。"
+                  : "仅质量模式使用。CPU 使用 CRF，GPU 使用对应编码器的质量参数；数值越低，质量越高。",
+              )}
             </span>
           </label>
           <MaterialSelect
-            label="编码速度 · Preset"
+            label={t("编码速度 · Preset")}
             value={settings.preset}
             options={presets}
             onChange={(value) => update("preset", value)}
           />
         </div>
         <label className="field-label">
-          附加 FFmpeg 参数
+          {t("附加 FFmpeg 参数")}
           <textarea
             rows={5}
-            placeholder={"-metadata\ntitle=我的视频"}
+            placeholder={t("-metadata\ntitle=我的视频")}
             value={rawText}
             onChange={(event) => {
               setRawText(event.target.value);
@@ -417,9 +435,9 @@ export function AdvancedSettings({
             spellCheck={false}
           />
           <span className="field-hint">
-            每行一个独立 argv 参数，以选项和值成对填写。支持
-            -metadata、-maxrate、-bufsize 等编码选项。编码器子选项使用
-            key=value，以冒号分隔；仅支持已知安全选项，文件读写与多遍编码选项不可使用。
+            {t(
+              "每行一个独立 argv 参数，以选项和值成对填写。支持 -metadata、-maxrate、-bufsize 等编码选项。编码器子选项使用 key=value，以冒号分隔；仅支持已知安全选项，文件读写与多遍编码选项不可使用。",
+            )}
           </span>
         </label>
       </div>

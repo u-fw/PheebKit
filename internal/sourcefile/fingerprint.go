@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"pheebkit/internal/compat"
 )
 
 var ErrChanged = errors.New("源媒体文件已更改，请重新导入并解析后再开始压缩。")
@@ -36,10 +37,7 @@ func fingerprint(path string, legacy bool) (string, error) {
 		return "", fmt.Errorf("读取源媒体文件标识失败：%w", err)
 	}
 	hash := sha256.New()
-	version := "kompeg-source-v2"
-	if legacy {
-		version = "kompeg-source-v1"
-	}
+	version := compat.FingerprintDomain(legacy)
 	fmt.Fprintf(hash, "%s\x00%d\x00%d\x00%s\x00", version, before.Size(), before.ModTime().UnixNano(), identity)
 	if err := writeContentSamples(hash, file, before.Size(), legacy); err != nil {
 		return "", ErrChanged

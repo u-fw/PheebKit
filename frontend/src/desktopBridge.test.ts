@@ -1,9 +1,48 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { API } from "./bridge";
+import { setLanguage } from "./i18n";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("stable desktop runtime contract", () => {
+  it("awaits the current locale before opening each native dialog", async () => {
+    const calls: string[] = [];
+    let complete: (() => void) | undefined;
+    vi.stubGlobal("localStorage", { setItem: vi.fn() });
+    vi.stubGlobal("window", {
+      go: {
+        app: {
+          Desktop: {
+            SetLocale: (language: string) => {
+              calls.push(language);
+              return new Promise<void>((resolve) => {
+                complete = resolve;
+              });
+            },
+            ChooseSubtitleFile: async () => {
+              calls.push("dialog");
+              return "C:/设置.srt";
+            },
+          },
+        },
+      },
+    });
+    try {
+      for (const language of ["en-US", "zh-CN"] as const) {
+        setLanguage(language);
+        const pending = API.chooseSubtitleFile();
+        expect(calls.at(-1)).toBe(language);
+        expect(calls.filter((call) => call === "dialog")).toHaveLength(
+          language === "en-US" ? 0 : 1,
+        );
+        complete?.();
+        expect(await pending).toBe("C:/设置.srt");
+        expect(calls.at(-1)).toBe("dialog");
+      }
+    } finally {
+      setLanguage("zh-CN");
+    }
+  });
   it("consumes direct v2 event payloads and retains listener cleanup", () => {
     const listeners = new Map<string, (value: unknown) => void>();
     const stop = vi.fn();

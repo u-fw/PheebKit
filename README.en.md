@@ -7,15 +7,15 @@
 
 A local-first Windows media toolkit powered by FFmpeg. Compress, trim, remux and process tracks with editable parameters, actual command previews and independent queued jobs. Media stays on your computer.
 
-Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Targets Windows 10/11 x64; Android is deferred. The current `0.2.0-rc.2` is a verification candidate, with no final installer release yet. See the [stabilization evidence and remaining checks](docs/stability.md).
+Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Targets Windows 10/11 x64; Android is deferred. The current `0.2.0-rc.3` is a verification candidate, with no final installer release yet. See the [stabilization evidence and remaining checks](docs/stability.md).
 
 ## Real desktop screenshots
 
-Unedited captures of the Windows 11 desktop candidate on 2026-10-18, using a self-generated eight-second H.264/AAC test video. The interface is currently primarily Simplified Chinese; this iteration adds bilingual README documentation. [Capture record and verification limits](docs/images/README.md)
+Unedited captures of the Windows 11 desktop candidate on 2026-10-18, using a self-generated eight-second H.264/AAC test video. The interface supports Simplified Chinese and English, with immediate language switching and locally saved preferences. [Capture record and verification limits](docs/images/README.md)
 
-![Native media workspace with actual thumbnail, metadata and output summary](docs/images/desktop-workspace-rc2.png)
+![Native media workspace with actual thumbnail, metadata and output summary](docs/images/desktop-workspace-rc3.png)
 
-![Native settings with draft recovery controls and a custom switch](docs/images/desktop-settings-rc2.png)
+![Native settings with draft recovery controls and a custom switch](docs/images/desktop-settings-en-rc3.png)
 
 ## Features
 
@@ -35,9 +35,9 @@ Candidates contain Setup, a no-install ZIP and SHA-256 sums. Extract the entire 
 
 Microsoft WebView2 Runtime and usable FFmpeg/ffprobe are required. Application packages do not bundle FFmpeg. Settings can download missing tools or select local executables; downloads are disabled while both tools are already usable. The default uses the FFmpeg-recommended Gyan stable build, trying gyan.dev and then the same-version GitHub release. The older domestic fallback requires explicit selection and never silently downgrades. Custom archives require an explicit source-trust confirmation and publisher SHA-256. [Download and validation policy](docs/ffmpeg-downloads.md)
 
-Discovery order: `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE` → `FFMPEG_PATH` / `FFPROBE_PATH` → saved application settings → PATH. Values may identify an executable or its directory. Correct explicit overrides in the environment and restart the app. System PATH is never modified.
+Discovery order: `PHEEBKIT_FFMPEG` / `PHEEBKIT_FFPROBE` → `FFMPEG_PATH` / `FFPROBE_PATH` → saved application settings → PATH. Values may identify an executable or its directory. Correct explicit overrides in the environment and restart the app. System PATH is never modified.
 
-`KOMPEG_*`, `%APPDATA%/kompeg`, the private tools directory and installer AppId remain compatibility identifiers for existing settings and upgrades. User-facing branding is 菲比工具箱 / PheebKit. Third-party version, copyright and filename output remains unchanged.
+Public environment variables use `PHEEBKIT_*`. New settings live in `%APPDATA%/PheebKit`; private downloads use `%LOCALAPPDATA%/PheebKit/tools`. An isolated compatibility layer reuses existing data and old overrides without deleting files. See [namespace migration and compatibility](docs/compatibility.md). Third-party version, copyright and filename output remains unchanged.
 
 ## Development and verification
 
@@ -58,7 +58,7 @@ npm --prefix frontend run format:check
 ./scripts/build-windows.ps1
 ```
 
-Real-media tests require verified FFmpeg tools and `KOMPEG_INTEGRATION=1`. Packaging checks source and final-binary vulnerabilities, frontend quality and clean sources. Installer acceptance checks install/reinstall/uninstall, running guards, digests and user-data preservation. Hosted Windows Server checks do not establish Windows 10/11 client UI acceptance. [Verification steps](docs/release-acceptance.md) · [Windows distribution](docs/windows-distribution.md)
+Real-media tests require verified FFmpeg tools and `PHEEBKIT_INTEGRATION=1`. Packaging checks source and final-binary vulnerabilities, frontend quality and clean sources. Installer acceptance checks install/reinstall/uninstall, running guards, digests and user-data preservation. Hosted Windows Server checks do not establish Windows 10/11 client UI acceptance. [Verification steps](docs/release-acceptance.md) · [Windows distribution](docs/windows-distribution.md)
 
 Key directories: `internal/core` defines media/projects/plans; `internal/compiler` validates and compiles arguments; `internal/runner/windows` manages actual processes; `internal/app` provides the native service boundary; `frontend` supplies the interface. [Architecture](docs/architecture.md) · [Project format](docs/project-format.md) · [UI design](docs/ui-design.md)
 

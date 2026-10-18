@@ -1,6 +1,7 @@
 param([string]$PreviousReleaseDirectory)
 
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'legacy.ps1')
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows) { throw 'Installer verification requires native Windows.' }
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -17,9 +18,11 @@ $toolsRoot = [IO.Path]::GetFullPath((Join-Path $workspace '.tools')) + [IO.Path]
 if (-not [IO.Path]::GetFullPath($root).StartsWith($toolsRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Test paths must stay inside the workspace tools directory' }
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 $configHashes = @{}
-foreach ($name in @('ffmpeg.json', 'history.json', 'preferences.json', 'editor.json')) {
-    $path = Join-Path $env:APPDATA "kompeg/$name"
-    $configHashes[$path] = if (Test-Path -LiteralPath $path) { (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash } else { '' }
+foreach ($directory in @('PheebKit', $PheebKitLegacyConfigDirectory)) {
+    foreach ($name in @('ffmpeg.json', 'history.json', 'preferences.json', 'editor.json')) {
+        $path = Join-Path $env:APPDATA "$directory/$name"
+        $configHashes[$path] = if (Test-Path -LiteralPath $path) { (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash } else { '' }
+    }
 }
 
 function Run-Hidden([string]$Path, [string[]]$Arguments) {
@@ -74,13 +77,17 @@ try {
         if ((Get-FileHash -LiteralPath $priorBinary).Hash -ne (Get-FileHash -LiteralPath (Join-Path $installed 'PheebKit.exe')).Hash) { throw 'Previous installation payload mismatch' }
         'retain across actual version upgrade' | Set-Content -LiteralPath (Join-Path $installed 'keep-upgrade-file.txt')
     }
+    $guardIndex = 0
     $beforeBlocked = if (Test-Path -LiteralPath (Join-Path $installed 'PheebKit.exe')) { (Get-FileHash -LiteralPath (Join-Path $installed 'PheebKit.exe')).Hash } else { '' }
-    $mutex = [Threading.Mutex]::new($false, 'Local\kompeg-application-running')
-    try {
-        $blocked = Run-Hidden $setup ($arguments + @('/LOG="' + (Join-Path $root 'blocked-install.log') + '"'))
-        $afterBlocked = if (Test-Path -LiteralPath (Join-Path $installed 'PheebKit.exe')) { (Get-FileHash -LiteralPath (Join-Path $installed 'PheebKit.exe')).Hash } else { '' }
-        if ($blocked -eq 0 -or $beforeBlocked -ne $afterBlocked) { throw 'Installer failed to respect running-application guard' }
-    } finally { $mutex.Dispose() }
+    foreach ($runningMutex in @('Local\PheebKit-application-running', $PheebKitLegacyRunningMutex)) {
+        $mutex = [Threading.Mutex]::new($false, $runningMutex)
+        try {
+            $blocked = Run-Hidden $setup ($arguments + @('/LOG="' + (Join-Path $root ('blocked-install-' + $guardIndex + '.log')) + '"'))
+            $afterBlocked = if (Test-Path -LiteralPath (Join-Path $installed 'PheebKit.exe')) { (Get-FileHash -LiteralPath (Join-Path $installed 'PheebKit.exe')).Hash } else { '' }
+            if ($blocked -eq 0 -or $beforeBlocked -ne $afterBlocked) { throw 'Installer failed to respect running-application guard' }
+        } finally { $mutex.Dispose() }
+        $guardIndex++
+    }
     $first = Run-Hidden $setup ($arguments + @('/LOG="' + (Join-Path $root 'install.log') + '"'))
     if ($first -ne 0) { throw "Installation failed: $first" }
     $registration = Get-ItemProperty -LiteralPath $registryPath
@@ -98,11 +105,13 @@ try {
     'user-owned data; retain during reinstall and uninstall' | Set-Content -LiteralPath (Join-Path $installed 'keep-user-file.txt')
     $second = Run-Hidden $setup ($arguments + @('/LOG="' + (Join-Path $root 'reinstall.log') + '"'))
     if ($second -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $installed 'keep-user-file.txt'))) { throw 'Reinstall failed or removed user-owned files' }
-    $mutex = [Threading.Mutex]::new($false, 'Local\kompeg-application-running')
-    try {
-        $blocked = Run-Hidden $uninstaller @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
-        if ($blocked -eq 0 -or -not (Test-Path -LiteralPath (Join-Path $installed 'PheebKit.exe'))) { throw 'Uninstaller failed to respect running-application guard' }
-    } finally { $mutex.Dispose() }
+    foreach ($runningMutex in @('Local\PheebKit-application-running', $PheebKitLegacyRunningMutex)) {
+        $mutex = [Threading.Mutex]::new($false, $runningMutex)
+        try {
+            $blocked = Run-Hidden $uninstaller @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
+            if ($blocked -eq 0 -or -not (Test-Path -LiteralPath (Join-Path $installed 'PheebKit.exe'))) { throw 'Uninstaller failed to respect running-application guard' }
+        } finally { $mutex.Dispose() }
+    }
     Remove-TestInstallation
     if ((Test-Path -LiteralPath $registryPath) -or (Test-Path -LiteralPath (Join-Path $installed 'PheebKit.exe'))) { throw 'Uninstall left application or uninstall registration behind' }
     if (-not (Test-Path -LiteralPath (Join-Path $installed 'keep-user-file.txt'))) { throw 'Uninstall removed user-owned files' }

@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/sourcefile"
 )
 
 func TestMediaPreviewRangeAndAccessBoundary(t *testing.T) {
@@ -123,8 +123,8 @@ func TestVideoRangesStayBoundedForWindowsResponseBuffer(t *testing.T) {
 }
 
 func TestRealVideoPositionFrames(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1")
 	}
 	service := NewService()
 	defer service.Close()

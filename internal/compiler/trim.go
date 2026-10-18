@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func outputDuration(trim *core.TimeRange, total float64) (float64, error) {

@@ -1,6 +1,6 @@
 package presets
 
-import "kompeg/internal/core"
+import "pheebkit/internal/core"
 
 func Builtin() []core.Preset {
 	balanced := core.DefaultSettings()

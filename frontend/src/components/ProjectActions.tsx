@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import { API } from "../bridge";
 import type { Job, Project } from "../bridge";
@@ -54,9 +55,9 @@ export function ProjectActions({
   return (
     <section className="surface settings-card project-actions">
       <div className="section-title">
-        <h2>项目与试压</h2>
+        <h2>{t("项目与试压")}</h2>
         <span className="subtle-label" role="status">
-          {dirty ? "未保存修改" : "可继续编辑"}
+          {t(dirty ? "未保存修改" : "可继续编辑")}
         </span>
       </div>
       <div className="action-row">
@@ -65,14 +66,14 @@ export function ProjectActions({
           disabled={busy || !connected}
           onClick={() => void perform("save")}
         >
-          保存项目
+          {t("保存项目")}
         </button>
         <button
           className="button text"
           disabled={busy || !connected}
           onClick={() => void perform("load")}
         >
-          打开项目
+          {t("打开项目")}
         </button>
       </div>
       {autosaveMessage && (
@@ -80,17 +81,19 @@ export function ProjectActions({
           className={autosaveError ? "inline-error" : "field-hint"}
           role={autosaveError ? "alert" : "status"}
         >
-          {autosaveMessage}
+          {t(autosaveMessage)}
         </p>
       )}
       <p className="field-hint">
-        项目保存当前文件、轨道、剪辑范围和全部设置，打开后重新检查源文件，由你确认执行。
+        {t(
+          "项目保存当前文件、轨道、剪辑范围和全部设置，打开后重新检查源文件，由你确认执行。",
+        )}
       </p>
       {operationOf(project.settings) === "compress" && (
         <>
           <div className="saved-settings-row">
             <MaterialSelect
-              label="样片时长"
+              label={t("样片时长")}
               editable
               value={seconds}
               options={Array.from({ length: 30 }, (_, index) => ({
@@ -104,19 +107,19 @@ export function ProjectActions({
               disabled={busy || !connected || !project.output.uri}
               onClick={() => void perform("sample")}
             >
-              {busy ? "处理中…" : "生成样片"}
+              {t(busy ? "处理中…" : "生成样片")}
             </button>
           </div>
           <p className="field-hint">
-            从当前剪辑起点（多片段使用列表第一段，默认开头）试压，最长不超过该段范围。样片保存在输出文件夹，完成后可在队列比较画面；为准确截取，Copy
-            音频会在样片中改为
-            AAC。声音处理会应用到样片，但整片淡入淡出不会应用；动态归一化可能与整片不同。样片体积和速度只供参考。
+            {t(
+              "从当前剪辑起点（多片段使用列表第一段，默认开头）试压，最长不超过该段范围。样片保存在输出文件夹，完成后可在队列比较画面；为准确截取，Copy 音频会在样片中改为 AAC。声音处理会应用到样片，但整片淡入淡出不会应用；动态归一化可能与整片不同。样片体积和速度只供参考。",
+            )}
           </p>
         </>
       )}
       {message && (
         <p className="field-hint" role="status">
-          {message}
+          {t(message)}
         </p>
       )}
     </section>

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { MaterialSelect } from "./MaterialSelect";
 import { formatTimecode } from "../trim";
 import { chooseTimePart, timeOptions, timeParts } from "../timePicker";
@@ -21,16 +22,19 @@ export function TimePicker({
   return (
     <fieldset className="time-picker">
       <legend>
-        {label}
-        <span>{formatTimecode(value)}</span>
+        {t(label)}
+        <span>{t(formatTimecode(value))}</span>
       </legend>
       <div className="time-picker-units">
         {(["hours", "minutes", "seconds"] as const).map((unit, index) => (
           <MaterialSelect
             key={unit}
             editable
-            label={["时", "分", "秒"][index]}
-            accessibleLabel={`${label} · ${["时", "分", "秒"][index]}`}
+            label={t(["时", "分", "秒"][index])}
+            accessibleLabel={t("{{0}} · {{1}}", [
+              t(label),
+              t(["时", "分", "秒"][index]),
+            ])}
             value={String(parts[unit])}
             options={timeOptions(value, unit, max)}
             onChange={(part) =>
@@ -50,12 +54,12 @@ export function TimePicker({
           onClick={() =>
             onChange(Math.max(0, Math.round(value * 1000) - 100) / 1000)
           }
-          aria-label={`${label}减少 0.1 秒`}
+          aria-label={t("{{0}}减少 0.1 秒", [t(label)])}
         >
-          − 0.1 秒
+          {t("− 0.1 秒")}
         </button>
         <span className="field-hint">
-          毫秒 {String(parts.milliseconds).padStart(3, "0")}
+          {t("毫秒")} {t(String(parts.milliseconds).padStart(3, "0"))}
         </span>
         <button
           type="button"
@@ -67,9 +71,9 @@ export function TimePicker({
                 1000,
             )
           }
-          aria-label={`${label}增加 0.1 秒`}
+          aria-label={t("{{0}}增加 0.1 秒", [t(label)])}
         >
-          + 0.1 秒
+          {t("+ 0.1 秒")}
         </button>
       </div>
     </fieldset>

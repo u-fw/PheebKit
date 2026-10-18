@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import type { ExecutionPlan } from "../bridge";
 import { errorMessage } from "../format";
@@ -23,11 +24,11 @@ export function CommandPreview({
     }
   }
   return (
-    <section className="command-card surface" aria-label="执行参数预览">
+    <section className="command-card surface" aria-label={t("执行参数预览")}>
       <div className="section-title">
         <h3>
           <Icon name="terminal" />
-          执行参数
+          {t("执行参数")}
         </h3>
         <button
           className="button text compact-button"
@@ -35,31 +36,34 @@ export function CommandPreview({
           onClick={() => void copy()}
         >
           <Icon name="copy" />
-          复制
+          {t("复制")}
         </button>
       </div>
-      <p>根据当前设置生成，用于核对实际处理方式。</p>
+      <p>{t("根据当前设置生成，用于核对实际处理方式。")}</p>
       {plan?.subtitleAsset && (
         <p className="field-hint">
-          执行前会在临时目录将所选文字字幕转换为
-          ASS；下方命令使用该临时目录中的固定字幕文件，不能单独复制运行。
+          {t(
+            "执行前会在临时目录将所选文字字幕转换为 ASS；下方命令使用该临时目录中的固定字幕文件，不能单独复制运行。",
+          )}
         </p>
       )}
       <pre aria-live="polite">
-        {loading
-          ? "正在生成执行计划…"
-          : plan?.preview ||
-            error ||
-            "导入媒体并选择输出文件后，执行参数会显示在这里。"}
+        {t(
+          loading
+            ? "正在生成执行计划…"
+            : plan?.preview ||
+                error ||
+                "导入媒体并选择输出文件后，执行参数会显示在这里。",
+        )}
       </pre>
       {plan && (
         <span className="subtle-label">
-          {plan.args.length} 个独立参数 · 本地执行
+          {plan.args.length} {t("个独立参数 · 本地执行")}
         </span>
       )}
       {copyStatus && (
         <span className="copy-status" role="status">
-          {copyStatus}
+          {t(copyStatus)}
         </span>
       )}
     </section>

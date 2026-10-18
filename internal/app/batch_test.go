@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"kompeg/internal/core"
-	"kompeg/internal/jobs"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/jobs"
+	"pheebkit/internal/sourcefile"
 )
 
 func batchService(t *testing.T) (*Service, []core.Project) {

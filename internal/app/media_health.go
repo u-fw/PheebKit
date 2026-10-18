@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func cloneHealth(r core.MediaHealth) core.MediaHealth {

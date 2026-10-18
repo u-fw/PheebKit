@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"kompeg/internal/capabilities"
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
+	"pheebkit/internal/capabilities"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
 )
 
 func (r *Runner) qualifyVideoEncoders(ctx context.Context, encoders []core.Encoder) []core.VideoEncoder {

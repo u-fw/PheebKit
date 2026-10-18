@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"kompeg/internal/capabilities"
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
+	"pheebkit/internal/capabilities"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
 )
 
 var textSubtitles = map[string]bool{"subrip": true, "srt": true, "ass": true, "ssa": true, "webvtt": true, "mov_text": true, "text": true}

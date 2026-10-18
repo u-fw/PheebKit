@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 	"sync"
 )
 

@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func recoverySettings() core.Settings {

@@ -18,7 +18,7 @@ The installer and ZIP contain identical `PheebKit.exe`, project license, generat
 
 Windows numeric resource revisions map alpha.N to N, beta.N to 10000+N, rc.N to 20000+N and final to 65535 (N <= 9999). This orders prereleases below their final release. Display versions retain the complete SemVer string.
 
-The installer AppId is permanently `{9D8FAD06-8029-4A58-9497-96C7DA878C63}` across versions. Existing installations reuse their directory and uninstall registration. Application-running mutex guards preserve support for multiple windows and prevent installation/uninstallation while a window is alive. The installer does not forcibly close media processing. Files not owned by the installer and AppData settings are retained on uninstall.
+The installer AppId is permanently `{9D8FAD06-8029-4A58-9497-96C7DA878C63}` across versions. Existing installations reuse their directory and uninstall registration. Both current and legacy application-running mutex guards preserve support for multiple windows and prevent installation/uninstallation while a window is alive. The installer does not forcibly close media processing. Files not owned by the installer and AppData settings are retained on uninstall.
 
 ## Build and package locally
 
@@ -34,7 +34,7 @@ node scripts/sync-version.mjs
 ./scripts/verify-windows-release.ps1
 ```
 
-Compiler provisioning downloads the versioned [official Inno release](https://github.com/jrsoftware/issrc/releases/tag/is-7_1_0), verifies its pinned asset SHA-256 and valid Authenticode publisher (Pyrsys B.V.), then uses the upstream `/PORTABLE=1` mode under `.tools`. No compiler file association or system installation is required. Alternatively pass `-InnoCompiler <absolute-path>` or `KOMPEG_ISCC`.
+Compiler provisioning downloads the versioned [official Inno release](https://github.com/jrsoftware/issrc/releases/tag/is-7_1_0), verifies its pinned asset SHA-256 and valid Authenticode publisher (Pyrsys B.V.), then uses the upstream `/PORTABLE=1` mode under `.tools`. No compiler file association or system installation is required. Alternatively pass `-InnoCompiler <absolute-path>` or `PHEEBKIT_ISCC`.
 
 Packaging requires clean committed sources, builds real frontend assets before Go package loading, runs Go tests/vet, frontend tests/typecheck/lint/format and version tests, then performs one production Wails build. It checks the EXE/notes version, generates notices for actual Go/production frontend dependencies, packages both deliverables and computes SHA-256. Existing version output directories are never overwritten. Generated packages and tools are ignored by Git. No credentials, repository URL or publishing identity is invented.
 
@@ -42,7 +42,7 @@ The installer installs per user to `%LOCALAPPDATA%/Programs/PheebKit`, supports 
 
 ## CI and publication
 
-`.github/workflows/windows.yml` runs Windows verification/packaging for PRs, main, version tags and manual dispatch. Official actions are pinned to verified release commit SHAs. Tagged builds must match `VERSION`. Candidate files are uploaded as workflow artifacts; repository permissions are read-only and no GitHub Release is created/published. Hosted execution remains unverified until run in the owner's repository.
+`.github/workflows/windows.yml` runs Windows verification/packaging for PRs, main, version tags and manual dispatch. Official actions are pinned to verified release commit SHAs. Tagged builds must match `VERSION`. Candidate files are uploaded as workflow artifacts; repository permissions are read-only and no GitHub Release is created/published. Hosted rc.2 main/tag verification passed in the public repository; each later candidate requires its own matching-revision run.
 
 CI downloads the publisher-pinned test FFmpeg via `scripts/setup-test-ffmpeg.ps1` and runs real media tests. For cross-version checks, manual dispatch accepts `upgrade_from_tag`; `scripts/prepare-upgrade-baseline.ps1` builds that reviewed local tag in an isolated worktree, then `verify-windows-release.ps1 -PreviousReleaseDirectory <candidate-directory>` installs it before the new candidate. Default lifecycle checks do not by themselves establish cross-version upgrade compatibility. See [release acceptance](release-acceptance.md) for commands and gates.
 
@@ -60,7 +60,7 @@ Beta.9 (2026-10-15) was built from clean committed source `ce1570bfb529d97e72c2c
 
 Beta.9 setup SHA-256: `57306af0e2d2d163687cff7aa405ecc45732b919f8d7aea18bd2bab7290b3318`; standalone ZIP: `7f04916d0c08f999eed302fc82f69837f25eafeb32363577553f0aa58cee5c61`. The version's artifacts are retained unchanged; no remote repository or hosted release was created.
 
-Beta.8 (2026-10-15) production packages were built from clean committed source `5d46ea2b2f84a591d25d25e02cc5f55f99d42fe5`; the EXE reports Go 1.27.2 and `vcs.modified=false`. The release gate passed real-media Go tests with `KOMPEG_INTEGRATION=1`, vet, 109 frontend tests/typecheck/lint/format, three version tests, source/binary govulncheck and npm audit (no known findings). Actual beta.7 package → beta.8 upgrade, exact installer/ZIP payload checks, checksum/version checks, reinstall/uninstall, mutex refusal and preservation of configuration/user sentinels passed. Logs remain in `.tools/installer-test-ea10d1ad12a244ee9b2ec850bf8fa5c7`. No app window was launched. Native subtitle picking, the new flows on GPU, installed-window interaction, clean Windows 10/11 and hosted CI remain separate acceptance items. See [feature evidence](ffmpeg-expansion.md).
+Beta.8 (2026-10-15) production packages were built from clean committed source `5d46ea2b2f84a591d25d25e02cc5f55f99d42fe5`; the EXE reports Go 1.27.2 and `vcs.modified=false`. The release gate passed real-media Go tests with `PHEEBKIT_INTEGRATION=1`, vet, 109 frontend tests/typecheck/lint/format, three version tests, source/binary govulncheck and npm audit (no known findings). Actual beta.7 package → beta.8 upgrade, exact installer/ZIP payload checks, checksum/version checks, reinstall/uninstall, mutex refusal and preservation of configuration/user sentinels passed. Logs remain in `.tools/installer-test-ea10d1ad12a244ee9b2ec850bf8fa5c7`. No app window was launched. Native subtitle picking, the new flows on GPU, installed-window interaction, clean Windows 10/11 and hosted CI remain separate acceptance items. See [feature evidence](ffmpeg-expansion.md).
 
 The first beta.8 release attempt exposed equal Windows timestamps making diagnostic preview FIFO eviction nondeterministic; it stopped before producing a final version directory. The cache now uses a monotonic sequence for FIFO ordering and timestamps only for expiration. Equal-timestamp regression and 30 repeated diagnostic test runs passed before the successful rebuild. No failed candidate was published or overwritten.
 
@@ -77,3 +77,5 @@ This is not a clean-machine or Windows 10 test. The upgrade baseline is a locall
 ## Existing FFmpeg safeguards
 
 One-click setup is for incomplete environments. A working FFmpeg/ffprobe pair disables download with a visible explanation, and native entry points repeat actual version checks before downloading. Explicit FFmpeg-related variables block downloads and configuration writes until corrected/removed and the app restarted. Ordinary PATH installations can still be deliberately switched through local-path selection. Existing active-job and duplicate-download guards remain in place.
+
+rc.3 uses current PheebKit public names and tests both current/legacy running guards plus hashes for both configuration roots. See [compatibility](compatibility.md).

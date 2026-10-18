@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestThumbnailConcurrencyAndCancellation(t *testing.T) {
@@ -100,8 +100,8 @@ func TestThumbnailRejectsInvalidAndOversizedData(t *testing.T) {
 }
 
 func TestRealFFmpegThumbnailAndCover(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to run real FFmpeg integration")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to run real FFmpeg integration")
 	}
 	environment := discoverEnvironment(binaryConfig{})
 	directory := t.TempDir()

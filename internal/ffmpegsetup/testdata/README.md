@@ -1,6 +1,6 @@
 # Archive fixtures
 
-These archives were generated for kompeg and contain four plain-text files:
+These archives were generated for PheebKit and contain four plain-text files:
 
 - `release/bin/ffmpeg.exe`: `binary`
 - `release/bin/ffprobe.exe`: `probe`

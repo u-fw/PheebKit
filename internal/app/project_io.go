@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	"kompeg/internal/localstore"
-	projectfile "kompeg/internal/project"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	"pheebkit/internal/localstore"
+	projectfile "pheebkit/internal/project"
 )
 
 // Portable presets omit settings tied to a particular source. Shared files are

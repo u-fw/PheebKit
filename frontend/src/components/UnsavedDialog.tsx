@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import { errorMessage } from "../format";
 export function UnsavedDialog({
@@ -38,11 +39,11 @@ export function UnsavedDialog({
         if (!busy) dismiss();
       }}
     >
-      <h2 id="unsaved-title">当前项目有未保存的修改</h2>
-      <p>继续会替换当前编辑。可以先保存项目，或放弃修改后继续。</p>
+      <h2 id="unsaved-title">{t("当前项目有未保存的修改")}</h2>
+      <p>{t("继续会替换当前编辑。可以先保存项目，或放弃修改后继续。")}</p>
       {error && (
         <p className="inline-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
       <div className="action-row">
@@ -52,21 +53,21 @@ export function UnsavedDialog({
           disabled={busy}
           onClick={dismiss}
         >
-          继续编辑
+          {t("继续编辑")}
         </button>
         <button
           className="button text"
           disabled={busy}
           onClick={() => void proceed(false)}
         >
-          放弃并继续
+          {t("放弃并继续")}
         </button>
         <button
           className="button primary"
           disabled={busy}
           onClick={() => void proceed(true)}
         >
-          {busy ? "处理中…" : "保存项目并继续"}
+          {t(busy ? "处理中…" : "保存项目并继续")}
         </button>
       </div>
     </dialog>

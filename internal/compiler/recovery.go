@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func validateRecovery(s core.Settings) error {

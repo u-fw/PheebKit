@@ -17,8 +17,10 @@ npm --prefix frontend run format:check
 
 修改 Go 服务接口后，运行 `wails generate module` 和 `node scripts/normalize-bindings.mjs`，提交生成的 `frontend/wailsjs`。构建会自动规范生成文件的行尾空白，不手改类型。`VERSION` 是版本来源，运行 `node scripts/sync-version.mjs` 同步前端、Windows 元信息及 Go 诊断版本。
 
-真实 FFmpeg 检查使用自备环境，或在原生 Windows x64 上运行 `scripts/setup-test-ffmpeg.ps1`。该脚本下载目录内已固定散列的发布者工具，仅放入 `.tools`，不修改系统 PATH 或发布包。随后设置 `KOMPEG_INTEGRATION=1` 并运行 Go 测试。强制终止恢复测试只结束它自己创建的无界面测试子进程。
+真实 FFmpeg 检查使用自备环境，或在原生 Windows x64 上运行 `scripts/setup-test-ffmpeg.ps1`。该脚本下载目录内已固定散列的发布者工具，仅放入 `.tools`，不修改系统 PATH 或发布包。随后设置 `PHEEBKIT_INTEGRATION=1` 并运行 Go 测试。强制终止恢复测试只结束它自己创建的无界面测试子进程。
 
 提交应包含必要回归检查、用户可见变化和实际验证范围。不要提交二进制、媒体、AppData、个人路径、凭据或诊断样本。公开反馈前检查所有附件。项目/草稿/配置格式变动需说明兼容性，不能静默丢弃旧数据。
 
 发布检查见 `docs/release-acceptance.md`。本地打包要求已提交的干净源码；创建候选包不代表已完成干净机器、原生界面或托管 CI 验收。发布、推送、签名和公开漏洞披露由维护者明确决定。
+
+界面文案使用共享 `locales/en.json` 和显示边界的 `t()`，保持参数占位符一致，不翻译用户文件名、路径、预设名及 FFmpeg 原始输出。`npm --prefix frontend test` 会执行翻译覆盖和旧命名隔离检查；新公开变量只使用 `PHEEBKIT_*`。详见 [i18n](docs/i18n.md) 与[兼容约定](docs/compatibility.md)。

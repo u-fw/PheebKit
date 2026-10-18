@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func finiteBetween(v, lo, hi float64) bool {

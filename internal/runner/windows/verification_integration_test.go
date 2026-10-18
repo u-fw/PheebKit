@@ -8,17 +8,17 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
 )
 
 func TestIntegrationPostflightUtilityOutputs(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	runner := New(os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE"))
+	runner := New(os.Getenv("PHEEBKIT_FFMPEG"), os.Getenv("PHEEBKIT_FFPROBE"))
 	dir := t.TempDir()
 	subtitle := filepath.Join(dir, "input.srt")
 	if err := os.WriteFile(subtitle, []byte("1\n00:00:00,100 --> 00:00:01,500\nPostflight 字幕\n"), 0600); err != nil {

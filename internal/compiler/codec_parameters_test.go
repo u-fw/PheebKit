@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestCompileRejectsCodecFileAccessAndImplicitPassFiles(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 type document struct {

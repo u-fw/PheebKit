@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestSaveSizeBoundaryIncludesNewlineAndPreservesOldFile(t *testing.T) {

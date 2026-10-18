@@ -10,9 +10,9 @@ import (
 	"strings"
 	"unicode"
 
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/sourcefile"
 )
 
 func validateEditing(s core.Settings) error {

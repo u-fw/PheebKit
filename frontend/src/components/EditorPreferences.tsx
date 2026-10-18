@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import type { EditorPreferences as Preferences } from "../bridge";
 import { errorMessage } from "../format";
@@ -49,25 +50,25 @@ export function EditorPreferences({
   return (
     <section className="surface preferences-card">
       <div className="section-title">
-        <h2>编辑与恢复</h2>
-        <span className="subtle-label">仅保存在本机</span>
+        <h2>{t("编辑与恢复")}</h2>
+        <span className="subtle-label">{t("仅保存在本机")}</span>
       </div>
       <label className="preference-switch">
         <span className="preference-switch-copy">
-          <span>自动保存当前项目草稿</span>
-          <span className="field-hint">保存编辑设置后生效</span>
+          <span>{t("自动保存当前项目草稿")}</span>
+          <span className="field-hint">{t("保存编辑设置后生效")}</span>
         </span>
         <span className="preference-switch-control">
           <input
             type="checkbox"
             role="switch"
-            aria-label="自动保存当前项目草稿"
+            aria-label={t("自动保存当前项目草稿")}
             checked={form.autosave}
             disabled={busy}
             onChange={(e) => setForm({ ...form, autosave: e.target.checked })}
           />
           <span className="preference-switch-state" aria-hidden="true">
-            {form.autosave ? "已开启" : "已关闭"}
+            {t(form.autosave ? "已开启" : "已关闭")}
           </span>
           <span className="preference-switch-track" aria-hidden="true" />
         </span>
@@ -75,7 +76,7 @@ export function EditorPreferences({
       <div className="field-grid">
         {fields.map((f) => (
           <label className="field-label" key={f.key}>
-            {f.label}
+            {t(f.label)}
             <input
               type="number"
               min={f.min}
@@ -87,25 +88,26 @@ export function EditorPreferences({
               }
             />
             <span className="field-hint">
-              范围 {f.min}–{f.max}
+              {t("范围")} {f.min}–{f.max}
             </span>
           </label>
         ))}
       </div>
       <p className="field-hint">
-        草稿不会覆盖 .ffproject
-        或自动开始任务；保留源文件路径和处理设置。关闭自动保存会保留已有草稿。缩短保留时间或数量会在保存设置时清理过期/较旧的历史草稿，活动窗口的草稿会保留。
+        {t(
+          "草稿不会覆盖 .ffproject 或自动开始任务；保留源文件路径和处理设置。关闭自动保存会保留已有草稿。缩短保留时间或数量会在保存设置时清理过期/较旧的历史草稿，活动窗口的草稿会保留。",
+        )}
       </p>
       <button
         className="button primary"
         disabled={busy || invalid}
         onClick={() => void submit()}
       >
-        {busy ? "保存中…" : "保存编辑设置"}
+        {t(busy ? "保存中…" : "保存编辑设置")}
       </button>
       {message && (
         <p className="field-hint" role="status">
-          {message}
+          {t(message)}
         </p>
       )}
     </section>

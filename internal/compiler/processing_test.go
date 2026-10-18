@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func trackFixture(t *testing.T) (core.Project, core.Media, core.Capabilities) {

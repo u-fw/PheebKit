@@ -1,3 +1,4 @@
+import { t, getLanguage } from "../i18n";
 import type { Media } from "../bridge";
 import { formatBitrate, formatBytes, formatDuration } from "../format";
 import { useThumbnail } from "../hooks/useThumbnail";
@@ -32,7 +33,7 @@ export function MediaCard({
   return (
     <article
       className={`media-card surface ${compact ? "compact" : ""}`}
-      aria-label="媒体信息"
+      aria-label={t("媒体信息")}
     >
       <div
         className={`media-visual ${cover.thumbnail ? "has-thumbnail" : ""}`}
@@ -52,13 +53,20 @@ export function MediaCard({
           </div>
         )}
         <span>
-          {format}
-          {cover.loading ? " · 读取封面…" : cover.failed ? " · 无可用封面" : ""}
+          {t(format)}{" "}
+          {t(
+            cover.loading
+              ? " · 读取封面…"
+              : cover.failed
+                ? " · 无可用封面"
+                : "",
+          )}
         </span>
       </div>
       <div className="media-details">
         <div className="section-eyebrow">
-          源媒体 <span className="tiny-dot" /> 已分析
+          {t("源媒体")}
+          <span className="tiny-dot" /> {t("已分析")}
         </div>
         <h2 title={media.name}>{media.name}</h2>
         <div className="media-tags">
@@ -69,65 +77,90 @@ export function MediaCard({
           )}
           {video && (
             <span className="chip">
-              {video.codecName.toUpperCase()}
-              {video.bitDepth ? ` · ${video.bitDepth}-bit` : ""}
+              {video.codecName.toUpperCase()}{" "}
+              {t(video.bitDepth ? ` · ${video.bitDepth}-bit` : "")}
             </span>
           )}
           {video && (
-            <span className="chip" title={`${video.frameRate} FPS`}>
-              {video.frameRate > 0
-                ? new Intl.NumberFormat("zh-CN", {
-                    maximumFractionDigits: 2,
-                  }).format(video.frameRate)
-                : "未知"}{" "}
+            <span className="chip" title={t(`${video.frameRate} FPS`)}>
+              {t(
+                video.frameRate > 0
+                  ? new Intl.NumberFormat(getLanguage(), {
+                      maximumFractionDigits: 2,
+                    }).format(video.frameRate)
+                  : "未知",
+              )}
+              {t(" ")}
               FPS
             </span>
           )}
-          {video?.hdr && <span className="chip accent-chip">{video.hdr}</span>}
+          {video?.hdr && (
+            <span className="chip accent-chip">{t(video.hdr)}</span>
+          )}
         </div>
         <dl className="media-metrics">
           <div>
-            <dt>文件大小</dt>
-            <dd>{formatBytes(media.sizeBytes)}</dd>
+            <dt>{t("文件大小")}</dt>
+            <dd>{t(formatBytes(media.sizeBytes))}</dd>
           </div>
           <div>
-            <dt>时长</dt>
-            <dd>{formatDuration(media.durationSeconds)}</dd>
+            <dt>{t("时长")}</dt>
+            <dd>{t(formatDuration(media.durationSeconds))}</dd>
           </div>
           <div>
-            <dt>平均码率</dt>
-            <dd>{formatBitrate(media.bitrate)}</dd>
+            <dt>{t("平均码率")}</dt>
+            <dd>{t(formatBitrate(media.bitrate))}</dd>
           </div>
         </dl>
         {!compact && (
           <div className="stream-list">
             <div>
               <Icon name="video" />
-              <span>视频 · {videos.length} 轨</span>
+              <span>
+                {t("视频 ·")} {videos.length} {t("轨")}
+              </span>
               <span
                 title={
                   video
-                    ? `像素格式：${video.pixelFormat || "未标注"}；色彩矩阵：${video.colorSpace || "未标注"}；传递特性：${video.colorTransfer || "未标注"}；原色：${video.colorPrimaries || "未标注"}`
+                    ? t(
+                        "像素格式：{{0}}；色彩矩阵：{{1}}；传递特性：{{2}}；原色：{{3}}",
+                        [
+                          video.pixelFormat || t("未标注"),
+                          video.colorSpace || t("未标注"),
+                          video.colorTransfer || t("未标注"),
+                          video.colorPrimaries || t("未标注"),
+                        ],
+                      )
                     : undefined
                 }
               >
-                {video ? videoLabel(video) : "无视频轨"}
+                {t(video ? videoLabel(video) : "无视频轨")}
               </span>
             </div>
             <div>
               <Icon name="audio" />
-              <span>音频 · {audio.length} 轨</span>
               <span>
-                {audio.length ? audio.map(streamLabel).join(" / ") : "无音频轨"}
+                {t("音频 ·")} {audio.length} {t("轨")}
+              </span>
+              <span>
+                {t(
+                  audio.length
+                    ? audio.map(streamLabel).join(" / ")
+                    : "无音频轨",
+                )}
               </span>
             </div>
             <div>
               <Icon name="subtitle" />
-              <span>字幕 · {subtitles.length} 轨</span>
               <span>
-                {subtitles.length
-                  ? subtitles.map(streamLabel).join(" / ")
-                  : "未检测到内嵌字幕"}
+                {t("字幕 ·")} {subtitles.length} {t("轨")}
+              </span>
+              <span>
+                {t(
+                  subtitles.length
+                    ? subtitles.map(streamLabel).join(" / ")
+                    : "未检测到内嵌字幕",
+                )}
               </span>
             </div>
           </div>

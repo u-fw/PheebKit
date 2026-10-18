@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/sourcefile"
 )
 
 func TestSampleUsesDistinctBoundedRangeAndProportionalBudget(t *testing.T) {
@@ -68,8 +68,8 @@ func TestSampleUsesFirstOrderedSegmentAndFullBudget(t *testing.T) {
 }
 
 func TestRealSampleJobAndComparisonRejectChangedSource(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1")
 	}
 	t.Setenv("APPDATA", t.TempDir())
 	s := NewService()

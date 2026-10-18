@@ -13,18 +13,18 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/capabilities"
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
-	windowsrunner "kompeg/internal/runner/windows"
+	"pheebkit/internal/capabilities"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
+	windowsrunner "pheebkit/internal/runner/windows"
 )
 
 func TestIntegrationCorruptRecovery(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
 		t.Skip("real FFmpeg opt-in")
 	}
-	ffmpeg, ffprobe := os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE")
+	ffmpeg, ffprobe := os.Getenv("PHEEBKIT_FFMPEG"), os.Getenv("PHEEBKIT_FFPROBE")
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	run := func(binary string, args ...string) []byte {

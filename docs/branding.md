@@ -4,7 +4,7 @@ The owner selected the Chinese name **菲比工具箱** and English brand **Phee
 
 `frontend/public/pheebkit.png` is the owner-supplied artwork, preserved byte-for-byte. Its SHA-256 is `163d1e2675600072a0399e0c06c22d0847333347ad3fc15c5e0aad4a7682e3fc`. The existing pinned Wails icon generator produces `build/windows/icon.ico` at 16, 32, 48, 64, 128 and 256 pixels. No new image service or dependency is used.
 
-Compatibility identities intentionally remain stable: the Go module/generated binding namespace, `KOMPEG_*` environment overrides, legacy AppData directories, theme-storage key, Windows manifest identity, installer AppId and application-running mutex. Existing configuration is read in place rather than copied/deleted. New installs use `%LOCALAPPDATA%/Programs/PheebKit`; Inno Setup reuses an existing installation path when registered under the same AppId. The previous kompeg artifacts are retained as historical candidates. The current application is `bin/PheebKit.exe`.
+Current public names use `pheebkit` / `PHEEBKIT_*`, including the Go module, build constants and Windows manifest. New installs use `%APPDATA%/PheebKit` and `%LOCALAPPDATA%/Programs/PheebKit`. Installer AppId and isolated legacy data/env/mutex aliases remain compatible. See [migration rules](compatibility.md) and [interface languages](i18n.md). The current application is `bin/PheebKit.exe`; older immutable artifacts remain historical evidence.
 
 The media summary labels YUV 4:2:0, bit depth and BT.709 in readable terms; full matrix/transfer/primaries values remain in the video's tooltip. `und`/missing track language is displayed as “语言未标注”, and absent subtitles as “未检测到内嵌字幕”. No claim is made about externally supplied subtitles or subtitles burned into the video.
 

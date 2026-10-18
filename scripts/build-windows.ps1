@@ -4,10 +4,11 @@ $ErrorActionPreference = 'Stop'
 if (-not $IsWindows) { throw 'Native Windows build requires PowerShell 7 on Windows.' }
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 Set-Location -LiteralPath $workspace
+. (Join-Path $PSScriptRoot 'legacy.ps1')
 $taskWailsVersion = wails version
 if ($LASTEXITCODE -ne 0 -or ($taskWailsVersion -join "`n") -notmatch 'v2\.17\.0\b') { throw 'Install the pinned stable Wails CLI: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0' }
 # Old v3 resources would duplicate icons/version resources in the new linker.
-$oldResource = Join-Path $workspace 'kompeg.syso'
+$oldResource = Join-Path $workspace $PheebKitLegacyResourceFilename
 if (Test-Path -LiteralPath $oldResource) {
     $archive = Join-Path $workspace '.tools'
     New-Item -ItemType Directory -Force -Path $archive | Out-Null
@@ -20,7 +21,7 @@ if ($LASTEXITCODE -ne 0 -or $taskRevision -notmatch '^[a-f0-9]{40}$') { throw 'C
 $taskDirty = git status --porcelain --untracked-files=normal
 if ($LASTEXITCODE -ne 0) { throw 'Cannot determine build source status' }
 $taskModified = if ($taskDirty) { 'true' } else { 'false' }
-$taskLinkerFlags = "-X kompeg/internal/buildinfo.Revision=$taskRevision -X kompeg/internal/buildinfo.Modified=$taskModified"
+$taskLinkerFlags = "-X pheebkit/internal/buildinfo.Revision=$taskRevision -X pheebkit/internal/buildinfo.Modified=$taskModified"
 wails build -trimpath -webview2 error -nosyncgomod -nocolour -ldflags $taskLinkerFlags
 if ($LASTEXITCODE -ne 0) { throw 'Wails production build failed' }
 New-Item -ItemType Directory -Force -Path (Join-Path $workspace 'bin') | Out-Null

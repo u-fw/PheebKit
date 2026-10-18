@@ -11,17 +11,17 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 // Execute the validated argument vector against the installed libraries. This
 // catches allowlist spelling/value mistakes that unit validation cannot find.
 func TestIntegrationSafeCodecParametersEncodeWithoutSideFiles(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
 	}
-	ffmpeg := integrationCodecTool(t, "KOMPEG_FFMPEG", "ffmpeg.exe")
-	ffprobe := integrationCodecTool(t, "KOMPEG_FFPROBE", "ffprobe.exe")
+	ffmpeg := integrationCodecTool(t, "PHEEBKIT_FFMPEG", "ffmpeg.exe")
+	ffprobe := integrationCodecTool(t, "PHEEBKIT_FFPROBE", "ffprobe.exe")
 	dir := t.TempDir()
 	input := filepath.Join(dir, "输入 sample.mkv")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

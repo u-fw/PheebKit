@@ -11,15 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
 )
 
 func TestIntegrationGPUDetectionAndQualifiedEncodeModes(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to execute GPU smoke trials and installed FFmpeg")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to execute GPU smoke trials and installed FFmpeg")
 	}
-	runner := New(os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE"))
+	runner := New(os.Getenv("PHEEBKIT_FFMPEG"), os.Getenv("PHEEBKIT_FFPROBE"))
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 	caps, err := runner.Capabilities(ctx)
@@ -29,7 +29,7 @@ func TestIntegrationGPUDetectionAndQualifiedEncodeModes(t *testing.T) {
 	for _, gpu := range caps.GPUs {
 		t.Logf("native adapter: %s (%s)", gpu.Name, gpu.Vendor)
 	}
-	if report := os.Getenv("KOMPEG_GPU_REPORT"); report != "" {
+	if report := os.Getenv("PHEEBKIT_GPU_REPORT"); report != "" {
 		data, err := json.MarshalIndent(caps, "", "  ")
 		if err != nil {
 			t.Fatal(err)

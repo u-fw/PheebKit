@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"kompeg/internal/core"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/core"
+	"pheebkit/internal/sourcefile"
 )
 
 var catalogFlags = map[string]string{"encoders": "-encoders", "decoders": "-decoders", "filters": "-filters", "muxers": "-muxers", "demuxers": "-demuxers", "protocols": "-protocols", "bsfs": "-bsfs", "pixel-formats": "-pix_fmts", "sample-formats": "-sample_fmts", "layouts": "-layouts", "colors": "-colors", "hardware": "-hwaccels", "devices": "-devices"}

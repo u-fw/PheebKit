@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import { API, type Media, type MediaHealth, type Settings } from "../bridge";
 import { errorMessage } from "../format";
@@ -92,24 +93,29 @@ export function MediaRecovery({
   return (
     <section className="surface settings-card media-recovery">
       <div className="section-title">
-        <h2>解码检查与恢复</h2>
-        <span className="subtle-label">生成新文件</span>
+        <h2>{t("解码检查与恢复")}</h2>
+        <span className="subtle-label">{t("生成新文件")}</span>
       </div>
       <p className="field-hint">
-        按选定窗口逐段检查，包含解码所需的参考帧。失败窗口可能包含正常画面，无法恢复已丢失的内容，也不能检出所有视觉异常。
+        {t(
+          "按选定窗口逐段检查，包含解码所需的参考帧。失败窗口可能包含正常画面，无法恢复已丢失的内容，也不能检出所有视觉异常。",
+        )}
       </p>
       <MaterialSelect
-        label="扫描窗口"
+        label={t("扫描窗口")}
         value={String(windowSeconds)}
         onChange={(value) => setWindowSeconds(Number(value))}
         disabled={active || pending}
         options={[1, 2, 5, 10, 30].map((value) => ({
           value: String(value),
-          label: `${value} 秒窗口${value === 5 ? "（默认）" : ""}`,
+          label: t("{{0}} 秒窗口{{1}}", [
+            value,
+            t(value === 5 ? "（默认）" : ""),
+          ]),
         }))}
       />
       <p className="field-hint">
-        窗口越小定位越细，但扫描更慢。最多 4320 个窗口、6 小时视频。
+        {t("窗口越小定位越细，但扫描更慢。最多 4320 个窗口、6 小时视频。")}
       </p>
       <div className="recovery-actions">
         <button
@@ -117,7 +123,7 @@ export function MediaRecovery({
           disabled={!connected || active || pending}
           onClick={() => void start()}
         >
-          {pending && !active ? "正在启动…" : "扫描当前视频"}
+          {t(pending && !active ? "正在启动…" : "扫描当前视频")}
         </button>
         {active && (
           <button
@@ -125,18 +131,18 @@ export function MediaRecovery({
             disabled={pending || report.state === "cancelling"}
             onClick={() => void cancel()}
           >
-            {report.state === "cancelling" ? "正在取消…" : "取消扫描"}
+            {t(report.state === "cancelling" ? "正在取消…" : "取消扫描")}
           </button>
         )}
       </div>
       {active && (
         <div role="status">
           <p>
-            {matches ? "正在检查当前视频" : "另一媒体正在扫描"} ·{" "}
+            {t(matches ? "正在检查当前视频" : "另一媒体正在扫描")} ·{t(" ")}
             {Math.floor(report.percent)}%
           </p>
           <progress
-            aria-label="解码扫描进度"
+            aria-label={t("解码扫描进度")}
             max={100}
             value={report.percent}
           />
@@ -144,18 +150,20 @@ export function MediaRecovery({
       )}
       {matches && report.state === "failed" && (
         <p className="inline-error" role="alert">
-          扫描未完成：{report.error}。不使用不完整结果。
+          {t("扫描未完成：")} {t(report.error)} {t("。不使用不完整结果。")}
         </p>
       )}
       {matches && report.state === "cancelled" && (
-        <p role="status">扫描已取消，不使用不完整结果。</p>
+        <p role="status">{t("扫描已取消，不使用不完整结果。")}</p>
       )}
       {completed && (
         <p role="status">
-          本次窗口 {report.windowSeconds} 秒。
-          {ranges.length
-            ? `发现 ${ranges.length} 个失败区间，共 ${formatTimecode(removed)}。请确认后应用恢复方案。`
-            : "未发现解码错误；这不代表不存在画面异常。"}
+          {t("本次窗口")} {report.windowSeconds} {t("秒。")}{" "}
+          {t(
+            ranges.length
+              ? `发现 ${ranges.length} 个失败区间，共 ${formatTimecode(removed)}。请确认后应用恢复方案。`
+              : "未发现解码错误；这不代表不存在画面异常。",
+          )}
         </p>
       )}
       {ranges.length > 0 && (
@@ -163,13 +171,13 @@ export function MediaRecovery({
           <ol className="recovery-ranges">
             {ranges.map((r) => (
               <li key={r.startSeconds}>
-                {formatTimecode(r.startSeconds)} →{" "}
-                {formatTimecode(r.endSeconds)}
+                {t(formatTimecode(r.startSeconds))} →{t(" ")}
+                {t(formatTimecode(r.endSeconds))}
               </li>
             ))}
           </ol>
           <MaterialSelect
-            label="恢复策略"
+            label={t("恢复策略")}
             value={mode}
             onChange={setMode}
             options={[
@@ -178,10 +186,15 @@ export function MediaRecovery({
             ]}
           />
           <p className="field-hint">
-            {mode === "delete"
-              ? `同时删除这些区间的画面与音频，预计保留 ${formatTimecode(Math.max(0, media.durationSeconds - removed))}。`
-              : "以黑画面与静音替代失败区间；音轨统一为 48 kHz 立体声，预计保留原时长。"}{" "}
-            应用后清除剪辑、字幕、声音处理和高级参数；源文件不变。请先恢复，再进行其他编辑。
+            {t(
+              mode === "delete"
+                ? `同时删除这些区间的画面与音频，预计保留 ${formatTimecode(Math.max(0, media.durationSeconds - removed))}。`
+                : "以黑画面与静音替代失败区间；音轨统一为 48 kHz 立体声，预计保留原时长。",
+            )}
+            {t(" ")}
+            {t(
+              "应用后清除剪辑、字幕、声音处理和高级参数；源文件不变。请先恢复，再进行其他编辑。",
+            )}
           </p>
           <button
             className="button outlined"
@@ -209,11 +222,11 @@ export function MediaRecovery({
               })
             }
           >
-            确认区间并应用方案
+            {t("确认区间并应用方案")}
           </button>
           {removed >= media.durationSeconds && (
             <p className="inline-error">
-              没有可保留的正常区间，不能恢复原视频内容。
+              {t("没有可保留的正常区间，不能恢复原视频内容。")}
             </p>
           )}
         </>
@@ -221,20 +234,23 @@ export function MediaRecovery({
       {recovery && (
         <div className="recovery-intent">
           <p>
-            当前方案：{recovery.mode === "delete" ? "删除" : "黑画面与静音填补"}{" "}
-            {recovery.damagedRanges?.length ?? 0}{" "}
-            个区间。保存前会完整解码复检，失败则不保存。
+            {t("当前方案：")}{" "}
+            {t(recovery.mode === "delete" ? "删除" : "黑画面与静音填补")}
+            {t(" ")}
+            {recovery.damagedRanges?.length ?? 0}
+            {t(" ")}
+            {t("个区间。保存前会完整解码复检，失败则不保存。")}
           </p>
           {recovery.mode === "black" && (
             <p className="field-hint">
-              失败区间使用黑画面与静音；音轨统一为 48 kHz 立体声。
+              {t("失败区间使用黑画面与静音；音轨统一为 48 kHz 立体声。")}
             </p>
           )}
           <ol className="recovery-ranges">
             {recovery.damagedRanges?.map((r) => (
               <li key={r.startSeconds}>
-                {formatTimecode(r.startSeconds)} →{" "}
-                {formatTimecode(r.endSeconds)}
+                {t(formatTimecode(r.startSeconds))} →{t(" ")}
+                {t(formatTimecode(r.endSeconds))}
               </li>
             ))}
           </ol>
@@ -242,13 +258,13 @@ export function MediaRecovery({
             className="button text"
             onClick={() => onChange({ ...settings, recovery: null })}
           >
-            移除恢复方案
+            {t("移除恢复方案")}
           </button>
         </div>
       )}
       {error && (
         <p className="inline-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
     </section>

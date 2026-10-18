@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func (r *Runner) verifyOutput(ctx context.Context, path string, plan core.ExecutionPlan) (*core.OutputVerification, error) {

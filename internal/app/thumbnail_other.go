@@ -4,7 +4,7 @@ package app
 
 import (
 	"context"
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func platformThumbnail(context.Context, string) ([]byte, error) { return nil, core.ErrUnsupported }

@@ -15,19 +15,19 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/capabilities"
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	windowsrunner "kompeg/internal/runner/windows"
+	"pheebkit/internal/capabilities"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	windowsrunner "pheebkit/internal/runner/windows"
 )
 
 func TestIntegrationAudioProcessing(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
 		t.Skip("real FFmpeg opt-in")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	ffmpeg, ffprobe := os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE")
+	ffmpeg, ffprobe := os.Getenv("PHEEBKIT_FFMPEG"), os.Getenv("PHEEBKIT_FFPROBE")
 	run := func(combined bool, args ...string) []byte {
 		t.Helper()
 		cmd := exec.CommandContext(ctx, ffmpeg, args...)

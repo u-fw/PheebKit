@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	"kompeg/internal/jobs"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	"pheebkit/internal/jobs"
+	"pheebkit/internal/sourcefile"
 )
 
 // Service is the Wails boundary; the compiler and job engine know nothing of UI.
@@ -61,6 +61,27 @@ type Service struct {
 	healthCancel       context.CancelFunc
 	healthBusy         atomic.Bool
 	healthWG           sync.WaitGroup
+	language           atomic.Uint32
+}
+
+func (s *Service) SetLocale(language string) error {
+	switch language {
+	case "zh-CN":
+		s.language.Store(0)
+	case "en-US":
+		s.language.Store(1)
+	default:
+		return errors.New("unsupported application language")
+	}
+	return nil
+}
+
+// Locale is internal native-host state, outside the reviewed renderer facade.
+func (s *Service) Locale() string {
+	if s.language.Load() == 1 {
+		return "en-US"
+	}
+	return "zh-CN"
 }
 
 func NewService() *Service {

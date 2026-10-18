@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { EnvironmentStatus, FFmpegSetupStatus } from "../bridge";
 import { FFmpegDownload } from "./FFmpegDownload";
+import { legacyBinaryVariables } from "../legacy";
 
 const status: FFmpegSetupStatus = {
   stage: "downloading",
@@ -57,10 +58,11 @@ describe("FFmpeg download feedback", () => {
   });
   it("explains explicit overrides even when the selected program is invalid", () => {
     for (const source of [
-      "KOMPEG_FFMPEG",
+      "PHEEBKIT_FFMPEG",
       "FFMPEG_PATH",
-      "KOMPEG_FFPROBE",
+      "PHEEBKIT_FFPROBE",
       "FFPROBE_PATH",
+      ...legacyBinaryVariables,
     ]) {
       const html = markup(null, true, {
         ...missingEnvironment,

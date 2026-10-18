@@ -2,11 +2,11 @@ package windows
 
 import (
 	"context"
-	"kompeg/internal/core"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"pheebkit/internal/core"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestIntegrationLocalInputNeverFollowsHTTPPlaylist(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
 		t.Skip("requires installed FFprobe")
 	}
 	var hits atomic.Int32
@@ -27,7 +27,7 @@ func TestIntegrationLocalInputNeverFollowsHTTPPlaylist(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err := New(os.Getenv("KOMPEG_FFMPEG"), os.Getenv("KOMPEG_FFPROBE")).Probe(ctx, core.Source{URI: path, Kind: core.SourceLocalFile})
+	_, err := New(os.Getenv("PHEEBKIT_FFMPEG"), os.Getenv("PHEEBKIT_FFPROBE")).Probe(ctx, core.Source{URI: path, Kind: core.SourceLocalFile})
 	if err == nil || !strings.Contains(err.Error(), "whitelist 'file'") {
 		t.Fatal("input protocol policy not enforced", err)
 	}

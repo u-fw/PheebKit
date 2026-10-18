@@ -3,9 +3,9 @@ package app
 import (
 	"errors"
 	"fmt"
-	"kompeg/internal/localstore"
 	"os"
 	"path/filepath"
+	"pheebkit/internal/localstore"
 	"strings"
 )
 

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func TestOutputVerificationRejectsStructureAndRetainsDurationWarnings(t *testing.T) {

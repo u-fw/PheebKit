@@ -1,2 +1,2 @@
 /// <reference types="vite/client" />
-declare const __KOMPEG_VERSION__: string;
+declare const __PHEEBKIT_VERSION__: string;

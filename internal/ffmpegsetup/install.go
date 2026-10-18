@@ -291,7 +291,7 @@ func (i *Installer) installPackage(ctx context.Context, root string, pkg Package
 		}
 		provenance += fmt.Sprintf("%s SHA256 %s\n%s\n", artifact.Name, artifact.SHA256, strings.Join(urls, "\n"))
 	}
-	if err := os.WriteFile(filepath.Join(payload, "kompeg-download.txt"), []byte(provenance), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(payload, "pheebkit-download.txt"), []byte(provenance), 0600); err != nil {
 		return Result{}, err
 	}
 	final := filepath.Join(root, pkg.ID+"-"+filepath.Base(stage)[len(".download-"):])

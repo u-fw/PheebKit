@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import type { Media, Settings } from "../bridge";
 import { buildScenario, scenarioPresets } from "../scenarioPresets";
@@ -13,12 +14,12 @@ export function ScenarioPresets({
   return (
     <section className="surface settings-card">
       <div className="section-title">
-        <h2>场景起点</h2>
-        <span className="subtle-label">所有参数均可继续修改</span>
+        <h2>{t("场景起点")}</h2>
+        <span className="subtle-label">{t("所有参数均可继续修改")}</span>
       </div>
       <div className="saved-settings-row">
         <MaterialSelect
-          label="场景预设"
+          label={t("场景预设")}
           value={selected}
           options={scenarioPresets.map((p) => ({ value: p.id, label: p.name }))}
           onChange={setSelected}
@@ -27,14 +28,16 @@ export function ScenarioPresets({
           className="button outlined"
           onClick={() => apply(buildScenario(selected, media))}
         >
-          应用场景
+          {t("应用场景")}
         </button>
       </div>
       <p className="field-hint">
-        {scenarioPresets.find((p) => p.id === selected)?.description}
+        {t(scenarioPresets.find((p) => p.id === selected)?.description)}
       </p>
       <p className="field-hint">
-        预设不会开始处理。应用后可修改质量、码率、分辨率、音频等参数，并保存为自己的配置。
+        {t(
+          "预设不会开始处理。应用后可修改质量、码率、分辨率、音频等参数，并保存为自己的配置。",
+        )}
       </p>
     </section>
   );

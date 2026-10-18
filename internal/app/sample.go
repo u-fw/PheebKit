@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	"pheebkit/internal/sourcefile"
 )
 
 type SampleComparison struct {

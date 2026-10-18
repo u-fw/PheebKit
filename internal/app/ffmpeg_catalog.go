@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 func (s *Service) GetFFmpegCatalog(category string) ([]core.CatalogEntry, error) {

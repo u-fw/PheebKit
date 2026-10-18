@@ -12,7 +12,7 @@ The application downloads only on an explicit click in Settings. It never instal
 | Domestic fallback | Gyan-derived FFmpeg/ffprobe 6.1.1 essentials, approximately 56 MiB gzip downloads | npmmirror binary mirror of eugeneware/ffmpeg-static b6.1.1 |
 | Default (and legacy `auto` API value) | Stable only; domestic selection is manual | Gyan first, matching GitHub release on transfer failure |
 
-The domestic package is intentionally labeled older. It is not treated as a byte-identical mirror of 9.0.2. Capabilities are rediscovered after installation; a missing software AV1 encoder or unusable GPU encoder is not fabricated. The installer retains upstream license/build/source notices and records download provenance. Downloading a package does not relicense it under kompeg's license.
+The domestic package is intentionally labeled older. It is not treated as a byte-identical mirror of 9.0.2. Capabilities are rediscovered after installation; a missing software AV1 encoder or unusable GPU encoder is not fabricated. The installer retains upstream license/build/source notices and records download provenance. Downloading a package does not relicense it under PheebKit's license.
 
 Pinned SHA-256 values live in `internal/ffmpegsetup/catalog.go`. The three executable-archive digests were compared against GitHub release asset metadata; domestic README/LICENSE digests were recorded separately. Built-in downloads cannot override trusted digests or provide arbitrary URLs. Catalog updates require a reviewed code change. Custom links have a separate explicit entry point and policy below.
 
@@ -32,7 +32,7 @@ Upstream references: [Gyan builds](https://www.gyan.dev/ffmpeg/builds/), [Gyan 9
 
 Settings → Download source → Custom download link offers two package types:
 
-- **Mirror of the built-in Gyan 9.0.2 full ZIP:** paste a complete HTTPS file link. kompeg continues checking the embedded upstream SHA-256; no user-entered hash is necessary. A repackaged ZIP or a different version fails that check.
+- **Mirror of the built-in Gyan 9.0.2 full ZIP:** paste a complete HTTPS file link. PheebKit continues checking the embedded upstream SHA-256; no user-entered hash is necessary. A repackaged ZIP or a different version fails that check.
 - **Other Windows x64 build:** paste the HTTPS file link, provide the publisher's complete 64-character SHA-256 and confirm trust in the source before running its FFmpeg/ffprobe. This hash establishes file consistency, not publisher authenticity.
 
 No URL directory convention is required. Signed query parameters are supported for the request and omitted from displayed progress/provenance. Direct file URLs need no particular extension. Other builds accept ZIP, 7z, RAR, tar, tar.gz/tgz, tar.xz and tar.bz2/tbz2 by content signature and TAR-header validation. Single gzip binaries remain a separate built-in catalog operation, not a custom archive. Download pages, source-only/Linux builds, encrypted or split archives and standalone/self-extracting executables are not supported.
@@ -41,13 +41,13 @@ Extraction preserves the archive's directory layout, DLLs and notices. It recurs
 
 ## Custom-link verification
 
-`KOMPEG_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealCustomFFmpegSetup$' -count=1 -v` passed with the real Gyan 9.0.2 essentials ZIP as an other-build input. It downloaded, verified the publisher SHA-256, extracted, checked architecture, ran both programs, detected the actual version, persisted private paths, scanned capabilities and confirmed readiness in a new service instance.
+`PHEEBKIT_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealCustomFFmpegSetup$' -count=1 -v` passed with the real Gyan 9.0.2 essentials ZIP as an other-build input. It downloaded, verified the publisher SHA-256, extracted, checked architecture, ran both programs, detected the actual version, persisted private paths, scanned capabilities and confirmed readiness in a new service instance.
 
 TLS integration tests also cover cross-host HTTPS redirects, signed queries, redacted notices, mixed-case filenames and DLL preservation. Negative cases cover page/source/missing-probe/multiple-copy archives and unsafe redirects. Go tests/vet and 46 frontend tests/typecheck/lint/format passed. Native click-through remains unverified as described below.
 
 ## Built-in verification on 2026-10-10
 
-`KOMPEG_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealFFmpegSetup$' -count=1 -v` completed real downloads of both packages in isolated temporary Windows profiles. SHA verification, extraction, actual FFmpeg/ffprobe execution, saved private paths, encoder scanning, duplicate-start rejection and configuration reuse by a new service instance passed.
+`PHEEBKIT_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealFFmpegSetup$' -count=1 -v` completed real downloads of both packages in isolated temporary Windows profiles. SHA verification, extraction, actual FFmpeg/ffprobe execution, saved private paths, encoder scanning, duplicate-start rejection and configuration reuse by a new service instance passed.
 
 Deterministic tests cover package fallback, preserved upstream license files, failed-hash rejection, traversal rejection, cancellation during transfer, clean staging, catalog restrictions and redirect restrictions. Frontend rendering tests cover determinate/indeterminate progress, cancellation availability, version warnings, error reporting and retry.
 
@@ -61,7 +61,7 @@ Download progress shows actual bytes, percentage when Content-Length is availabl
 
 Fixtures exercise 7z, stored RAR, bzip2 TAR, TAR/gzip/XZ, extensionless URLs, DLL/notices retention, TAR traversal/links/special-file rejection, aggregate limits and default-source policy. Fixtures contain plain text rather than executable code; production validation never runs them.
 
-`KOMPEG_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealCustom7zFFmpegSetup$' -count=1 -v` passed on 2026-10-10 (86.74 seconds) with the real 161 MiB Gyan 9.0.2 full 7z. Its publisher SHA-256 was verified against release asset metadata. Extraction, AMD64 checks, execution of both tools, version detection, private configuration persistence and capability scanning passed. Native click-through remains unverified.
+`PHEEBKIT_SETUP_INTEGRATION=1 go test ./internal/app -run '^TestRealCustom7zFFmpegSetup$' -count=1 -v` passed on 2026-10-10 (86.74 seconds) with the real 161 MiB Gyan 9.0.2 full 7z. Its publisher SHA-256 was verified against release asset metadata. Extraction, AMD64 checks, execution of both tools, version detection, private configuration persistence and capability scanning passed. Native click-through remains unverified.
 
 The full decoder dependency notices are in `docs/archive-decoder-notices.txt`; distribute them with the Windows executable (a copy is provided in `bin/archive-decoder-notices.txt`).
 

@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"kompeg/internal/core"
+	"pheebkit/internal/core"
 )
 
 const maxProjectSize = 1024 * 1024

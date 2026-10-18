@@ -198,6 +198,10 @@ export function SetActiveMedia(arg1, arg2) {
   return window['go']['app']['Desktop']['SetActiveMedia'](arg1, arg2);
 }
 
+export function SetLocale(arg1) {
+  return window['go']['app']['Desktop']['SetLocale'](arg1);
+}
+
 export function SetQueuePaused(arg1) {
   return window['go']['app']['Desktop']['SetQueuePaused'](arg1);
 }

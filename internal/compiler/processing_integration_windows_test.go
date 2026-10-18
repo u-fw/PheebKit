@@ -15,15 +15,15 @@ import (
 	"testing"
 	"time"
 
-	"kompeg/internal/capabilities"
-	"kompeg/internal/compiler"
-	"kompeg/internal/core"
-	windowsrunner "kompeg/internal/runner/windows"
+	"pheebkit/internal/capabilities"
+	"pheebkit/internal/compiler"
+	"pheebkit/internal/core"
+	windowsrunner "pheebkit/internal/runner/windows"
 )
 
 func TestIntegrationMediaOperationsRoundTrip(t *testing.T) {
-	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
-		t.Skip("set KOMPEG_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
+	if os.Getenv("PHEEBKIT_INTEGRATION") != "1" {
+		t.Skip("set PHEEBKIT_INTEGRATION=1 to execute installed FFmpeg/FFprobe")
 	}
 	tool := func(env, name string) string {
 		t.Helper()
@@ -39,7 +39,7 @@ func TestIntegrationMediaOperationsRoundTrip(t *testing.T) {
 		}
 		return value
 	}
-	ffmpeg, ffprobe := tool("KOMPEG_FFMPEG", "ffmpeg.exe"), tool("KOMPEG_FFPROBE", "ffprobe.exe")
+	ffmpeg, ffprobe := tool("PHEEBKIT_FFMPEG", "ffmpeg.exe"), tool("PHEEBKIT_FFPROBE", "ffprobe.exe")
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	dir := t.TempDir()
@@ -286,7 +286,7 @@ func TestIntegrationMediaOperationsRoundTrip(t *testing.T) {
 		}
 	})
 	for _, entry := range mustReadDir(t, dir) {
-		if entry.IsDir() && strings.HasPrefix(entry.Name(), ".kompeg-") {
+		if entry.IsDir() && strings.HasPrefix(entry.Name(), ".pheebkit-") {
 			t.Fatalf("owned execution scratch leaked: %s", entry.Name())
 		}
 	}

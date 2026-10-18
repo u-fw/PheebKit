@@ -21,7 +21,7 @@ const lines = execFileSync(
 const modules = new Map();
 for (const line of lines) {
   const [name, version, directory] = line.split("|");
-  if (name && name !== "kompeg") modules.set(name, { version, directory });
+  if (name && name !== "pheebkit") modules.set(name, { version, directory });
 }
 for (const name of ["react", "react-dom", "scheduler"]) {
   const directory = resolve("frontend/node_modules", name);

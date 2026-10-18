@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"kompeg/internal/capabilities"
-	"kompeg/internal/core"
-	"kompeg/internal/ffmpegpolicy"
-	"kompeg/internal/probe"
-	"kompeg/internal/sourcefile"
+	"pheebkit/internal/capabilities"
+	"pheebkit/internal/core"
+	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/probe"
+	"pheebkit/internal/sourcefile"
 )
 
 type Runner struct {
@@ -123,7 +123,7 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 		return core.Result{}, err
 	}
 	outputParent := filepath.Dir(plan.Output.URI)
-	scratchDir, err := os.MkdirTemp(outputParent, ".kompeg-*")
+	scratchDir, err := os.MkdirTemp(outputParent, ".pheebkit-*")
 	if err != nil {
 		return core.Result{}, fmt.Errorf("create output scratch directory: %w", err)
 	}
@@ -253,7 +253,7 @@ func cleanupScratch(path, parent string) error {
 	if err != nil {
 		return err
 	}
-	if !strings.EqualFold(filepath.Dir(absPath), filepath.Clean(absParent)) || !strings.HasPrefix(filepath.Base(absPath), ".kompeg-") {
+	if !strings.EqualFold(filepath.Dir(absPath), filepath.Clean(absParent)) || !strings.HasPrefix(filepath.Base(absPath), ".pheebkit-") {
 		return fmt.Errorf("scratch directory is outside the selected output directory")
 	}
 	return os.RemoveAll(absPath)
