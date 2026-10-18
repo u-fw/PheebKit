@@ -37,6 +37,10 @@ type binaryConfig struct {
 	FFprobe string `json:"ffprobe"`
 }
 
+// A newly selected executable may have a slow first launch on a clean system.
+// Validation stays bounded while allowing the complete tool pair to start.
+const environmentCheckTimeout = 30 * time.Second
+
 func configFile() (string, error) {
 	dir, err := os.UserConfigDir()
 	if err != nil {
@@ -148,7 +152,17 @@ func checkBinary(ctx context.Context, binary BinaryStatus, name string) (BinaryS
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	cmd.WaitDelay = time.Second
 	if err := cmd.Run(); err != nil {
-		return binary, fmt.Errorf("%s 无法运行（来源：%s，路径：%s）：%w", name, binary.Source, binary.Path, err)
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
+		detail := strings.TrimSpace(stderr.String())
+		if len(detail) > 1024 {
+			detail = detail[:1024] + "…"
+		}
+		if detail != "" {
+			detail = "\n" + detail
+		}
+		return binary, fmt.Errorf("%s 无法运行（来源：%s，路径：%s）：%w%s", name, binary.Source, binary.Path, err, detail)
 	}
 	first := strings.TrimSpace(strings.SplitN(stdout.String(), "\n", 2)[0])
 	if !strings.HasPrefix(first, name+" version ") {
@@ -172,10 +186,10 @@ func validateEnvironment(ctx context.Context, environment Environment) Environme
 	}
 	environment.Ready = len(failures) == 0
 	if !environment.Ready {
-		environment.Message = strings.Join(failures, "\n") + "\n请在设置中一键下载补全，或选择 FFmpeg 所在目录 / ffmpeg.exe，kompeg 会同时验证 ffprobe。"
+		environment.Message = strings.Join(failures, "\n") + "\n请在设置中一键下载补全，或选择 FFmpeg 所在目录 / ffmpeg.exe，菲比工具箱会同时验证 ffprobe。"
 		for _, binary := range []BinaryStatus{environment.FFmpeg, environment.FFprobe} {
 			if !binary.Available && binary.Source != "PATH" && binary.Source != "config" {
-				environment.Message += "\n环境变量 " + binary.Source + " 优先于应用设置；请修正该变量后重新启动 kompeg。"
+				environment.Message += "\n环境变量 " + binary.Source + " 优先于应用设置；请修正该变量后重新启动菲比工具箱。"
 			}
 		}
 	}
@@ -188,7 +202,7 @@ func (s *Service) GetEnvironment() Environment {
 	}
 	s.configMu.RLock()
 	defer s.configMu.RUnlock()
-	ctx, cancel := context.WithTimeout(s.ctx, 8*time.Second)
+	ctx, cancel := context.WithTimeout(s.ctx, environmentCheckTimeout)
 	defer cancel()
 	// Report the binaries owned by this instance, not settings another window
 	// may have written while this instance was processing jobs.
@@ -245,7 +259,7 @@ func (s *Service) reloadEnvironment() error {
 	if s.hasPendingJobs() {
 		return errors.New("FFmpeg 配置已更改，请等待所有任务结束或取消任务后，再重新检测并同步路径。")
 	}
-	ctx, cancel := context.WithTimeout(s.ctx, 8*time.Second)
+	ctx, cancel := context.WithTimeout(s.ctx, environmentCheckTimeout)
 	defer cancel()
 	selected = validateEnvironment(ctx, selected)
 	if !selected.Ready {
@@ -276,7 +290,7 @@ func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, 
 		return Environment{}, errors.New("请等待所有任务结束或取消任务后，再更改 FFmpeg 路径。")
 	}
 	if variable := explicitFFmpegOverride(); variable != "" {
-		return Environment{}, fmt.Errorf("环境变量 %s 优先于应用配置。请先清除或修正该变量，并重启 kompeg，再切换本机路径。", variable)
+		return Environment{}, fmt.Errorf("环境变量 %s 优先于应用配置。请先清除或修正该变量，并重启菲比工具箱，再切换本机路径。", variable)
 	}
 	if strings.TrimSpace(ffmpegPath) == "" {
 		return Environment{}, errors.New("请选择 ffmpeg.exe 或填写 FFmpeg 所在目录。")
@@ -290,7 +304,7 @@ func (s *Service) ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, 
 			return Environment{}, fmt.Errorf("%s 路径必须是本机绝对路径。", binary.name)
 		}
 	}
-	ctx, cancel := context.WithTimeout(s.ctx, 8*time.Second)
+	ctx, cancel := context.WithTimeout(s.ctx, environmentCheckTimeout)
 	defer cancel()
 	chosen := validateEnvironment(ctx, Environment{Platform: runtime.GOOS, Configurable: true, FFmpeg: BinaryStatus{Path: config.FFmpeg, Source: "config"}, FFprobe: BinaryStatus{Path: config.FFprobe, Source: "config"}})
 	if !chosen.Ready {

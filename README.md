@@ -1,82 +1,56 @@
 # 菲比工具箱 · PheebKit
 
-Source and feedback: [u-fw/PheebKit](https://github.com/u-fw/PheebKit). Licensed `GPL-3.0-only`.
+[简体中文](README.md) · [English](README.en.md)
 
-A Windows 10/11 x64 local media application using Go Core, stable Wails v2.17.0, React and strict TypeScript. Windows uses real installed FFmpeg binaries. Android is deferred and no APK is released.
+[![Windows verification](https://github.com/u-fw/PheebKit/actions/workflows/windows.yml/badge.svg)](https://github.com/u-fw/PheebKit/actions/workflows/windows.yml)
+[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
 
-The owner approved migration from the original v3 Beta spike to stable Wails v2 on 2026-10-18. The current `0.2.0-rc.2` is the verification candidate for `0.2.0`; it is not a stable-release claim. See the [stabilization acceptance matrix](docs/stability.md) and [release checks](docs/release-acceptance.md). Final packaging requires reviewed evidence matching its exact version and source revision.
+本地优先的 Windows 媒体工具。用 FFmpeg 完成压缩、剪辑、转封装与轨道处理，提供可修改的参数、真实执行预览和独立任务队列。媒体无需上传。
 
-Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
+技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前 `0.2.0-rc.2` 用于稳定版验收，尚未发布正式版安装包；已验证范围和缺口见[稳定化记录](docs/stability.md)。
 
-Beta.11 adds optional configurable audio processing: dynamic single-pass loudness normalization, FFT denoise, up to eight EQ bands, whole-output fades, sample rate and mono/stereo conversion. See [audio behavior/evidence](docs/audio-processing.md). It retains [conservative media recovery](docs/media-recovery.md), ordered range editing, subtitle burn-in, local capability/help discovery, diagnostics, draft recovery and Undo/Redo. See [release notes](RELEASE_NOTES.md), [expansion scope](docs/ffmpeg-expansion.md) and [release acceptance](docs/release-acceptance.md). Capability discovery is not a claim that every listed FFmpeg workflow is executable through the GUI.
+## 实际运行截图
 
-## Windows development
+2026-10-18 在 Windows 11 桌面候选程序上的原始截图，使用自建的 8 秒 H.264/AAC 测试视频。界面当前主要使用简体中文；本轮双语支持范围为 README。[截图与实测说明](docs/images/README.md)
 
-Requires Go 1.26+ with automatic selection of the pinned Go 1.27.2 security toolchain, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Release builds enforce Go 1.27.2 or newer and source/final-binary dependency vulnerability checks. See the [security/performance audit](docs/security-performance-audit.md). Install the exact CLI once:
+![真实桌面媒体工作区：缩略图、媒体信息和输出概览](docs/images/desktop-workspace-rc2.png)
+
+![真实设置页：草稿恢复设置与自定义开关](docs/images/desktop-settings-rc2.png)
+
+## 可以做什么
+
+- **压缩与剪辑**：H.264、HEVC、AV1；质量、目标码率、目标体积；完整视频、单区间剪辑、最多 16 个同源片段拼接或分段输出。时间可直接输入或使用选择器、滑块微调。
+- **GPU 与 CPU**：默认优先 GPU，经实际试编码确认 NVENC/QSV/AMF 可用性；不可用时回退 CPU，并显示原因。
+- **画面与声音**：分辨率、裁剪、旋转、翻转；音轨选择、音量、归一化、降噪、均衡、淡入淡出、采样率与声道设置。
+- **封装与字幕**：兼容流无重编码转封装，音频与文字字幕提取；内嵌或外部文字字幕烧录，支持样式和时间偏移。
+- **任务与项目**：批量导入、串行队列、取消、调整等待顺序、暂停后续调度；样片对比、项目/预设、撤销/重做、自动草稿与显式恢复。
+- **损坏媒体恢复**：逐窗口解码检查，默认删除确认的失败区间，也可用黑画面/静音保留时长；恢复输出必须完整解码通过。无法重建已丢失的内容。
+- **环境补全**：复用已有 FFmpeg；缺失时可显式下载、查看进度、取消重试，或填写带 SHA-256 的自定义 HTTPS 压缩包链接。支持 ZIP、7z、RAR、tar、gzip/xz/bzip2 的 tar 变体。
+
+多文件时间线、HDR 输出、任意命令/滤镜图、网络/直播采集和 FFmpeg 进程暂停/续跑不在本版范围。[媒体工具](docs/media-tools.md) · [音频处理](docs/audio-processing.md) · [恢复策略](docs/media-recovery.md) · [扩展范围](docs/ffmpeg-expansion.md)
+
+## 使用与安装
+
+候选包包含 Setup、免安装 ZIP 和 SHA-256 清单；免安装包需完整解压后运行，并仍将设置保存在 AppData。正式下载发布后以 [GitHub Releases](https://github.com/u-fw/PheebKit/releases) 为准；Actions 构建产物是验收候选。
+
+需要 Microsoft WebView2 Runtime 与可用的 FFmpeg/ffprobe。FFmpeg 不内置在应用安装包中。缺失时在设置中下载或选择本机文件；已找到可用工具时禁止重复下载。默认来源为 FFmpeg 官网推荐的 Gyan 稳定构建，先尝试 gyan.dev，再尝试同版 GitHub 线路；国内旧版备用源需手动选择，不静默降级。自定义包必须明确确认来源并提供发布者 SHA-256。[下载与安全策略](docs/ffmpeg-downloads.md)
+
+FFmpeg 查找顺序为 `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE` → `FFMPEG_PATH` / `FFPROBE_PATH` → 应用设置 → PATH。环境变量可指向程序或所在目录；显式覆盖需在环境中修正并重启应用。系统 PATH 不会被修改。
+
+`KOMPEG_*`、`%APPDATA%/kompeg`、私有工具目录和安装 AppId 是保留的兼容标识，用于复用历史设置与正常升级；用户界面品牌统一为菲比工具箱 / PheebKit。第三方工具的版本、版权和文件名保持原样。
+
+## 开发与验证
+
+需要 Windows x64、PowerShell 7、Node 24+，以及 Go 1.26+（自动选择固定的 Go 1.27.2 工具链）；正式构建强制要求 Go 1.27.2+。使用固定 Wails CLI 并保留仓库锁文件：
 
 ```powershell
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
 npm --prefix frontend ci
 wails generate module
-npm --prefix frontend run build
-./scripts/build-windows.ps1
-.\bin\PheebKit.exe
-```
-
-The Windows build script generates bindings/resources and embeds the production frontend, then copies the executable to `bin/PheebKit.exe`. The manifest enables long paths; filesystem policy and the installed FFmpeg build still determine complete long-path support. For optional explicit binary selection:
-
-```powershell
-$env:KOMPEG_FFMPEG = 'D:\Tools\ffmpeg\bin\ffmpeg.exe'
-$env:KOMPEG_FFPROBE = 'D:\Tools\ffmpeg\bin\ffprobe.exe'
-```
-
-Use `wails dev` for frontend development. Ordinary browser previews cannot execute native operations. Drag media files onto the workspace or use the multi-file picker (up to 32 files), review media details, configure processing, inspect the backend command preview and follow progress/results in Queue. Batch submission uses shared settings, independent track selections and distinct output names; all projects must pass preflight before any are enqueued.
-
-FFmpeg discovery prefers `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE`, then `FFMPEG_PATH` / `FFPROBE_PATH`, then application settings and PATH. Values can identify the executable or its directory. Missing/invalid binaries show a setup prompt; Settings lets you download a verified Windows x64 package or select `ffmpeg.exe` and verifies its sibling `ffprobe.exe`. Paths are saved in `%APPDATA%/kompeg/ffmpeg.json`, without modifying Windows environment variables. Explicit environment overrides must be corrected in the environment and require restarting the app. Reconfiguration is blocked while jobs are active. One-click downloads are disabled when both tools are already usable; select a local path to deliberately switch versions. Explicit overrides must be removed/corrected before downloads or path writes.
-
-One-click setup offers Gyan 9.0.2 full stable builds and the older npmmirror 6.1.1 domestic fallback. The default tries gyan.dev first, then the matching GitHub release. Domestic fallback must be selected manually after a failure; it never silently downgrades. Versions, transfer progress, cancellation and retry are visible. Downloads use fixed SHA-256 digests, preserve upstream notices, and install privately under `%LOCALAPPDATA%/kompeg/tools`. See [download policy and verification](docs/ffmpeg-downloads.md).
-
-Settings also accepts a custom HTTPS archive download link. Mirrors of the exact built-in Gyan full ZIP retain its pinned digest. Other Windows x64 builds require a publisher-provided SHA-256 and explicit source trust; PheebKit automatically finds a single FFmpeg/ffprobe pair, preserves sidecar DLLs, validates and configures it. ZIP, 7z, RAR, tar, tar.gz/tgz, tar.xz and tar.bz2/tbz2 are detected by file contents without requiring an external extractor. Download pages, source-only/Linux builds, encrypted or split archives and self-extracting executables are unsupported.
-
-New compression settings default to GPU preference. NVENC, QSV and AMF are offered only after bounded real encoding trials; unavailable combinations fall back to CPU with a visible reason. Source artwork prefers Windows thumbnail providers and falls back to FFmpeg cover/frame extraction.
-
-Compression defaults to the complete source duration. Select **剪辑并压缩** to retain one start/end range using Material hour/minute/second selectors, 0.1-second adjustment buttons or keyboard-accessible sliders. The same FFmpeg invocation trims and encodes once; progress, speed and size-mode bitrate budget use the selected duration. Audio uses AAC/Opus for accurate boundaries (Copy changes to AAC when enabling trim). See [trimming behavior and verification](docs/trimming.md).
-
-**多片段拼接** retains up to 16 ordered ranges from the same file. Edit times directly, add/remove/reorder ranges, then produce one joined encode or separate `-part-01` outputs. Repeats/overlaps intentionally repeat content. Joining supports up to four selected encoded audio tracks; remove soft subtitle tracks or burn them into video. Subtitle Burn-in supports an embedded text track or local SRT/ASS/SSA/VTT, with offset/font/size/colors/outline/shadow/margins/position/bold controls. Samples use the first range and retain the burn settings. No lossless cut, multi-file timeline, bitmap subtitle/OCR or rendered live preview is implied; generate a sample to review the actual result.
-
-Settings → FFmpeg Capabilities and Option Help reads the current binary's compiled encoders, decoders, filters, formats, protocols and other catalogs, with bounded searchable pages and local detailed/full help. These lists do not replace actual GPU trials. Typed execution controls remain validated; arbitrary commands, network/live capture and unrestricted filter graphs are not enabled by opening help.
-
-**解码检查与恢复** scans only when requested, shows progress/cancel and conservative failed intervals, then lets you review/apply a recovery intent before starting a normal queue job. Default deletion removes corresponding video/audio and shortens the timeline. The alternate black/silence mode retains duration and normalizes audio to 48 kHz stereo. It does not restore missing original content or detect every visual defect. Complete output decoding must succeed before saving; metadata checks alone do not qualify a recovery. Unknown configuration errors abort scanning, and incomplete reports cannot supply deletion advice. Recovery is a separate pass before trimming/subtitle edits; sources with unreadable headers and highly fragmented damage may be refused. See the [limits and real corruption evidence](docs/media-recovery.md).
-
-Windows packaging produces an installer, a standalone ZIP and SHA-256 checksums from the same build. `VERSION` is the version source; Settings, EXE resources and package metadata stay synchronized. See [Windows distribution and verification](docs/windows-distribution.md) for packaging commands, local lifecycle checks and remaining clean-machine/signing checks. Publication remains a separate owner action.
-
-## Task workflow and local preferences
-
-Closing the window (including Alt+F4) checks the native job queue and FFmpeg setup. Active work opens a confirmation dialog; returning preserves work, while explicit exit cancels processing. Completed results offer Open File and Show in Folder; missing/moved files produce an actionable error. Reuse Settings re-probes the source, restores the editable intent and suggests a new output filename, without executing a saved command.
-
-Trim preview offers source playback, selected-range playback, a seek slider, current-position boundary buttons and FFmpeg boundary frames. WebView2 codec support controls playback; unsupported formats retain FFmpeg position-frame navigation. Preview is a positioning aid rather than frame-exact edit playback.
-
-The app saves recent job history (normally 200 records) and up to 20 named processing configurations under the existing `%APPDATA%/kompeg` directory. Interrupted jobs do not auto-resume. Defaults/presets exclude source/output paths, trim, specific track indexes and crop margins; retained history contains local file paths and diagnostics. Atomic JSON writes use a cross-process file lock. See [task workflow and verification](docs/workflows.md).
-
-## Media tools — 0.2.0-beta.1
-
-- Compression selects audio/subtitle tracks, mutes audio, retains compatible subtitles, crops even pixel margins, rotates/flips video and adjusts encoded audio volume. Crop coordinates follow the source's displayed orientation; the preview remains the original, and adjustments apply to output.
-- Remux copies the primary motion-video stream and selected compatible audio/subtitle streams to MP4/MKV/WebM. It does not encode, trim or apply filters. Unsupported container/codec combinations fail before processing.
-- Audio extraction saves one selected track as AAC/M4A, Opus, MP3, FLAC, WAV or a compatible copy in Matroska Audio. Text subtitle extraction supports SRT/ASS/WebVTT. Beta.8 also burns text subtitles into compressed video; bitmap subtitle/OCR remains outside this release.
-- Batch processing uses full source durations and excludes the active single-file crop/trim/multi-range/burn settings. Track choices are reviewed per file. Processing remains serial; waiting jobs can be reordered, and pausing scheduling leaves the current job running. Remaining time is an estimate from live speed.
-- Short sample compression offers 10/20/30-second shortcuts and direct 1–30-second entry from the current range start, within that range. Samples are distinct output files and can be compared at corresponding positions in Queue. Copy audio becomes AAC for the sample; size budgets scale with duration. The 512px comparison is a positioning aid, not a full-resolution quality metric.
-- Save/open `.ffproject` files and import/export `.pheebpreset` configurations through native dialogs. Opening/importing never executes tasks; sources are re-probed, existing output targets require a new choice, and duplicate imported preset names are rejected. See [processing policies and acceptance](docs/media-tools.md).
-
-## Verification commands
-
-```powershell
-npm --prefix frontend ci
+node scripts/normalize-bindings.mjs
 npm --prefix frontend run build
 go test ./...
 go vet ./...
-$env:KOMPEG_INTEGRATION = '1'
-go test ./internal/runner/windows -v
-Remove-Item Env:\KOMPEG_INTEGRATION
 npm --prefix frontend run test
 npm --prefix frontend run typecheck
 npm --prefix frontend run lint
@@ -84,44 +58,12 @@ npm --prefix frontend run format:check
 ./scripts/build-windows.ps1
 ```
 
-`go run ./cmd/spike -input <absolute-path> -output <new-absolute-path.mp4>` verifies the same probe/compiler/runner slice without the UI and prints actual media/result JSON.
+真实 FFmpeg 回归需要经校验的测试工具和 `KOMPEG_INTEGRATION=1`。发布脚本执行源码与最终 EXE 漏洞扫描、前端检查和干净源码校验；安装验收检查安装/重装/卸载、运行保护、校验和及用户数据保留。GitHub 托管 Windows Server 检查不等于 Windows 10/11 客户端界面验收。[验证步骤](docs/release-acceptance.md) · [Windows 打包](docs/windows-distribution.md)
 
-## Structure
+核心目录：`internal/core` 定义媒体/项目/执行计划，`internal/compiler` 生成经过验证的参数，`internal/runner/windows` 管理真实进程，`internal/app` 提供原生服务边界，`frontend` 提供界面。[架构](docs/architecture.md) · [项目格式](docs/project-format.md) · [界面设计](docs/ui-design.md)
 
-```text
-cmd/spike/                  real Windows headless verification command
-internal/app/               Wails service, events, platform factories
-internal/core/              shared Media, Project IR, plan, job and Runner
-internal/probe/              ffprobe JSON decoder
-internal/capabilities/       dynamic encoder registry
-internal/compiler/          validation, argv and command preview
-internal/project/           schema-versioned project persistence
-internal/presets/           versioned preset definitions
-internal/jobs/              independent job records and serial worker queue
-internal/runner/windows/    real process, progress/log parsing and cancellation
-internal/runner/android/    explicitly unsupported mock/native boundary
-frontend/                   shared React UI, tokens and generated TS bindings
-platform/android/           JNI/SAF native integration plan
-platform/windows/           Windows adapter and distribution notes
-build/windows/              manifest, icon and executable metadata
-build/android/              pinned upstream task reference; toolchain required
-docs/                       architecture, design and verification evidence
-```
+## 参与与许可证
 
-See [architecture](docs/architecture.md), [UI design](docs/ui-design.md), [runner](docs/ffmpeg-runner.md), [project format](docs/project-format.md), [Android FFmpeg spike](docs/android-ffmpeg-spike.md) and [actual verification](docs/verification.md).
+代码采用 **GNU GPL v3 only (`GPL-3.0-only`)**，详见 [LICENSE](LICENSE)。第三方依赖和素材保留各自许可证；FFmpeg 的下载或分发仍需遵守其自身许可证与源码/声明义务。
 
-The [open-source readiness review](docs/open-source-readiness.md) records repaired defects, verification and remaining publication decisions.
-
-For contributions and responsible reporting, see [CONTRIBUTING](CONTRIBUTING.md) and [SECURITY](SECURITY.md). Diagnostic reports are previewed locally and shared only by the user.
-
-## License
-
-PheebKit's original code is licensed under the GNU General Public License version 3 only (`GPL-3.0-only`). See [LICENSE](LICENSE) for the full terms. Third-party dependencies and assets retain their respective licenses. FFmpeg is currently discovered locally rather than bundled; packaging or downloading FFmpeg does not replace its own license or distribution obligations.
-
-## Current scope
-
-Home, Media Card and thumbnails, environment setup, qualified GPU/CPU selection, SDR compression with single/multi-range editing and basic transforms, text subtitle burn-in, selected tracks, compatible remux/audio/text-subtitle extraction, batch/queue scheduling, samples, project management/recovery, presets, diagnostic export and local FFmpeg discovery/help form the current Windows slice. Multi-file timelines, HDR encoding, unrestricted Raw Command/filter graphs, live/network capture and FFmpeg process pause/resume remain later milestones. Windows FFmpeg is discovered rather than bundled; third-party redistribution needs its own source/notice review.
-
-Android SDK/NDK/emulator and a connected device are absent on the audited machine. The pinned Android task assets also require a POSIX build host. APK build, Android Go binding and native FFmpeg execution are therefore not verified; responsive UI reuse alone does not satisfy those criteria.
-
-The current brand is 菲比工具箱 / PheebKit. Settings in the legacy kompeg AppData directory, KOMPEG_* environment overrides, project schema and installer AppId remain compatible. Release files use PheebKit; earlier kompeg packages are historical candidates. The supplied brand image is preserved in frontend/public/pheebkit.png and converted to Windows icons with the pinned Wails CLI.
+[贡献指南](CONTRIBUTING.md) · [私密安全反馈](SECURITY.md) · [更新记录](RELEASE_NOTES.md) · [问题反馈](https://github.com/u-fw/PheebKit/issues)

@@ -283,7 +283,7 @@ func (i *Installer) installPackage(ctx context.Context, root string, pkg Package
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
-	provenance := fmt.Sprintf("Downloaded by kompeg. Package: %s\nVersion: %s\nKeep this directory's upstream license and build/source notices when redistributing.\n", pkg.ID, pkg.Version)
+	provenance := fmt.Sprintf("Downloaded by PheebKit. Package: %s\nVersion: %s\nKeep this directory's upstream license and build/source notices when redistributing.\n", pkg.ID, pkg.Version)
 	for _, artifact := range pkg.Artifacts {
 		urls := make([]string, len(artifact.URLs))
 		for index, raw := range artifact.URLs {

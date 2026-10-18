@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -255,6 +256,34 @@ func TestFailedBinaryCheckClearsPreviousAvailability(t *testing.T) {
 	}
 }
 
+func TestBinaryCheckPreservesCancellationCause(t *testing.T) {
+	path, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	binary, err := checkBinary(ctx, BinaryStatus{Path: path}, "ffmpeg")
+	if !errors.Is(err, context.Canceled) || binary.Available {
+		t.Fatalf("cancellation was hidden by a generic process error: %+v %v", binary, err)
+	}
+}
+
+func TestBinaryFailureIncludesBoundedStderr(t *testing.T) {
+	path, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	// The Go test executable rejects the fixed -version argument before tests
+	// run. Its real stderr must survive the binary validation boundary.
+	_, err = checkBinary(ctx, BinaryStatus{Path: path}, "ffmpeg")
+	if err == nil || !strings.Contains(err.Error(), "flag provided but not defined") || len(err.Error()) > 3072 {
+		t.Fatalf("missing or unbounded binary failure detail: %v", err)
+	}
+}
+
 type testRunner struct{ scans atomic.Int32 }
 
 func (*testRunner) Probe(context.Context, core.Source) (core.Media, error) {
@@ -278,7 +307,7 @@ func TestMissingExplicitEnvironmentIsActionable(t *testing.T) {
 	if environment.Ready || environment.FFmpeg.Available {
 		t.Fatal("missing binary reported ready")
 	}
-	if !strings.Contains(environment.Message, "KOMPEG_FFMPEG") || !strings.Contains(environment.Message, "重新启动") {
+	if !strings.Contains(environment.Message, "KOMPEG_FFMPEG") || !strings.Contains(environment.Message, "重新启动菲比工具箱") || strings.Contains(environment.Message, "kompeg 会") {
 		t.Fatalf("missing explicit env is not actionable: %s", environment.Message)
 	}
 }

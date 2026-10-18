@@ -69,13 +69,13 @@ func (s *Service) startFFmpegSetup(packages []ffmpegsetup.Package, custom bool) 
 		return s.setupStatus, errors.New("请等待所有任务结束或取消任务后，再下载配置 FFmpeg。")
 	}
 	if variable := explicitFFmpegOverride(); variable != "" {
-		return s.setupStatus, errors.New("环境变量 " + variable + " 优先于下载配置。请先清除或修正该变量，并重启 kompeg。")
+		return s.setupStatus, errors.New("环境变量 " + variable + " 优先于下载配置。请先清除或修正该变量，并重启菲比工具箱。")
 	}
 	// Revalidate at the native entry point: a stale UI or another caller must
 	// not download over a working environment. NewService has not run these
 	// binaries yet, so the stored Ready flag alone cannot decide eligibility.
 	s.configMu.RLock()
-	checkCtx, checkCancel := context.WithTimeout(s.ctx, 8*time.Second)
+	checkCtx, checkCancel := context.WithTimeout(s.ctx, environmentCheckTimeout)
 	environment := validateEnvironment(checkCtx, s.environment)
 	checkCancel()
 	s.configMu.RUnlock()

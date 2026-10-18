@@ -9,7 +9,7 @@ $release = Join-Path $workspace "release/$version"
 $setup = Join-Path $release "PheebKit-$version-windows-x64-setup.exe"
 $zip = Join-Path $release "PheebKit-$version-windows-x64-standalone.zip"
 $registryPath = 'HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall/{9D8FAD06-8029-4A58-9497-96C7DA878C63}_is1'
-if (Test-Path -LiteralPath $registryPath) { throw 'An existing kompeg installation is registered; refusing to alter it for verification.' }
+if (Test-Path -LiteralPath $registryPath) { throw 'An existing PheebKit installation is registered; refusing to alter it for verification.' }
 $root = Join-Path $workspace ('.tools/installer-test-' + [guid]::NewGuid().ToString('N'))
 $installed = Join-Path $root 'app'
 $uninstaller = Join-Path $installed 'unins000.exe'
