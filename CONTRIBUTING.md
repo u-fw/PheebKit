@@ -15,7 +15,7 @@ npm --prefix frontend run lint
 npm --prefix frontend run format:check
 ```
 
-修改 Go 服务接口后，重新生成并提交 TypeScript bindings。`VERSION` 是版本来源，运行 `node scripts/sync-version.mjs` 同步前端、Windows 元信息及 Go 诊断版本。不要手改生成文件。
+修改 Go 服务接口后，运行 `wails generate module` 和 `node scripts/normalize-bindings.mjs`，提交生成的 `frontend/wailsjs`。构建会自动规范生成文件的行尾空白，不手改类型。`VERSION` 是版本来源，运行 `node scripts/sync-version.mjs` 同步前端、Windows 元信息及 Go 诊断版本。
 
 真实 FFmpeg 检查使用自备环境，或在原生 Windows x64 上运行 `scripts/setup-test-ffmpeg.ps1`。该脚本下载目录内已固定散列的发布者工具，仅放入 `.tools`，不修改系统 PATH 或发布包。随后设置 `KOMPEG_INTEGRATION=1` 并运行 Go 测试。强制终止恢复测试只结束它自己创建的无界面测试子进程。
 

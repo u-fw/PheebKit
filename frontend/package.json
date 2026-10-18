@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
+    "prebuild": "node ../scripts/normalize-bindings.mjs",
     "build": "npm run typecheck && vite build",
     "build:dev": "vite build --mode development",
     "test": "vitest run",

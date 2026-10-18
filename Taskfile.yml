@@ -9,6 +9,7 @@ tasks:
       - node scripts/sync-version.mjs
       - go mod tidy
       - wails generate module
+      - node scripts/normalize-bindings.mjs
   build:
     cmds:
       - pwsh -NoProfile -File scripts/build-windows.ps1

@@ -1,5 +1,5 @@
 export namespace app {
-	
+
 	export interface BinaryStatus {
 	    path: string;
 	    version: string;
@@ -96,7 +96,7 @@ export namespace app {
 }
 
 export namespace core {
-	
+
 	export interface AudioProcessing {
 	    normalize?: Loudness | null;
 	    denoiseReductionDB: number;
@@ -272,7 +272,7 @@ export namespace core {
 	    name: string;
 	    settings: Settings;
 	}
-	
+
 	export interface Project {
 	    schemaVersion: number;
 	    id: string;
@@ -294,8 +294,8 @@ export namespace core {
 	    output: Source;
 	    verification?: OutputVerification | null;
 	}
-	
-	
+
+
 	export interface Stream {
 	    sampleRate?: number;
 	    channels?: number;
@@ -364,4 +364,3 @@ export namespace core {
 	}
 
 }
-
