@@ -20,7 +20,7 @@ type Media struct {
 	SizeBytes         int64    `json:"sizeBytes"`
 	DurationSeconds   float64  `json:"durationSeconds"`
 	Bitrate           int64    `json:"bitrate"`
-	Streams           []Stream `json:"streams"`
+	Streams           []Stream `json:"streams" ts_type:"Stream[] | null"`
 }
 
 type Stream struct {

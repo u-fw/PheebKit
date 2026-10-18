@@ -43,7 +43,7 @@ func (s *Service) SaveProject(p core.Project) (string, error) {
 	if err := validateProjectShape(p); err != nil {
 		return "", err
 	}
-	path, err := s.app.Dialog.SaveFile().SetFilename("PheebKit.ffproject").AddFilter("PheebKit 项目", "*.ffproject").PromptForSingleSelection()
+	path, err := s.app.SaveFile(FileDialog{Filename: "PheebKit.ffproject", FilterName: "PheebKit 项目", Pattern: "*.ffproject"})
 	if err != nil || path == "" {
 		return "", err
 	}
@@ -114,7 +114,7 @@ func (s *Service) LoadProject() (*JobReuse, error) {
 	if s.app == nil {
 		return nil, errors.New("native file dialog is unavailable")
 	}
-	path, err := s.app.Dialog.OpenFile().SetTitle("打开处理项目").AddFilter("PheebKit 项目", "*.ffproject").PromptForSingleSelection()
+	path, err := s.app.OpenFile(FileDialog{Title: "打开处理项目", FilterName: "PheebKit 项目", Pattern: "*.ffproject"})
 	if err != nil || path == "" {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (s *Service) openStoredProject(p core.Project) (*JobReuse, error) {
 		if s.app == nil {
 			return nil, errors.New("项目源文件已丢失，请在桌面应用中重新定位")
 		}
-		replacement, err := s.app.Dialog.OpenFile().SetTitle("源文件丢失，请重新定位：" + filepath.Base(p.Inputs[0].URI)).PromptForSingleSelection()
+		replacement, err := s.app.OpenFile(FileDialog{Title: "源文件丢失，请重新定位：" + filepath.Base(p.Inputs[0].URI)})
 		if err != nil || replacement == "" {
 			return nil, err
 		}
@@ -240,7 +240,7 @@ func (s *Service) ImportPreset() (*WorkspacePreferences, error) {
 	if s.app == nil {
 		return nil, errors.New("native file dialog is unavailable")
 	}
-	path, err := s.app.Dialog.OpenFile().SetTitle("导入常用配置").AddFilter("PheebKit 配置", "*.pheebpreset").PromptForSingleSelection()
+	path, err := s.app.OpenFile(FileDialog{Title: "导入常用配置", FilterName: "PheebKit 配置", Pattern: "*.pheebpreset"})
 	if err != nil || path == "" {
 		return nil, err
 	}
@@ -294,7 +294,7 @@ func (s *Service) ExportPreset(id string) (string, error) {
 	if found == nil {
 		return "", errors.New("常用配置不存在")
 	}
-	path, err := s.app.Dialog.SaveFile().SetFilename("PheebKit.pheebpreset").AddFilter("PheebKit 配置", "*.pheebpreset").PromptForSingleSelection()
+	path, err := s.app.SaveFile(FileDialog{Filename: "PheebKit.pheebpreset", FilterName: "PheebKit 配置", Pattern: "*.pheebpreset"})
 	if err != nil || path == "" {
 		return "", err
 	}

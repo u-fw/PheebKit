@@ -24,30 +24,30 @@ type EditorPreferences struct {
 type RecoveryDraft struct {
 	ID        string       `json:"id"`
 	PID       int          `json:"pid"`
-	UpdatedAt time.Time    `json:"updatedAt"`
+	UpdatedAt time.Time    `json:"updatedAt" ts_type:"string"`
 	Project   core.Project `json:"project"`
 }
 type RecentProject struct {
 	ID        string    `json:"id"`
 	Path      string    `json:"path"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	UpdatedAt time.Time `json:"updatedAt" ts_type:"string"`
 }
 type editorFile struct {
 	Version     int               `json:"version"`
 	Preferences EditorPreferences `json:"preferences"`
-	Drafts      []RecoveryDraft   `json:"drafts"`
-	Recent      []RecentProject   `json:"recent"`
+	Drafts      []RecoveryDraft   `json:"drafts" ts_type:"RecoveryDraft[] | null"`
+	Recent      []RecentProject   `json:"recent" ts_type:"RecentProject[] | null"`
 }
 type DraftSummary struct {
 	ID        string    `json:"id"`
 	Source    string    `json:"source"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	UpdatedAt time.Time `json:"updatedAt" ts_type:"string"`
 	Active    bool      `json:"active"`
 }
 type ProjectLibrary struct {
 	Preferences EditorPreferences `json:"preferences"`
-	Drafts      []DraftSummary    `json:"drafts"`
-	Recent      []RecentProject   `json:"recent"`
+	Drafts      []DraftSummary    `json:"drafts" ts_type:"DraftSummary[] | null"`
+	Recent      []RecentProject   `json:"recent" ts_type:"RecentProject[] | null"`
 	Error       string            `json:"error"`
 }
 

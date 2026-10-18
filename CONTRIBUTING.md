@@ -1,6 +1,6 @@
 # 参与开发
 
-保持 Go Core、Wails v3、React/TypeScript 和现有 lockfile。Wails Beta 的使用授权仅适用于当前 Technical Spike；不要因此引入其他实验依赖。新增依赖前核验官方来源，避免无关升级。
+保持 Go Core、固定稳定 Wails v2.17.0、React/TypeScript 和现有 lockfile。2026-10-18 用户批准从 v3 Beta 迁移到稳定 v2；当前产品不再依赖 v3。新增依赖前核验官方来源，避免无关升级。
 
 使用 Go 1.27.2 安全工具链、Node 24+、固定 Wails CLI，按 README 安装。干净源码目录应先构建真实前端产物，再执行会加载根包的 Go 检查：
 

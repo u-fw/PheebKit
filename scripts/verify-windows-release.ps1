@@ -88,7 +88,9 @@ try {
     if ($registration.DisplayName -notlike '菲比工具箱 (PheebKit)*') { throw 'Installer branding mismatch' }
     if ($PreviousReleaseDirectory -and -not (Test-Path -LiteralPath (Join-Path $installed 'keep-upgrade-file.txt'))) { throw 'Version upgrade removed user-owned files' }
     if ((Get-FileHash -LiteralPath $standalone).Hash -ne (Get-FileHash -LiteralPath (Join-Path $installed 'PheebKit.exe')).Hash) { throw 'Installer and ZIP contain different application binaries' }
-    foreach ($file in @('LICENSE.txt', 'THIRD_PARTY_NOTICES.txt', 'README.txt', 'RELEASE_NOTES.md')) {
+    $buildInfo = Get-Content -LiteralPath (Join-Path $root 'standalone/BUILD_INFO.json') -Raw | ConvertFrom-Json
+    if ($buildInfo.schemaVersion -ne 1 -or $buildInfo.version -ne $version -or $buildInfo.modified -ne $false -or $buildInfo.sourceRevision -notmatch '^[a-f0-9]{40}$' -or $buildInfo.executableSHA256 -ne (Get-FileHash -LiteralPath $standalone -Algorithm SHA256).Hash.ToLowerInvariant()) { throw 'Source/build manifest mismatch' }
+    foreach ($file in @('LICENSE.txt', 'THIRD_PARTY_NOTICES.txt', 'README.txt', 'RELEASE_NOTES.md', 'BUILD_INFO.json')) {
         if ((Get-FileHash -LiteralPath (Join-Path $root "standalone/$file")).Hash -ne (Get-FileHash -LiteralPath (Join-Path $installed $file)).Hash) { throw "Payload notice differs: $file" }
     }
     'user-owned data; retain during reinstall and uninstall' | Set-Content -LiteralPath (Join-Path $installed 'keep-user-file.txt')

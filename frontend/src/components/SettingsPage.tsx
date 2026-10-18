@@ -362,8 +362,8 @@ export function SettingsPage({
         connected={connected}
       />
       <p className="field-hint">
-        菲比工具箱 · PheebKit {__KOMPEG_VERSION__} · Windows 测试版 · Android
-        暂缓
+        菲比工具箱 · PheebKit {__KOMPEG_VERSION__} · Windows{" "}
+        {__KOMPEG_VERSION__.includes("-") ? "候选版" : "正式版"} · Android 暂缓
       </p>
     </div>
   );

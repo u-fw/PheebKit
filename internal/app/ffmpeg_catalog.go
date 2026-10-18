@@ -34,5 +34,5 @@ func (s *Service) ChooseSubtitleFile() (string, error) {
 	if s.app == nil {
 		return "", errors.New("native file dialog is unavailable")
 	}
-	return s.app.Dialog.OpenFile().AddFilter("文字字幕 SRT / ASS / SSA / WebVTT", "*.srt;*.ass;*.ssa;*.vtt").PromptForSingleSelection()
+	return s.app.OpenFile(FileDialog{FilterName: "文字字幕 SRT / ASS / SSA / WebVTT", Pattern: "*.srt;*.ass;*.ssa;*.vtt"})
 }

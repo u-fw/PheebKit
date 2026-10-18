@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/wailsapp/wails/v3/pkg/application"
 	"kompeg/internal/compiler"
 	"kompeg/internal/core"
 	"kompeg/internal/jobs"
@@ -20,7 +19,7 @@ import (
 
 // Service is the Wails boundary; the compiler and job engine know nothing of UI.
 type Service struct {
-	app                *application.App
+	app                NativeHost
 	runner             *runnerProxy
 	jobs               *jobs.Manager
 	ctx                context.Context
@@ -75,7 +74,7 @@ func NewService() *Service {
 	}
 	s.jobs = jobs.New(s.runner, func(job core.Job) {
 		if s.app != nil {
-			s.app.Event.Emit("job:updated", job)
+			s.app.Emit("job:updated", job)
 			s.emitQueueStatus()
 		}
 	})
@@ -83,7 +82,7 @@ func NewService() *Service {
 }
 
 //wails:ignore
-func (s *Service) Attach(a *application.App) { s.app = a }
+func (s *Service) Attach(a NativeHost) { s.app = a }
 
 //wails:ignore
 func (s *Service) Close() {
@@ -98,7 +97,7 @@ func (s *Service) Close() {
 func (s *Service) GetPlatform() string {
 	log.Printf("bridge GetPlatform: %s", runtime.GOOS)
 	if s.app != nil {
-		s.app.Event.Emit("bridge:ready", runtime.GOOS)
+		s.app.Emit("bridge:ready", runtime.GOOS)
 	}
 	return runtime.GOOS
 }
@@ -139,7 +138,7 @@ func (s *Service) probe(uri string) (core.Media, error) {
 	m.SourceFingerprint = fingerprint
 	s.cacheMedia(m)
 	if s.app != nil {
-		s.app.Event.Emit("media:probed", m)
+		s.app.Emit("media:probed", m)
 	}
 	return m, nil
 }
@@ -148,7 +147,7 @@ func (s *Service) ChooseMedia() (*core.Media, error) {
 	if s.app == nil {
 		return nil, errors.New("native file dialog is unavailable")
 	}
-	path, err := s.app.Dialog.OpenFile().SetTitle("选择媒体文件").AddFilter("视频与音频", "*.mp4;*.mkv;*.mov;*.webm;*.avi;*.m4v;*.ts;*.mp3;*.flac;*.wav;*.m4a;*.ogg").PromptForSingleSelection()
+	path, err := s.app.OpenFile(FileDialog{Title: "选择媒体文件", FilterName: "视频与音频", Pattern: "*.mp4;*.mkv;*.mov;*.webm;*.avi;*.m4v;*.ts;*.mp3;*.flac;*.wav;*.m4a;*.ogg"})
 	if err != nil || path == "" {
 		return nil, err
 	}
@@ -163,7 +162,7 @@ func (s *Service) ChooseOutput(suggested string) (string, error) {
 	if s.app == nil {
 		return "", errors.New("native file dialog is unavailable")
 	}
-	return s.app.Dialog.SaveFile().SetDirectory(filepath.Dir(suggested)).SetFilename(filepath.Base(suggested)).AddFilter("媒体输出", "*.mp4;*.mkv;*.webm;*.m4a;*.mka;*.mp3;*.flac;*.wav;*.opus;*.srt;*.vtt;*.ass").PromptForSingleSelection()
+	return s.app.SaveFile(FileDialog{Directory: filepath.Dir(suggested), Filename: filepath.Base(suggested), FilterName: "媒体输出", Pattern: "*.mp4;*.mkv;*.webm;*.m4a;*.mka;*.mp3;*.flac;*.wav;*.opus;*.srt;*.vtt;*.ass"})
 }
 
 func (s *Service) Capabilities() (core.Capabilities, error) {

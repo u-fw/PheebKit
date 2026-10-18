@@ -51,14 +51,11 @@ append(
   execFileSync("go", ["version"], { encoding: "utf8" }).trim(),
   goRoot,
 );
-// npm's Wails runtime omits its license file; it shares the pinned Go module's MIT license.
-const runtime = JSON.parse(
-  readFileSync("frontend/node_modules/@wailsio/runtime/package.json", "utf8"),
-);
-const wails = modules.get("github.com/wailsapp/wails/v3");
-if (!wails || runtime.version !== wails.version.slice(1))
-  throw new Error("Wails Go/npm runtime version mismatch");
-append("npm:@wailsio/runtime", runtime.version, wails.directory);
+// Wails v2 generates its JS runtime directly from the pinned Go module.
+const wails = modules.get("github.com/wailsapp/wails/v2");
+if (!wails || /-(?:alpha|beta|rc)/i.test(wails.version))
+  throw new Error("A stable Wails v2 module is required");
+append("generated Wails JavaScript runtime", wails.version, wails.directory);
 if (existsSync(resolve(destination)))
   throw new Error(
     "Notice output already exists; use a fresh release staging directory",

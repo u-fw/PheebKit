@@ -53,6 +53,7 @@ Source: "{#PayloadDir}\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\RELEASE_NOTES.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#PayloadDir}\BUILD_INFO.json"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\菲比工具箱 (PheebKit)"; Filename: "{app}\PheebKit.exe"

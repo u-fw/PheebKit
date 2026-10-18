@@ -52,7 +52,7 @@ type diagnosticJob struct {
 }
 type diagnosticReport struct {
 	SchemaVersion       int                 `json:"schemaVersion"`
-	GeneratedAt         time.Time           `json:"generatedAt"`
+	GeneratedAt         time.Time           `json:"generatedAt" ts_type:"string"`
 	ApplicationVersion  string              `json:"applicationVersion"`
 	Revision            string              `json:"revision"`
 	ModifiedBuild       bool                `json:"modifiedBuild"`
@@ -69,16 +69,15 @@ type diagnosticReport struct {
 	CapabilitiesStatus  string              `json:"capabilitiesStatus"`
 	EditorRecordStatus  string              `json:"editorRecordStatus"`
 	WorkspaceReadError  bool                `json:"workspaceReadError"`
-	GPUVendors          []string            `json:"gpuVendors"`
-	Encoders            []diagnosticEncoder `json:"encoders"`
+	GPUVendors          []string            `json:"gpuVendors" ts_type:"string[] | null"`
+	Encoders            []diagnosticEncoder `json:"encoders" ts_type:"diagnosticEncoder[] | null"`
 	QueueStates         map[string]int      `json:"queueStates"`
 	HistorySaveError    bool                `json:"historySaveError"`
-	RecentJobs          []diagnosticJob     `json:"recentJobs,omitempty"`
+	RecentJobs          []diagnosticJob     `json:"recentJobs,omitempty" ts_type:"diagnosticJob[] | null"`
 	PrivacyPolicy       string              `json:"privacyPolicy"`
 }
 
 var ffmpegRelease = regexp.MustCompile(`^(?:ffmpeg|ffprobe) version n?([0-9]{1,3}\.[0-9]{1,3}(?:\.[0-9]{1,3})?)\b`)
-var revisionPattern = regexp.MustCompile(`^[a-f0-9]{7,64}$`)
 var diagnosticModuleVersion = regexp.MustCompile(`^v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(?:-(?:alpha|beta|rc)\.[0-9]{1,4})?$`)
 
 func diagnosticChoice(value string, allowed ...string) string {
@@ -133,17 +132,10 @@ func (s *Service) GetDiagnosticPreview(options DiagnosticOptions) (DiagnosticPre
 	environment := s.environment
 	s.configMu.RUnlock()
 	report := diagnosticReport{SchemaVersion: 1, GeneratedAt: time.Now().UTC(), ApplicationVersion: buildinfo.Version, Revision: "unknown", GoVersion: runtime.Version(), OS: runtime.GOOS, OSVersion: diagnosticOSVersion(), Architecture: runtime.GOARCH, LogicalCPUs: runtime.NumCPU(), FFmpeg: diagnosticBinaryView(environment.FFmpeg), FFprobe: diagnosticBinaryView(environment.FFprobe), EnvironmentReady: environment.Ready, GPUVendors: []string{}, Encoders: []diagnosticEncoder{}, QueueStates: map[string]int{}, PrivacyPolicy: "structured-allowlist-v1: no paths, filenames, usernames, argv, raw logs, raw errors, URLs, environment values, media metadata, custom parameters or project documents"}
+	report.Revision, report.ModifiedBuild = buildinfo.Provenance()
 	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, setting := range info.Settings {
-			if setting.Key == "vcs.revision" && revisionPattern.MatchString(setting.Value) {
-				report.Revision = setting.Value
-			}
-			if setting.Key == "vcs.modified" {
-				report.ModifiedBuild = setting.Value == "true"
-			}
-		}
 		for _, dependency := range info.Deps {
-			if dependency.Path == "github.com/wailsapp/wails/v3" && diagnosticModuleVersion.MatchString(dependency.Version) {
+			if dependency.Path == "github.com/wailsapp/wails/v2" && diagnosticModuleVersion.MatchString(dependency.Version) {
 				report.WailsVersion = dependency.Version
 			}
 		}
@@ -259,7 +251,7 @@ func (s *Service) ExportDiagnosticReport(token string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	path, err := s.app.Dialog.SaveFile().SetFilename("PheebKit-diagnostics.json").AddFilter("脱敏诊断报告", "*.json").PromptForSingleSelection()
+	path, err := s.app.SaveFile(FileDialog{Filename: "PheebKit-diagnostics.json", FilterName: "脱敏诊断报告", Pattern: "*.json"})
 	if err != nil || path == "" {
 		return "", err
 	}

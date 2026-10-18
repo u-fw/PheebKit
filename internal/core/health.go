@@ -6,7 +6,7 @@ import "context"
 type Recovery struct {
 	Mode              string      `json:"mode"`
 	SourceFingerprint string      `json:"sourceFingerprint"`
-	DamagedRanges     []TimeRange `json:"damagedRanges"`
+	DamagedRanges     []TimeRange `json:"damagedRanges" ts_type:"TimeRange[] | null"`
 }
 
 type MediaHealth struct {
@@ -17,7 +17,7 @@ type MediaHealth struct {
 	Percent           float64     `json:"percent"`
 	DurationSeconds   float64     `json:"durationSeconds"`
 	WindowSeconds     float64     `json:"windowSeconds"`
-	DamagedRanges     []TimeRange `json:"damagedRanges"`
+	DamagedRanges     []TimeRange `json:"damagedRanges" ts_type:"TimeRange[] | null"`
 	Error             string      `json:"error"`
 }
 

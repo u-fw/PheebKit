@@ -1,10 +1,10 @@
 package core
 
 type AudioProcessing struct {
-	Normalize          *Loudness       `json:"normalize,omitempty"`
+	Normalize          *Loudness       `json:"normalize,omitempty" ts_type:"Loudness | null"`
 	DenoiseReductionDB float64         `json:"denoiseReductionDB"`
 	NoiseFloorDB       float64         `json:"noiseFloorDB"`
-	Equalizer          []EqualizerBand `json:"equalizer"`
+	Equalizer          []EqualizerBand `json:"equalizer" ts_type:"EqualizerBand[] | null"`
 	FadeInSeconds      float64         `json:"fadeInSeconds"`
 	FadeOutSeconds     float64         `json:"fadeOutSeconds"`
 	SampleRate         int             `json:"sampleRate"`

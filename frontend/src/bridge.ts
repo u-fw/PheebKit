@@ -1,7 +1,11 @@
-import { Events } from "@wailsio/runtime";
-import * as Service from "../bindings/kompeg/internal/app/service";
-import type * as Core from "../bindings/kompeg/internal/core/models";
-import type { FFmpegSetupStatus } from "../bindings/kompeg/internal/app/models";
+import {
+  EventsOn,
+  OnFileDrop,
+  OnFileDropOff,
+} from "../wailsjs/runtime/runtime";
+import * as Service from "../wailsjs/go/app/Desktop";
+import type { core as Core, app as Models } from "../wailsjs/go/models";
+type FFmpegSetupStatus = Models.FFmpegSetupStatus;
 export type { FFmpegSetupStatus };
 
 export type Source = Core.Source;
@@ -318,8 +322,8 @@ export const API = {
     return { ...status, pendingIDs: status.pendingIDs ?? [] };
   },
   subscribeQueue: (callback: (status: QueueStatus) => void): (() => void) =>
-    Events.On("queue:updated", (event) =>
-      callback({ ...event.data, pendingIDs: event.data.pendingIDs ?? [] }),
+    EventsOn("queue:updated", (status: QueueStatus) =>
+      callback({ ...status, pendingIDs: status.pendingIDs ?? [] }),
     ),
   saveProject: async (project: Project): Promise<string> =>
     Service.SaveProject(project),
@@ -351,7 +355,9 @@ export const API = {
       unsaved?: boolean;
     }) => void,
   ): (() => void) =>
-    Events.On("app:close-requested", (event) => callback(event.data)),
+    EventsOn("app:close-requested", (request: Parameters<typeof callback>[0]) =>
+      callback(request),
+    ),
   openJobOutput: async (id: string, folder: boolean): Promise<void> =>
     Service.OpenJobOutput(id, folder),
   reuseJob: async (
@@ -425,9 +431,11 @@ export const API = {
   chooseOutput: async (suggested: string): Promise<string> =>
     Service.ChooseOutput(suggested),
   subscribeJobs: (callback: (job: Job) => void): (() => void) =>
-    Events.On("job:updated", (event) => callback(jobView(event.data))),
+    EventsOn("job:updated", (job: Core.Job) => callback(jobView(job))),
   subscribeMedia: (callback: (media: Media) => void): (() => void) =>
-    Events.On("media:probed", (event) => callback(mediaView(event.data))),
-  onDrop: (callback: (paths: string[]) => void): (() => void) =>
-    Events.On("media:drop", (event) => callback(event.data)),
+    EventsOn("media:probed", (media: Core.Media) => callback(mediaView(media))),
+  onDrop: (callback: (paths: string[]) => void): (() => void) => {
+    OnFileDrop((_x, _y, paths) => callback(paths), false);
+    return OnFileDropOff;
+  },
 };

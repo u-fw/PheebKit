@@ -21,7 +21,7 @@ func (s *Service) CanClose() bool {
 	downloading := s.setupBusy.Load()
 	if count > 0 || downloading || s.unsavedEdits {
 		if s.app != nil {
-			s.app.Event.Emit("app:close-requested", CloseRequest{Jobs: count, Downloading: downloading, Unsaved: s.unsavedEdits})
+			s.app.Emit("app:close-requested", CloseRequest{Jobs: count, Downloading: downloading, Unsaved: s.unsavedEdits})
 		}
 		return false
 	}

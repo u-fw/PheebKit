@@ -6,14 +6,14 @@ const ProjectSchemaVersion = 1
 type Project struct {
 	SchemaVersion int      `json:"schemaVersion"`
 	ID            string   `json:"id"`
-	Inputs        []Source `json:"inputs"`
+	Inputs        []Source `json:"inputs" ts_type:"Source[] | null"`
 	Output        Source   `json:"output"`
 	Settings      Settings `json:"settings"`
 }
 
 type Settings struct {
-	AudioProcessing   *AudioProcessing `json:"audioProcessing,omitempty"`
-	Recovery          *Recovery        `json:"recovery,omitempty"`
+	AudioProcessing   *AudioProcessing `json:"audioProcessing,omitempty" ts_type:"AudioProcessing | null"`
+	Recovery          *Recovery        `json:"recovery,omitempty" ts_type:"Recovery | null"`
 	Operation         string           `json:"operation,omitempty"`
 	Codec             string           `json:"codec"`
 	Encoder           string           `json:"encoder"`
@@ -25,13 +25,13 @@ type Settings struct {
 	Mode              string           `json:"mode"`
 	BitrateKbps       int              `json:"bitrateKbps"`
 	TargetSizeMB      float64          `json:"targetSizeMB"`
-	RawArguments      []string         `json:"rawArguments"`
-	Trim              *TimeRange       `json:"trim,omitempty"`
-	Segments          []TimeRange      `json:"segments,omitempty"`
-	SubtitleBurn      *SubtitleBurn    `json:"subtitleBurn,omitempty"`
-	AudioSelection    *TrackSelection  `json:"audioSelection,omitempty"`
-	SubtitleSelection *TrackSelection  `json:"subtitleSelection,omitempty"`
-	Transform         *VideoTransform  `json:"transform,omitempty"`
+	RawArguments      []string         `json:"rawArguments" ts_type:"string[] | null"`
+	Trim              *TimeRange       `json:"trim,omitempty" ts_type:"TimeRange | null"`
+	Segments          []TimeRange      `json:"segments,omitempty" ts_type:"TimeRange[] | null"`
+	SubtitleBurn      *SubtitleBurn    `json:"subtitleBurn,omitempty" ts_type:"SubtitleBurn | null"`
+	AudioSelection    *TrackSelection  `json:"audioSelection,omitempty" ts_type:"TrackSelection | null"`
+	SubtitleSelection *TrackSelection  `json:"subtitleSelection,omitempty" ts_type:"TrackSelection | null"`
+	Transform         *VideoTransform  `json:"transform,omitempty" ts_type:"VideoTransform | null"`
 	VolumeDB          float64          `json:"volumeDB,omitempty"`
 }
 
@@ -56,7 +56,7 @@ type SubtitleBurn struct {
 // relative to audio/subtitle streams. Nil preserves the original defaults.
 type TrackSelection struct {
 	Mode    string `json:"mode"`
-	Indices []int  `json:"indices,omitempty"`
+	Indices []int  `json:"indices,omitempty" ts_type:"number[] | null"`
 }
 
 // VideoTransform applies crop, clockwise rotation, then horizontal/vertical flips.
@@ -64,7 +64,7 @@ type VideoTransform struct {
 	Rotation       int          `json:"rotation"`
 	FlipHorizontal bool         `json:"flipHorizontal"`
 	FlipVertical   bool         `json:"flipVertical"`
-	Crop           *CropMargins `json:"crop,omitempty"`
+	Crop           *CropMargins `json:"crop,omitempty" ts_type:"CropMargins | null"`
 }
 
 type CropMargins struct {

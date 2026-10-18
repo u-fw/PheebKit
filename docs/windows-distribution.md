@@ -1,6 +1,6 @@
 # Windows distribution
 
-Windows x64 is the active release target. Android work is deferred: its source is retained, but no APK is packaged or published. Application version is read from `VERSION`. Wails v3 Beta remains the explicitly approved experimental baseline; these are experimental candidates, not a production-stability claim.
+Windows x64 is the active release target. Android is deferred and no APK is packaged. Application version is read from `VERSION`. The owner approved stable Wails v2.17.0 migration on 2026-10-18. RC packages are verification candidates; final-version packaging additionally requires exact-revision acceptance evidence from [stabilization](stability.md).
 
 ## Artifacts
 
@@ -25,7 +25,7 @@ The installer AppId is permanently `{9D8FAD06-8029-4A58-9497-96C7DA878C63}` acro
 Requires native Windows x64, PowerShell 7, stable Go 1.27.2 or newer, Node 24+, the pinned Wails CLI and Inno Setup 7.1.0. The release script runs pinned govulncheck and npm audit before building; network/advisory failures stop packaging. The module retains Go 1.25 language compatibility with an automatic Go 1.27.2 toolchain hint.
 
 ```powershell
-go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
 npm --prefix frontend ci
 ./scripts/setup-inno.ps1
 node scripts/sync-version.mjs

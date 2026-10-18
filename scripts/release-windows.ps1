@@ -1,4 +1,4 @@
-param([string]$InnoCompiler = $env:KOMPEG_ISCC)
+param([string]$InnoCompiler = $env:KOMPEG_ISCC, [string]$StableEvidence)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -18,6 +18,10 @@ function Invoke-Checked([string]$Program, [string[]]$Arguments) {
 $versionInfo = node --input-type=module -e 'import { readVersion } from "./scripts/version.mjs"; console.log(JSON.stringify(readVersion()));'
 if ($LASTEXITCODE -ne 0) { throw 'Invalid VERSION file' }
 $version = $versionInfo | ConvertFrom-Json
+if (-not $version.prerelease) {
+    if (-not $StableEvidence) { throw 'Stable packaging requires reviewed acceptance records via -StableEvidence. See docs/stability.md.' }
+    Invoke-Checked node @('scripts/stable-evidence.mjs', $StableEvidence)
+}
 $releaseRoot = Join-Path $workspace 'release'
 $final = Join-Path $releaseRoot $version.version
 $resolvedFinal = [IO.Path]::GetFullPath($final)
@@ -39,7 +43,7 @@ try {
     Invoke-Checked node @('scripts/sync-version.mjs')
     $dirty = git status --porcelain --untracked-files=normal
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Release packaging requires committed sources and synchronized version metadata; commit changes before packaging.' }
-    Invoke-Checked node @('--test', 'scripts/version.test.mjs')
+    Invoke-Checked node @('--test', 'scripts/version.test.mjs', 'scripts/stable-evidence.test.mjs')
     # A fresh clone has no embedded frontend/dist. Build real assets before Go
     # package loading/tests; cached development output must not be a prerequisite.
     Invoke-Checked npm @('--prefix', 'frontend', 'ci')
@@ -49,17 +53,20 @@ try {
     Invoke-Checked go @('run', 'golang.org/x/vuln/cmd/govulncheck@v1.9.0', './...')
     Invoke-Checked npm @('--prefix', 'frontend', 'audit', '--audit-level=low')
     foreach ($check in @('test', 'typecheck', 'lint', 'format:check')) { Invoke-Checked npm @('--prefix', 'frontend', 'run', $check) }
-    Invoke-Checked wails3 @('build')
-    $application = Join-Path $workspace 'bin/PheebKit.exe'
+    $application = Join-Path $payload 'PheebKit.exe'
+    & (Join-Path $workspace 'scripts/build-windows.ps1') -OutputPath $application
+    if ($LASTEXITCODE -ne 0) { throw 'Native build failed' }
     $metadata = (Get-Item -LiteralPath $application).VersionInfo
     if ($metadata.ProductVersion -ne $version.version) { throw 'Executable version does not match VERSION' }
-    Copy-Item -LiteralPath $application -Destination (Join-Path $payload 'PheebKit.exe')
+    $taskSourceRevision = (git rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $taskSourceRevision -notmatch '^[a-f0-9]{40}$') { throw 'Cannot record matching source revision' }
+    @{ schemaVersion = 1; version = $version.version; sourceRevision = $taskSourceRevision; modified = $false; framework = 'wails-v2.17.0'; executableSHA256 = (Get-FileHash -LiteralPath $application -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'BUILD_INFO.json') -Encoding utf8NoBOM
     Copy-Item -LiteralPath (Join-Path $workspace 'LICENSE') -Destination (Join-Path $payload 'LICENSE.txt')
     if ((Get-Content -LiteralPath (Join-Path $workspace 'RELEASE_NOTES.md') -TotalCount 1) -ne "# PheebKit $($version.version)") { throw 'Release notes do not match VERSION' }
     Copy-Item -LiteralPath (Join-Path $workspace 'RELEASE_NOTES.md') -Destination (Join-Path $payload 'RELEASE_NOTES.md')
     Invoke-Checked node @('scripts/dependency-notices.mjs', (Join-Path $payload 'THIRD_PARTY_NOTICES.txt'))
     @"
-PheebKit $($version.version) - Windows x64 experimental release
+PheebKit $($version.version) - Windows x64
 
 Extract the entire ZIP, then run PheebKit.exe. This is a no-install application;
 settings and downloaded FFmpeg are stored in AppData, not beside this executable.

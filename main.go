@@ -1,30 +1,20 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"log"
-	"os"
 	"runtime"
-	"strconv"
 
-	"github.com/wailsapp/wails/v3/pkg/application"
-	"github.com/wailsapp/wails/v3/pkg/events"
+	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"kompeg/internal/app"
-	"kompeg/internal/core"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
-
-func init() {
-	application.RegisterEvent[core.Media]("media:probed")
-	application.RegisterEvent[core.Job]("job:updated")
-	application.RegisterEvent[app.QueueStatus]("queue:updated")
-	application.RegisterEvent[string]("bridge:ready")
-	application.RegisterEvent[[]string]("media:drop")
-	application.RegisterEvent[bool]("window:maximised")
-	application.RegisterEvent[app.CloseRequest]("app:close-requested")
-}
 
 func main() {
 	releaseGuard, err := holdInstallerGuard()
@@ -33,51 +23,20 @@ func main() {
 	}
 	defer releaseGuard()
 	service := app.NewService()
-	a := application.New(application.Options{
-		Name:        "PheebKit",
-		Description: "菲比工具箱 · 本地媒体处理工具",
-		Services:    []application.Service{application.NewService(service)},
-		Assets:      application.AssetOptions{Handler: service.AssetHandler(application.AssetFileServerFS(assets))},
-		Windows:     windowsDebugOptions(),
-		ShouldQuit:  service.CanClose,
-	})
-	service.Attach(a)
-	a.OnShutdown(service.Close)
-	window := a.Window.NewWithOptions(application.WebviewWindowOptions{
+	defer service.Close()
+	err = wails.Run(&options.App{
 		Title: "菲比工具箱 · PheebKit",
 		Width: 1280, Height: 860, MinWidth: 360, MinHeight: 620,
 		Frameless:        runtime.GOOS == "windows",
-		EnableFileDrop:   true,
-		BackgroundColour: application.NewRGB(15, 22, 23),
-		URL:              "/",
+		BackgroundColour: options.NewRGB(15, 22, 23),
+		AssetServer:      &assetserver.Options{Assets: assets, Middleware: service.AssetHandler},
+		Bind:             []interface{}{&app.Desktop{DesktopAPI: service}},
+		OnStartup:        func(ctx context.Context) { service.Attach(&wailsHost{ctx: ctx}) },
+		OnBeforeClose:    func(context.Context) bool { return !service.CanClose() },
+		DragAndDrop:      &options.DragAndDrop{EnableFileDrop: true, DisableWebViewDrop: true},
+		Windows:          &windows.Options{WindowClassName: "PheebKitWindow", DLLSearchPaths: windows.DLLSearchApplicationDir | windows.DLLSearchSystem32},
 	})
-	window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {
-		if !service.CanClose() {
-			event.Cancel()
-		}
-	})
-	window.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
-		a.Event.Emit("media:drop", event.Context().DroppedFiles())
-	})
-	for _, eventType := range []events.WindowEventType{events.Common.WindowMaximise, events.Common.WindowUnMaximise} {
-		window.OnWindowEvent(eventType, func(*application.WindowEvent) {
-			a.Event.Emit("window:maximised", window.IsMaximised())
-		})
-	}
-	if err := a.Run(); err != nil {
+	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-// Debugging is opt-in for local WebView verification; normal runs expose no port.
-func windowsDebugOptions() application.WindowsOptions {
-	value := os.Getenv("KOMPEG_DEBUG_PORT")
-	if value == "" {
-		return application.WindowsOptions{}
-	}
-	port, err := strconv.Atoi(value)
-	if err != nil || port < 1024 || port > 65535 {
-		log.Fatal("KOMPEG_DEBUG_PORT must be an integer from 1024 to 65535")
-	}
-	return application.WindowsOptions{AdditionalBrowserArgs: []string{"--remote-debugging-port=" + strconv.Itoa(port)}}
 }

@@ -8,13 +8,10 @@ tasks:
     cmds:
       - node scripts/sync-version.mjs
       - go mod tidy
-      - wails3 generate bindings -ts -i -clean=true
+      - wails generate module
   build:
     cmds:
-      - task: bindings
-      - task: build:frontend
-      - wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out kompeg.syso
-      - go build -tags production -trimpath -ldflags="-s -w -H windowsgui" -o bin/PheebKit.exe .
+      - pwsh -NoProfile -File scripts/build-windows.ps1
   build:frontend:
     dir: frontend
     cmds:
@@ -22,9 +19,7 @@ tasks:
       - npm run build
   build:dev:
     cmds:
-      - task: bindings
-      - wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out kompeg.syso
-      - 'go build {{if .EXTRA_TAGS}}-tags {{.EXTRA_TAGS}}{{end}} -buildvcs=false -gcflags=all="-l" -o bin/PheebKit-dev.exe .'
+      - wails build -debug -o PheebKit-dev.exe -webview2 error
   dev:frontend:
     dir: frontend
     cmds:
@@ -34,10 +29,10 @@ tasks:
       - ./bin/PheebKit.exe
   run:dev:
     cmds:
-      - ./bin/PheebKit-dev.exe
-  build:server:
+      - ./build/bin/PheebKit-dev.exe
+  dev:
     cmds:
-      - go build -tags server -o bin/PheebKit-server.exe .
+      - wails dev
   test:
     cmds:
       - node --test scripts/version.test.mjs

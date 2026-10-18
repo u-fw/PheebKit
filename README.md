@@ -1,8 +1,10 @@
 # 菲比工具箱 · PheebKit
 
-A Windows 10/11 x64 video-processing experimental application using Go Core, Wails v3, React and strict TypeScript. Windows uses real installed FFmpeg binaries. Android work is deferred; its unsupported mock/native-shell research remains in source and no APK is released.
+Source and feedback: [u-fw/PheebKit](https://github.com/u-fw/PheebKit). Licensed `GPL-3.0-only`.
 
-Wails `v3.0.0-beta.27` and its experimental Android shell were explicitly approved for this spike. This repository is not a production release. [Environment audit](docs/environment.md) and [Android blockers](docs/android.md) distinguish installed tools, source support and actual runtime evidence.
+A Windows 10/11 x64 local media application using Go Core, stable Wails v2.17.0, React and strict TypeScript. Windows uses real installed FFmpeg binaries. Android is deferred and no APK is released.
+
+The owner approved migration from the original v3 Beta spike to stable Wails v2 on 2026-10-18. The current `0.2.0-rc.1` is the verification candidate for `0.2.0`; it is not a stable-release claim. See the [stabilization acceptance matrix](docs/stability.md) and [release checks](docs/release-acceptance.md). Final packaging requires reviewed evidence matching its exact version and source revision.
 
 Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 
@@ -13,22 +15,22 @@ Beta.11 adds optional configurable audio processing: dynamic single-pass loudnes
 Requires Go 1.25+ with automatic selection of the pinned Go 1.27.2 security toolchain, Node 24+, WebView2 and FFmpeg/ffprobe with a supported software or usable hardware encoder. Release builds enforce Go 1.27.2 or newer and dependency vulnerability checks. See the [security/performance audit](docs/security-performance-audit.md). Install the exact CLI once:
 
 ```powershell
-go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
 npm --prefix frontend ci
-wails3 generate bindings -ts -i -clean=true
+wails generate module
 npm --prefix frontend run build
-wails3 build
+./scripts/build-windows.ps1
 .\bin\PheebKit.exe
 ```
 
-`wails3 build` generates the Windows manifest/resource and embeds the production frontend. The manifest enables long paths; filesystem policy and the installed FFmpeg build still determine complete long-path support. For optional explicit binary selection:
+The Windows build script generates bindings/resources and embeds the production frontend, then copies the executable to `bin/PheebKit.exe`. The manifest enables long paths; filesystem policy and the installed FFmpeg build still determine complete long-path support. For optional explicit binary selection:
 
 ```powershell
 $env:KOMPEG_FFMPEG = 'D:\Tools\ffmpeg\bin\ffmpeg.exe'
 $env:KOMPEG_FFPROBE = 'D:\Tools\ffmpeg\bin\ffprobe.exe'
 ```
 
-Use `wails3 dev -config build/config.yml` for frontend development. Ordinary browser previews cannot execute native operations. Drag media files onto the workspace or use the multi-file picker (up to 32 files), review media details, configure processing, inspect the backend command preview and follow progress/results in Queue. Batch submission uses shared settings, independent track selections and distinct output names; all projects must pass preflight before any are enqueued.
+Use `wails dev` for frontend development. Ordinary browser previews cannot execute native operations. Drag media files onto the workspace or use the multi-file picker (up to 32 files), review media details, configure processing, inspect the backend command preview and follow progress/results in Queue. Batch submission uses shared settings, independent track selections and distinct output names; all projects must pass preflight before any are enqueued.
 
 FFmpeg discovery prefers `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE`, then `FFMPEG_PATH` / `FFPROBE_PATH`, then application settings and PATH. Values can identify the executable or its directory. Missing/invalid binaries show a setup prompt; Settings lets you download a verified Windows x64 package or select `ffmpeg.exe` and verifies its sibling `ffprobe.exe`. Paths are saved in `%APPDATA%/kompeg/ffmpeg.json`, without modifying Windows environment variables. Explicit environment overrides must be corrected in the environment and require restarting the app. Reconfiguration is blocked while jobs are active. One-click downloads are disabled when both tools are already usable; select a local path to deliberately switch versions. Explicit overrides must be removed/corrected before downloads or path writes.
 
@@ -79,7 +81,7 @@ npm --prefix frontend run test
 npm --prefix frontend run typecheck
 npm --prefix frontend run lint
 npm --prefix frontend run format:check
-wails3 build
+./scripts/build-windows.ps1
 ```
 
 `go run ./cmd/spike -input <absolute-path> -output <new-absolute-path.mp4>` verifies the same probe/compiler/runner slice without the UI and prints actual media/result JSON.

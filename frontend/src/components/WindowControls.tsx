@@ -1,4 +1,9 @@
-import { Events, Window } from "@wailsio/runtime";
+import {
+  WindowIsMaximised,
+  WindowMinimise,
+  WindowToggleMaximise,
+  Quit,
+} from "../../wailsjs/runtime/runtime";
 import { useEffect, useState } from "react";
 import { Icon } from "./Icon";
 
@@ -12,7 +17,7 @@ export function WindowControls({
   useEffect(() => {
     let alive = true;
     const refresh = () => {
-      void Window.IsMaximised().then(
+      void WindowIsMaximised().then(
         (value) => {
           if (alive) setMaximised(value);
         },
@@ -22,22 +27,20 @@ export function WindowControls({
       );
     };
     refresh();
-    const unsubscribe = Events.On("window:maximised", (event) => {
-      if (alive && typeof event.data === "boolean") setMaximised(event.data);
-    });
+    window.addEventListener("resize", refresh);
     return () => {
       alive = false;
-      unsubscribe();
+      window.removeEventListener("resize", refresh);
     };
   }, [onError]);
 
   async function control(action: "minimise" | "maximise" | "close") {
     try {
-      if (action === "minimise") await Window.Minimise();
-      else if (action === "close") await Window.Close();
+      if (action === "minimise") WindowMinimise();
+      else if (action === "close") Quit();
       else {
-        await Window.ToggleMaximise();
-        setMaximised(await Window.IsMaximised());
+        WindowToggleMaximise();
+        setMaximised(await WindowIsMaximised());
       }
     } catch (cause) {
       onError(`窗口操作失败：${String(cause)}`);

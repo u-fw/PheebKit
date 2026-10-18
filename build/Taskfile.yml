@@ -7,6 +7,6 @@ tasks:
   build:frontend:
     dir: frontend
     cmds:
-      - wails3 generate bindings -ts -i -clean=true
+      - wails generate module
       - npm ci
       - npm run build

@@ -1,4 +1,6 @@
-# Open-source readiness — baseline 2026-10-10, iteration 2026-10-15
+# Open-source readiness — baseline 2026-10-10, stabilization 2026-10-18
+
+Current work targets `0.2.0` with a stable Wails v2.17.0 shell, explicitly chosen by the owner on 2026-10-18. The dated Beta records below remain historical evidence. The active scope, native observations and outstanding release gates are maintained in [stabilization](stability.md); final packaging requires exact-revision reviewed records. Current-window native GPU compression/import/export evidence does not substitute for clean Windows 10/11, CPU-only or hosted CI acceptance.
 
 Beta.11 adds opt-in typed audio processing with real PCM/loudness/noise/rate/channel evidence, post-concat whole-output envelopes and actual Service queue/persistence checks. Dynamic single-pass normalization is distinguished from future measured two-pass mastering workflows. [Audio evidence](audio-processing.md) records measured fixtures and remaining native/manual limits; it is not a universal audio-quality guarantee.
 

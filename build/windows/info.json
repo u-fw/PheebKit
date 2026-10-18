@@ -1,19 +1,19 @@
 {
 	"fixed": {
-		"file_version": "0.2.0.10012",
-		"product_version": "0.2.0.10012"
+		"file_version": "0.2.0.20001",
+		"product_version": "0.2.0.20001"
 	},
 	"info": {
 		"0409": {
-			"FileVersion": "0.2.0-beta.12",
+			"FileVersion": "0.2.0-rc.1",
 			"InternalName": "PheebKit",
 			"OriginalFilename": "PheebKit.exe",
-			"ProductVersion": "0.2.0-beta.12",
+			"ProductVersion": "0.2.0-rc.1",
 			"CompanyName": "PheebKit",
 			"FileDescription": "菲比工具箱 · 本地媒体处理工具",
 			"LegalCopyright": "© 2026 PheebKit contributors",
 			"ProductName": "菲比工具箱 (PheebKit)",
-			"Comments": "Windows experimental release; Android deferred"
+			"Comments": "Windows release candidate; Android deferred"
 		}
 	}
 }

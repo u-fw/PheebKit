@@ -1,5 +1,8 @@
 # Windows release acceptance
 
+## 0.2.0 stabilization — 2026-10-18
+
+The owner chose stable Wails v2.17.0 migration. [Stabilization](stability.md) is the active acceptance matrix; dated Beta entries below are historical. Final-version packaging now requires reviewed evidence matching the exact version/revision, while RC remains a verification candidate. The current workstation passes native import/cancel, qualified RTX 4070 GPU compression with event-driven completion/structure checks, independent complete output decoding, custom maximise/restore, and diagnostic preview/native save. Clean Windows 10/11, CPU-only, missing-WebView2 and hosted CI are not inferred from these results.
 ## Beta.12 settings switch acceptance
 
 The autosave switch layout, pointer/Space interaction and saved boolean passed disposable real-component browser checks. Light/dark, 375px portrait, 812px landscape, reduced-motion and forced-colors were checked; the editable time selector retains its transparent background, zero padding and 24px minimum input height. Fresh-page checks reported no console errors. The production gate passed 118 frontend tests, TypeScript/ESLint/Prettier, Go tests with integration enabled, vet, version checks and source/binary vulnerability audits. Actual beta.11 → beta.12 upgrade/reinstall/uninstall passed with exact payload/checksum/version checks, running guards and user configuration preservation. Native installed-window and clean-machine acceptance remain separate. See [distribution evidence](windows-distribution.md).

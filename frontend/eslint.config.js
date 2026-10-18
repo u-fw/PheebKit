@@ -3,7 +3,7 @@ import tseslint from "typescript-eslint";
 import hooks from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
-  { ignores: ["dist/**", "bindings/**"] },
+  { ignores: ["dist/**", "wailsjs/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

@@ -262,7 +262,7 @@ func (s *Service) applyEnvironment(environment Environment, config binaryConfig)
 	s.caps = nil
 	s.capsMu.Unlock()
 	if s.app != nil {
-		s.app.Event.Emit("environment:updated", environment)
+		s.app.Emit("environment:updated", environment)
 	}
 }
 
@@ -320,7 +320,7 @@ func (s *Service) ChooseFFmpeg() (*Environment, error) {
 	if s.app == nil {
 		return nil, errors.New("本机文件选择器不可用。")
 	}
-	path, err := s.app.Dialog.OpenFile().SetTitle("选择 ffmpeg.exe（同目录需有 ffprobe.exe）").AddFilter("FFmpeg", "ffmpeg.exe").PromptForSingleSelection()
+	path, err := s.app.OpenFile(FileDialog{Title: "选择 ffmpeg.exe（同目录需有 ffprobe.exe）", FilterName: "FFmpeg", Pattern: "ffmpeg.exe"})
 	if err != nil || path == "" {
 		return nil, err
 	}

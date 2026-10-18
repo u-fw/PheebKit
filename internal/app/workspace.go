@@ -18,12 +18,12 @@ type historyEntry struct {
 }
 type historyFile struct {
 	Version int            `json:"version"`
-	Entries []historyEntry `json:"entries"`
+	Entries []historyEntry `json:"entries" ts_type:"historyEntry[] | null"`
 }
 type WorkspacePreferences struct {
 	Version             int            `json:"version"`
-	LastSettings        *core.Settings `json:"lastSettings,omitempty"`
-	Presets             []core.Preset  `json:"presets"`
+	LastSettings        *core.Settings `json:"lastSettings,omitempty" ts_type:"core.Settings | null"`
+	Presets             []core.Preset  `json:"presets" ts_type:"core.Preset[] | null"`
 	LastOutputDirectory string         `json:"lastOutputDirectory,omitempty"`
 }
 type WorkspaceStatus struct {

@@ -15,7 +15,7 @@ func (s *Service) QueueStatus() QueueStatus { return QueueStatus(s.jobs.QueueSta
 
 func (s *Service) emitQueueStatus() {
 	if s.app != nil {
-		s.app.Event.Emit("queue:updated", s.QueueStatus())
+		s.app.Emit("queue:updated", s.QueueStatus())
 	}
 }
 
@@ -74,12 +74,12 @@ func (s *Service) ChooseMediaPaths() ([]string, error) {
 	if s.app == nil {
 		return nil, errors.New("native file dialog is unavailable")
 	}
-	return s.app.Dialog.OpenFile().SetTitle("选择媒体文件（可多选）").AddFilter("视频与音频", "*.mp4;*.mkv;*.mov;*.webm;*.avi;*.m4v;*.ts;*.mp3;*.flac;*.wav;*.m4a;*.ogg;*.opus;*.aac").PromptForMultipleSelection()
+	return s.app.OpenFiles(FileDialog{Title: "选择媒体文件（可多选）", FilterName: "视频与音频", Pattern: "*.mp4;*.mkv;*.mov;*.webm;*.avi;*.m4v;*.ts;*.mp3;*.flac;*.wav;*.m4a;*.ogg;*.opus;*.aac"})
 }
 
 func (s *Service) ChooseOutputDirectory(suggested string) (string, error) {
 	if s.app == nil {
 		return "", errors.New("native directory dialog is unavailable")
 	}
-	return s.app.Dialog.OpenFile().SetTitle("选择批量输出文件夹").CanChooseFiles(false).CanChooseDirectories(true).CanCreateDirectories(true).SetDirectory(filepath.Clean(suggested)).PromptForSingleSelection()
+	return s.app.OpenDirectory(FileDialog{Title: "选择批量输出文件夹", Directory: filepath.Clean(suggested)})
 }

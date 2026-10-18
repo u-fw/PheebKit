@@ -12,9 +12,22 @@ on:
         type: string
         required: false
         default: ''
+      checks_only:
+        description: 'Run source verification without creating release artifacts'
+        type: boolean
+        default: false
+      stable_evidence:
+        description: 'Reviewed stable acceptance JSON matching this exact revision; required for final versions'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   windows:
@@ -24,6 +37,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.27.2"
@@ -35,7 +49,7 @@ jobs:
       - name: Install pinned build dependencies
         shell: pwsh
         run: |
-          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm --prefix frontend ci
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -58,18 +72,32 @@ jobs:
           go test ./... -count=1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build optional previous-version upgrade candidate
-        if: github.event_name == 'workflow_dispatch' && inputs.upgrade_from_tag != ''
+        if: github.event_name == 'workflow_dispatch' && inputs.upgrade_from_tag != '' && !inputs.checks_only
         shell: pwsh
         env:
           PHEEBKIT_UPGRADE_FROM_TAG: ${{ inputs.upgrade_from_tag }}
-        run: ./scripts/prepare-upgrade-baseline.ps1 -Ref $env:PHEEBKIT_UPGRADE_FROM_TAG
-      - name: Verify and package Windows x64
-        shell: pwsh
         run: |
-          ./scripts/release-windows.ps1
+          # Historical v3 candidates are built only as isolated upgrade baselines.
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/prepare-upgrade-baseline.ps1 -Ref $env:PHEEBKIT_UPGRADE_FROM_TAG
+      - name: Verify and package Windows x64
+        if: ${{ !inputs.checks_only }}
+        shell: pwsh
+        env:
+          PHEEBKIT_STABLE_EVIDENCE: ${{ inputs.stable_evidence }}
+        run: |
+          if ($env:PHEEBKIT_STABLE_EVIDENCE) {
+            $evidencePath = Join-Path (Get-Location) '.tools/stable-evidence.json'
+            $env:PHEEBKIT_STABLE_EVIDENCE | Set-Content -LiteralPath $evidencePath -Encoding utf8NoBOM
+            ./scripts/release-windows.ps1 -StableEvidence $evidencePath
+          } else {
+            ./scripts/release-windows.ps1
+          }
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify installer lifecycle in an isolated directory
+        if: ${{ !inputs.checks_only }}
         shell: pwsh
         run: |
           if (Test-Path -LiteralPath '.tools/upgrade-baseline-path.txt') {
@@ -78,12 +106,30 @@ jobs:
             ./scripts/verify-windows-release.ps1
           }
       - name: Upload candidate artifacts
+        if: ${{ !inputs.checks_only }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: PheebKit-windows-x64
           path: release/*/*
           if-no-files-found: error
           retention-days: 14
+      - name: Finish checks-only verification
+        if: inputs.checks_only
+        shell: pwsh
+        run: |
+          go vet ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm --prefix frontend audit --audit-level=low
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($check in @('test', 'typecheck', 'lint', 'format:check')) {
+            npm --prefix frontend run $check
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/build-windows.ps1
 
 # Produces reviewable candidates only. GitHub Releases publication remains a
 # separate explicit owner action; Android is intentionally absent.
