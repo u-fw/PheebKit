@@ -1,10 +1,27 @@
 package buildinfo
 
 import (
+	"bytes"
+	"encoding/json"
 	"runtime/debug"
 	"strings"
 	"testing"
 )
+
+func TestBuildDescriptionUsesActualProvenance(t *testing.T) {
+	var buffer bytes.Buffer
+	if err := WriteDescription(&buffer); err != nil {
+		t.Fatal(err)
+	}
+	var value Description
+	if err := json.Unmarshal(buffer.Bytes(), &value); err != nil {
+		t.Fatal(err)
+	}
+	revision, modified := Provenance()
+	if value.SchemaVersion != 1 || value.Version != Version || value.SourceRevision != revision || value.Modified != modified {
+		t.Fatalf("incorrect build description: %+v", value)
+	}
+}
 
 func TestProvenanceNeverCallsUnknownBuildClean(t *testing.T) {
 	sha := strings.Repeat("a", 40)

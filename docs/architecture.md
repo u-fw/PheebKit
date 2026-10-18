@@ -38,7 +38,7 @@ flowchart TD
 
 The Windows spike discovers installed software encoders and runtime-qualifies NVENC, AMF and QSV candidates using bounded real encoding trials. Automatic selection prefers a qualified GPU, then software with a visible reason. Software HEVC and NVIDIA NVENC are verified on the audited workstation; AMD/Intel execution is not claimed.
 
-Local media and execution plans carry an optional source fingerprint. It combines file identity, size, modification/change timestamps and bounded content samples. Probe validates it before and after inspection; preview and execution reject changed sources, and publication checks it again. This detects ordinary replacement/editing without hashing an entire multi-gigabyte video. It is not a complete content-integrity hash or a file lock.
+Local media and execution plans carry an optional source fingerprint. It combines file identity, size and modification/change timestamps with full content hashing up to 4 MiB or three 64 KiB samples for larger files. Probe validates it before and after inspection; preview and execution reject detected changes, and publication checks it again. Large-file sampling detects ordinary replacement/editing without reading an entire multi-gigabyte video; it cannot guarantee detection of every unsampled edit on filesystems with weak timestamps and is not a file lock. Historical fingerprints retain their original comparison semantics; fresh probes issue v2 fingerprints. Old recovery projects still open, but their source-bound recovery ranges require a fresh scan or explicit removal after this algorithm change.
 
 ## Persistence and compatibility
 

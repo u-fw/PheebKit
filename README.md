@@ -4,7 +4,7 @@ Source and feedback: [u-fw/PheebKit](https://github.com/u-fw/PheebKit). Licensed
 
 A Windows 10/11 x64 local media application using Go Core, stable Wails v2.17.0, React and strict TypeScript. Windows uses real installed FFmpeg binaries. Android is deferred and no APK is released.
 
-The owner approved migration from the original v3 Beta spike to stable Wails v2 on 2026-10-18. The current `0.2.0-rc.1` is the verification candidate for `0.2.0`; it is not a stable-release claim. See the [stabilization acceptance matrix](docs/stability.md) and [release checks](docs/release-acceptance.md). Final packaging requires reviewed evidence matching its exact version and source revision.
+The owner approved migration from the original v3 Beta spike to stable Wails v2 on 2026-10-18. The current `0.2.0-rc.2` is the verification candidate for `0.2.0`; it is not a stable-release claim. See the [stabilization acceptance matrix](docs/stability.md) and [release checks](docs/release-acceptance.md). Final packaging requires reviewed evidence matching its exact version and source revision.
 
 Current branding is 菲比工具箱 / PheebKit. Historical screenshots in the verification archive show earlier kompeg builds.
 

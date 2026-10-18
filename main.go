@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"log"
+	"os"
 	"runtime"
 
 	"github.com/wailsapp/wails/v2"
@@ -11,12 +12,20 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"kompeg/internal/app"
+	"kompeg/internal/buildinfo"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "--build-info" {
+		if err := buildinfo.WriteDescription(os.Stdout); err != nil {
+			log.Print(err)
+			os.Exit(1)
+		}
+		return
+	}
 	releaseGuard, err := holdInstallerGuard()
 	if err != nil {
 		log.Fatal(err)

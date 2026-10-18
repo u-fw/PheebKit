@@ -1,9 +1,34 @@
 package buildinfo
 
 import (
+	"encoding/json"
+	"io"
 	"regexp"
 	"runtime/debug"
 )
+
+type Description struct {
+	SchemaVersion  int    `json:"schemaVersion"`
+	Version        string `json:"version"`
+	SourceRevision string `json:"sourceRevision"`
+	Modified       bool   `json:"modified"`
+	Framework      string `json:"framework"`
+}
+
+// WriteDescription supports artifact verification without creating a window,
+// reading user configuration or starting a media process.
+func WriteDescription(writer io.Writer) error {
+	revision, modified := Provenance()
+	value := Description{SchemaVersion: 1, Version: Version, SourceRevision: revision, Modified: modified, Framework: "unknown"}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, dependency := range info.Deps {
+			if dependency.Path == "github.com/wailsapp/wails/v2" {
+				value.Framework = "wails-" + dependency.Version
+			}
+		}
+	}
+	return json.NewEncoder(writer).Encode(value)
+}
 
 // Stable Wails v2 disables Go's automatic VCS stamping. The reviewed Windows
 // build script supplies these values through the supported linker flags.

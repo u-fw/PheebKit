@@ -2,6 +2,7 @@ package sourcefile
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"os"
 	"path/filepath"
@@ -40,7 +41,8 @@ func TestSameSizeEditWithRestoredModificationTimeIsDetected(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Outside all three content samples: filesystem change time must catch it.
+	// Outside the old three samples: full small-file hashing must catch it even
+	// when the filesystem's coarse change time does not advance.
 	file, err := os.OpenFile(path, os.O_WRONLY, 0600)
 	if err != nil {
 		t.Fatal(err)
@@ -57,6 +59,64 @@ func TestSameSizeEditWithRestoredModificationTimeIsDetected(t *testing.T) {
 	}
 	if err := Verify(path, fingerprint); !errors.Is(err, ErrChanged) {
 		t.Fatalf("same-size edit with restored mtime was accepted: %v", err)
+	}
+}
+
+func TestSmallContentHashAndLargeReadBudget(t *testing.T) {
+	data := bytes.Repeat([]byte{29}, 1024*1024)
+	digest := func(data []byte, legacy bool) string {
+		hash := sha256.New()
+		if err := writeContentSamples(hash, bytes.NewReader(data), int64(len(data)), legacy); err != nil {
+			t.Fatal(err)
+		}
+		return string(hash.Sum(nil))
+	}
+	before, oldBefore := digest(data, false), digest(data, true)
+	data[128*1024] = 30
+	if before == digest(data, false) {
+		t.Fatal("small-file content mutation was missed")
+	}
+	if oldBefore != digest(data, true) {
+		t.Fatal("fixture must be outside the legacy samples")
+	}
+	large := &countedReaderAt{Reader: bytes.NewReader(make([]byte, fullHashLimit+1))}
+	if err := writeContentSamples(sha256.New(), large, fullHashLimit+1, false); err != nil {
+		t.Fatal(err)
+	}
+	if large.read != 192*1024 {
+		t.Fatalf("large-file read budget changed: %d", large.read)
+	}
+}
+
+type countedReaderAt struct {
+	*bytes.Reader
+	read int
+}
+
+func (r *countedReaderAt) ReadAt(p []byte, offset int64) (int, error) {
+	n, err := r.Reader.ReadAt(p, offset)
+	r.read += n
+	return n, err
+}
+
+func TestLegacyFingerprintCompatibility(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "legacy.mp4")
+	if err := os.WriteFile(path, bytes.Repeat([]byte{7}, 1024*1024), 0600); err != nil {
+		t.Fatal(err)
+	}
+	old, err := fingerprint(path, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	current, err := Fingerprint(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if old == current {
+		t.Fatal("new probes must issue version-2 fingerprints")
+	}
+	if err := Verify(path, old); err != nil {
+		t.Fatalf("unchanged historical reference rejected: %v", err)
 	}
 }
 

@@ -4,7 +4,7 @@ This workflow repairs playback by discarding or replacing failed intervals. It c
 
 ## Intent and priority
 
-1. Scan the imported local video, show progress/cancel, bind the completed report to the source fingerprint.
+1. Scan the imported local video, show progress/cancel, bind the completed report to the source fingerprint. After the rc.2 fingerprint upgrade, old recovery projects still open but require a fresh scan or explicit removal of their recovery settings; an old scan is never silently rebound to a new fingerprint.
 2. Default to deleting failed windows and the corresponding audio. The timeline becomes shorter. Review the actual ranges before applying; applying is an editable project change, not execution.
 3. Alternatively replace failed windows with black video and silence, preserving approximately the source duration. This mode explicitly normalizes retained audio to 48 kHz stereo. Freeze-frame interpolation and original audio salvage are not implemented.
 4. Execute through the normal serial cancellable queue, retain the original file, write to private scratch space, verify structure/duration and decode the entire result before no-overwrite publication. Failed/cancelled verification must not publish a result.

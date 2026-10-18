@@ -2,7 +2,7 @@
 
 Core owns `Runner.Probe`, `Capabilities`, `Start` and `Cancel`. Execution plans contain argv and `Source` references, never an executable shell string. The application invokes runners from background bridge calls and the job worker; FFmpeg does not block React.
 
-Local source fingerprints are checked around probe, before preview, before queued execution and before output publication. Changed media requires explicit re-import; an old plan does not silently reuse stale stream indices, HDR status or size budgets. File identity/change timestamps and bounded samples detect ordinary replacements/edits, rather than promising a complete content hash or a file lock.
+Local source fingerprints are checked around probe, before preview, before queued execution and before output publication. Detected changes require explicit re-import; an old plan does not silently reuse stale stream indices, HDR status or size budgets. Files up to 4 MiB are hashed in full. Larger files combine identity/change timestamps with 192 KiB of content samples; unsampled changes on filesystems with weak timestamps are outside this detection guarantee. This is not a file lock. Historical references retain their original fingerprint semantics; new probes use v2 hashes.
 
 ## Windows
 

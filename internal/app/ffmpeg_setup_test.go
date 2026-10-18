@@ -55,6 +55,7 @@ func TestRealFFmpegSetupReadinessGuard(t *testing.T) {
 	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
 		t.Skip("set KOMPEG_INTEGRATION=1 to verify guards with real PATH binaries")
 	}
+	makeIntegrationPATHAvailable(t)
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	for _, name := range []string{"KOMPEG_FFMPEG", "KOMPEG_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {

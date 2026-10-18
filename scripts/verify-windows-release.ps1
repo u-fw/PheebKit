@@ -90,6 +90,8 @@ try {
     if ((Get-FileHash -LiteralPath $standalone).Hash -ne (Get-FileHash -LiteralPath (Join-Path $installed 'PheebKit.exe')).Hash) { throw 'Installer and ZIP contain different application binaries' }
     $buildInfo = Get-Content -LiteralPath (Join-Path $root 'standalone/BUILD_INFO.json') -Raw | ConvertFrom-Json
     if ($buildInfo.schemaVersion -ne 1 -or $buildInfo.version -ne $version -or $buildInfo.modified -ne $false -or $buildInfo.sourceRevision -notmatch '^[a-f0-9]{40}$' -or $buildInfo.executableSHA256 -ne (Get-FileHash -LiteralPath $standalone -Algorithm SHA256).Hash.ToLowerInvariant()) { throw 'Source/build manifest mismatch' }
+    $actualBuild = & $standalone --build-info | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or $actualBuild.schemaVersion -ne 1 -or $actualBuild.version -ne $buildInfo.version -or $actualBuild.sourceRevision -ne $buildInfo.sourceRevision -or $actualBuild.modified -ne $false -or $actualBuild.framework -ne $buildInfo.framework) { throw 'Actual executable provenance differs from manifest' }
     foreach ($file in @('LICENSE.txt', 'THIRD_PARTY_NOTICES.txt', 'README.txt', 'RELEASE_NOTES.md', 'BUILD_INFO.json')) {
         if ((Get-FileHash -LiteralPath (Join-Path $root "standalone/$file")).Hash -ne (Get-FileHash -LiteralPath (Join-Path $installed $file)).Hash) { throw "Payload notice differs: $file" }
     }

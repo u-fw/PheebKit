@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -70,6 +71,7 @@ func TestRealConfigurationReloadWithoutRestart(t *testing.T) {
 	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
 		t.Skip("set KOMPEG_INTEGRATION=1 to run real FFmpeg integration")
 	}
+	makeIntegrationPATHAvailable(t)
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("XDG_CONFIG_HOME", directory)
@@ -113,6 +115,7 @@ func TestRealSharedConfigurationStaysConsistentWithEachInstance(t *testing.T) {
 	if os.Getenv("KOMPEG_INTEGRATION") != "1" {
 		t.Skip("set KOMPEG_INTEGRATION=1 to test shared real FFmpeg configuration")
 	}
+	makeIntegrationPATHAvailable(t)
 	directory := t.TempDir()
 	t.Setenv("APPDATA", directory)
 	t.Setenv("XDG_CONFIG_HOME", directory)
@@ -193,6 +196,23 @@ func TestRealSharedConfigurationStaysConsistentWithEachInstance(t *testing.T) {
 	if !retained.Ready || retained.FFmpeg.Path != ffmpeg || previewBinary(second.runner.snapshot()) != ffmpeg || !strings.Contains(retained.Message, "继续使用") {
 		t.Fatalf("invalid shared settings changed actual status: %+v", retained)
 	}
+}
+
+// PATH scenarios must use the explicitly provisioned integration tools, even
+// on clean runners that have never installed FFmpeg globally. t.Setenv changes
+// only this test process and restores the original PATH afterwards.
+func makeIntegrationPATHAvailable(t *testing.T) {
+	t.Helper()
+	directories := []string{}
+	for _, name := range []string{"ffmpeg", "ffprobe"} {
+		selected := selectBinary(name, "", os.Getenv)
+		path, err := exec.LookPath(binaryPath(selected.Path, name))
+		if err != nil {
+			t.Fatalf("integration tool %s is unavailable: %v", name, err)
+		}
+		directories = append(directories, filepath.Dir(path))
+	}
+	t.Setenv("PATH", strings.Join(directories, string(os.PathListSeparator))+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
 func copyTestBinary(t *testing.T, source, destination string) {

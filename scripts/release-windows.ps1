@@ -60,6 +60,8 @@ try {
     if ($metadata.ProductVersion -ne $version.version) { throw 'Executable version does not match VERSION' }
     $taskSourceRevision = (git rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0 -or $taskSourceRevision -notmatch '^[a-f0-9]{40}$') { throw 'Cannot record matching source revision' }
+    $taskActualBuild = & $application --build-info | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or $taskActualBuild.schemaVersion -ne 1 -or $taskActualBuild.version -ne $version.version -or $taskActualBuild.sourceRevision -ne $taskSourceRevision -or $taskActualBuild.modified -ne $false -or $taskActualBuild.framework -ne 'wails-v2.17.0') { throw 'Executable provenance does not match reviewed source' }
     @{ schemaVersion = 1; version = $version.version; sourceRevision = $taskSourceRevision; modified = $false; framework = 'wails-v2.17.0'; executableSHA256 = (Get-FileHash -LiteralPath $application -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'BUILD_INFO.json') -Encoding utf8NoBOM
     Copy-Item -LiteralPath (Join-Path $workspace 'LICENSE') -Destination (Join-Path $payload 'LICENSE.txt')
     if ((Get-Content -LiteralPath (Join-Path $workspace 'RELEASE_NOTES.md') -TotalCount 1) -ne "# PheebKit $($version.version)") { throw 'Release notes do not match VERSION' }
