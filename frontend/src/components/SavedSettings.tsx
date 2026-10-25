@@ -9,10 +9,12 @@ export function SavedSettings({
   settings,
   apply,
   onSaved,
+  onPreferences,
 }: {
   settings: Settings;
   apply: (value: Settings) => void;
   onSaved?: (value: Settings) => void;
+  onPreferences?: (value: WorkspacePreferences) => void;
 }) {
   const [preferences, setPreferences] = useState<WorkspacePreferences>({
     version: 1,
@@ -28,6 +30,7 @@ export function SavedSettings({
       (value) => {
         if (alive) {
           setPreferences(value.preferences);
+          onPreferences?.(value.preferences);
           setMessage(value.error);
         }
       },
@@ -38,13 +41,14 @@ export function SavedSettings({
     return () => {
       alive = false;
     };
-  }, []);
+  }, [onPreferences]);
   async function save(named: boolean) {
     setBusy(true);
     setMessage("");
     try {
       const next = await API.saveSettings(settings, named ? name.trim() : "");
       setPreferences(next);
+      onPreferences?.(next);
       if (next.lastSettings) onSaved?.(next.lastSettings);
       setMessage(
         named
@@ -61,7 +65,9 @@ export function SavedSettings({
     setBusy(true);
     setMessage("");
     try {
-      setPreferences(await API.deletePreset(selected));
+      const next = await API.deletePreset(selected);
+      setPreferences(next);
+      onPreferences?.(next);
       setSelected("");
       setMessage("常用配置已删除。");
     } catch (cause) {
@@ -79,6 +85,7 @@ export function SavedSettings({
         const next = await API.importPreset();
         if (next) {
           setPreferences(next);
+          onPreferences?.(next);
           setMessage("配置已导入，请选择并应用。当前设置和默认值未更改。");
         }
       } else {
@@ -98,7 +105,7 @@ export function SavedSettings({
   return (
     <section className="surface settings-card saved-settings">
       <div className="section-title">
-        <h2>{t("常用设置")}</h2>
+        <h2 tabIndex={-1}>{t("常用设置")}</h2>
         <span className="subtle-label">{t("保存在本机")}</span>
       </div>
       <div className="action-row">

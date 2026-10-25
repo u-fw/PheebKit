@@ -52,6 +52,7 @@ export function makeBatchProjects(
   suffix: string,
   overrides: Record<string, BatchTrackOverride> = {},
 ): Project[] {
+  if (files.length > 32) throw new Error("每批最多处理 32 个文件。");
   if (!directory.trim()) throw new Error("请选择批量输出文件夹。");
   if (
     !suffix ||

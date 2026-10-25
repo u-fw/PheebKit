@@ -152,6 +152,14 @@
   font-size: var(--font-xs);
 }
 .workbench-inspector {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-4));
+  display: flex;
+  flex-direction: column;
+  max-height: calc(
+    100dvh - var(--topbar-height) - var(--output-dock-height, 100px) -
+      var(--space-6)
+  );
   grid-area: inspector;
   min-width: 0;
   border: 1px solid var(--outline-variant);
@@ -160,6 +168,7 @@
   overflow: clip;
 }
 .inspector-heading {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -171,6 +180,7 @@
   font-size: var(--font-body);
 }
 .inspector-tabs {
+  flex-shrink: 0;
   display: flex;
   padding: 0 var(--space-2);
   border-bottom: 1px solid var(--outline-variant);
@@ -196,6 +206,8 @@
   border-radius: var(--radius-sm);
 }
 .inspector-panel {
+  min-height: 0;
+  flex: 1 1 auto;
   padding: var(--space-4);
   display: grid;
   gap: var(--space-4);
@@ -366,6 +378,10 @@
   }
 }
 @media (max-width: 1100px) {
+  .workbench-inspector {
+    position: static;
+    max-height: none;
+  }
   .workbench-layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "stage" "inspector";
@@ -374,6 +390,12 @@
   .inspector-panel {
     max-height: none;
     overflow: visible;
+  }
+}
+@media (max-height: 700px) {
+  .workbench-inspector {
+    position: static;
+    max-height: none;
   }
 }
 @media (max-width: 560px) {
@@ -605,6 +627,37 @@ html:has(.app-shell[data-page="compress"]) {
   inset-block: 0;
   width: 2px;
   background: var(--primary);
+}
+.batch-recipes {
+  border-block: 1px solid var(--outline-variant);
+  margin-block: var(--space-4);
+  padding-block: var(--space-4);
+}
+.batch-recipes .material-select {
+  flex: 1 1 180px;
+}
+.batch-review-row {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-low);
+  overflow-wrap: anywhere;
+}
+.batch-review-row details {
+  margin-block: var(--space-3);
+}
+.batch-command {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--font-xs);
+}
+.batch-review-progress {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-4);
+}
+.batch-review-progress progress {
+  width: 100%;
+  accent-color: var(--primary);
 }
 .waveform-baseline {
   stroke: var(--outline-variant);

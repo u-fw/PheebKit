@@ -3,7 +3,14 @@ import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { draftFingerprint, inOutputDirectory, type Draft } from "../draft";
 import { directoryOf } from "../batch";
 import { API } from "../bridge";
-import type { Capabilities, Job, Media, Project, Settings } from "../bridge";
+import type {
+  Capabilities,
+  Job,
+  Media,
+  Project,
+  Settings,
+  WorkspacePreferences,
+} from "../bridge";
 import { errorMessage } from "../format";
 import {
   changeOperation,
@@ -57,7 +64,14 @@ type Props = {
   initialOutput?: string;
   needsSave?: boolean;
   undoLimit?: number;
-  renderBatch?: (settings: Settings) => ReactNode;
+  renderBatch?: (
+    settings: Settings,
+    controls: {
+      preferences: WorkspacePreferences | null;
+      applyRecipe: (settings: Settings) => void;
+      manageRecipes: () => void;
+    },
+  ) => ReactNode;
   projectActions?: (
     project: Project,
     markSaved: (project: Project) => void,
@@ -120,6 +134,8 @@ export function Compress({
   const [choosingOutput, setChoosingOutput] = useState(false);
   const [advancedRevision, setAdvancedRevision] = useState(0);
   const [settingsNotice, setSettingsNotice] = useState("");
+  const [workspacePreferences, setWorkspacePreferences] =
+    useState<WorkspacePreferences | null>(null);
   const [projectID] = useState(() => crypto.randomUUID());
   useEffect(() => {
     if (!visible || starting || choosingOutput) return;
@@ -430,7 +446,20 @@ export function Compress({
             makeProject(media, settings, output, projectID),
             markSaved,
           )}
-          {renderBatch?.(settings)}
+          {renderBatch?.(settings, {
+            preferences: workspacePreferences,
+            applyRecipe: applySettings,
+            manageRecipes: () => {
+              setInspector("tools");
+              requestAnimationFrame(() => {
+                const section = document
+                  .getElementById(`${inspectorID}-panel-tools`)
+                  ?.querySelector<HTMLElement>(".saved-settings");
+                section?.querySelector<HTMLElement>("h2")?.focus();
+                section?.scrollIntoView({ block: "nearest" });
+              });
+            },
+          })}
         </div>
         <aside className="workbench-inspector" aria-label={t("处理参数")}>
           <div className="inspector-heading">
@@ -620,6 +649,7 @@ export function Compress({
           >
             <ScenarioPresets media={media} apply={applySettings} />
             <SavedSettings
+              onPreferences={setWorkspacePreferences}
               onSaved={onSaved}
               settings={settings}
               apply={applySettings}

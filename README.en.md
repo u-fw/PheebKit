@@ -29,7 +29,7 @@ The current source is iterating on a Material 3 / Material You workbench: light/
 - **GPU and CPU:** prefers GPU encoding after actual NVENC/QSV/AMF trials; falls back to CPU with a visible explanation when a combination is unavailable.
 - **Picture and audio:** resolution, crop, rotation and flip; track selection, gain, loudness normalization, denoise, EQ, fades, sample rate and channel conversion.
 - **Containers and subtitles:** compatible stream-copy remux; audio/text-subtitle extraction; embedded or external text subtitle burn-in with editable style and timing.
-- **Jobs and projects:** batch import, serial scheduling, cancellation, waiting-job reordering and scheduling pause; sample comparisons, projects/presets, Undo/Redo, checkpoints and explicit recovery.
+- **Jobs and projects:** batch import, reusable recipes and per-file preflight, serial scheduling, cancellation, waiting-job reordering and scheduling pause; sample comparisons, projects/presets, Undo/Redo, checkpoints and explicit recovery.
 - **Damaged media:** bounded decode-window scans, reviewed deletion of failed intervals by default, or black/silent replacement to preserve duration. Recovery output must pass a complete decode. Missing content cannot be reconstructed.
 - **FFmpeg setup:** reuse installed tools or explicitly download with progress, cancellation/retry and a custom HTTPS archive option requiring publisher SHA-256. Supports ZIP, 7z, RAR, tar and gzip/xz/bzip2 tar variants.
 

@@ -19,7 +19,6 @@ import { BRAND_NAME, BRAND_ENGLISH } from "./brand";
 import { BrandLogo } from "./components/BrandLogo";
 import { API } from "./bridge";
 import { ExitDialog } from "./components/ExitDialog";
-import { BatchPanel } from "./components/BatchPanel";
 import { ProjectActions } from "./components/ProjectActions";
 import { ProjectLibrary } from "./components/ProjectLibrary";
 import { EditorPreferences } from "./components/EditorPreferences";
@@ -42,6 +41,11 @@ const Queue = lazy(() =>
 const SampleComparison = lazy(() =>
   import("./components/SampleComparison").then((module) => ({
     default: module.SampleComparison,
+  })),
+);
+const BatchPanel = lazy(() =>
+  import("./components/BatchPanel").then((module) => ({
+    default: module.BatchPanel,
   })),
 );
 
@@ -442,19 +446,30 @@ export default function App() {
                   initialOutput={studio.reuse?.output}
                   needsSave={studio.reuse?.needsSave}
                   undoLimit={library?.preferences.undoLimit ?? 50}
-                  renderBatch={(settings) =>
+                  renderBatch={(settings, controls) =>
                     studio.mediaList.length > 1 ? (
-                      <BatchPanel
-                        key={settings.operation || "compress"}
-                        files={studio.mediaList}
-                        settings={settings}
-                        connected={studio.connected}
-                        outputDirectory={studio.outputDirectory}
-                        onOutputDirectory={studio.setOutputDirectory}
-                        onNotice={studio.setError}
-                        onJobs={studio.addJobs}
-                        showQueue={() => navigate("queue")}
-                      />
+                      <Suspense
+                        fallback={
+                          <p className="field-hint" role="status">
+                            {t("正在加载批量工具…")}
+                          </p>
+                        }
+                      >
+                        <BatchPanel
+                          key={settings.operation || "compress"}
+                          files={studio.mediaList}
+                          settings={settings}
+                          preferences={controls.preferences}
+                          applyRecipe={controls.applyRecipe}
+                          manageRecipes={controls.manageRecipes}
+                          connected={studio.connected}
+                          outputDirectory={studio.outputDirectory}
+                          onOutputDirectory={studio.setOutputDirectory}
+                          onNotice={studio.setError}
+                          onJobs={studio.addJobs}
+                          showQueue={() => navigate("queue")}
+                        />
+                      </Suspense>
                     ) : null
                   }
                   onDraft={onDraft}

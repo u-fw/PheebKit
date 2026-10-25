@@ -1,6 +1,6 @@
 # PheebKit task workflows — 0.2.0-beta.8
 
-## Current Material workbench iteration — 2026-10-25
+## Current Material workbench iteration — 2026-10-26
 
 The dated beta sections below are historical. The current source uses stable Wails v2, Material seed palettes/density, a grouped workbench, full-source previews, loops, nominal frame steps, filmstrip thumbnails and bounded waveform windows. Actual native source-preview evidence and remaining release checks are recorded in the [active iteration](uiux-iteration.md).
 
@@ -11,6 +11,8 @@ Beta.8 adds ordered same-source segment joins/independent exports, typed subtitl
 Beta.7 adds [local diagnostic preview/export](diagnostics.md) and [release acceptance checks](release-acceptance.md), including actual headless process-interruption recovery and previous-version installer verification. Diagnostics use structured allowlists and are never uploaded automatically. Native/clean-machine/hosted-CI gates remain separate.
 
 Beta.6 adds configurable local drafts/recovery and recent projects, bounded Undo/Redo, editable scene presets, AAC/Opus bitrate controls and direct 1–30 second sample entry. See [editing/recovery policy and evidence](editor-recovery.md). The dated sections below describe the earlier foundations; recent-project and autosave work described as future in beta.5 is now implemented for the focused single-file project.
+
+Batch now offers explicit application of saved portable recipes and sequential per-file preflight. Each file retains its own track choices and shows its planned output, actual encoder decision and execution parameters. Every selected file must pass before queue admission; parameter/path/track/source changes invalidate the review, and admission validates again atomically. Stop finishes the current check, then skips remaining files. Applying/importing a recipe never starts work. The current browser evidence and pending native checks are recorded in the active iteration above.
 
 ## Beta.5 reliability iteration — 2026-10-14
 
