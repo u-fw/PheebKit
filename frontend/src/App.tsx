@@ -21,7 +21,6 @@ import { API } from "./bridge";
 import { ExitDialog } from "./components/ExitDialog";
 import { BatchPanel } from "./components/BatchPanel";
 import { ProjectActions } from "./components/ProjectActions";
-import { SampleComparison } from "./components/SampleComparison";
 import { ProjectLibrary } from "./components/ProjectLibrary";
 import { EditorPreferences } from "./components/EditorPreferences";
 import { useAutosaveDraft } from "./hooks/useAutosaveDraft";
@@ -39,6 +38,11 @@ const Compress = lazy(() =>
 );
 const Queue = lazy(() =>
   import("./components/Queue").then((module) => ({ default: module.Queue })),
+);
+const SampleComparison = lazy(() =>
+  import("./components/SampleComparison").then((module) => ({
+    default: module.SampleComparison,
+  })),
 );
 
 type Page = "home" | "compress" | "queue" | "settings";

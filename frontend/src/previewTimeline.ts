@@ -46,3 +46,32 @@ export function selectionPlayback(
   if (position < end) return null;
   return { seek: loop ? start : end, pause: !loop };
 }
+
+export function comparisonDuration(
+  sourceDuration: number,
+  sampleDuration: number,
+  start: number,
+  requested: number,
+): number {
+  if (
+    ![sourceDuration, sampleDuration, start, requested].every(
+      Number.isFinite,
+    ) ||
+    start < 0 ||
+    requested <= 0
+  )
+    return 0;
+  return Math.max(
+    0,
+    Math.min(sampleDuration, sourceDuration - start, requested),
+  );
+}
+
+export function comparisonPosition(
+  position: number,
+  start: number,
+  duration: number,
+) {
+  const sample = boundedPosition(position, duration);
+  return { sample, source: start + sample };
+}

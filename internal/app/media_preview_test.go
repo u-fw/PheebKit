@@ -33,6 +33,12 @@ func TestMediaPreviewRangeAndAccessBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	for range 70 {
+		reopened, err := service.GetMediaPreviewURL(path)
+		if err != nil || reopened != url {
+			t.Fatalf("reopening unchanged media revoked the active preview: %s %v", reopened, err)
+		}
+	}
 	handler := service.AssetHandler(http.NotFoundHandler())
 	request := httptest.NewRequest("GET", url, nil)
 	request.Header.Set("Range", "bytes=2-5")

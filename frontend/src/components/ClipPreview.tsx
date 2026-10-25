@@ -88,6 +88,7 @@ export function ClipPreview({
 }) {
   const positionID = useId();
   const video = useRef<HTMLVideoElement>(null);
+  const lifetime = useRef({ active: false });
   const stopAt = useRef<number | null>(null);
   const [source, setSource] = useState("");
   const [position, setPosition] = useState(start);
@@ -117,8 +118,15 @@ export function ClipPreview({
     };
   }, [media.source.uri]);
   useEffect(() => {
-    if (!visible) video.current?.pause();
-  }, [visible]);
+    const state = lifetime.current;
+    const player = video.current;
+    state.active = visible;
+    if (!visible) player?.pause();
+    return () => {
+      state.active = false;
+      player?.pause();
+    };
+  }, [visible, source]);
   useEffect(() => {
     if (!visible || !playing) return;
     let tick = 0;
@@ -172,8 +180,10 @@ export function ClipPreview({
     }
     try {
       await player.play();
+      if (!lifetime.current.active) player.pause();
     } catch (cause) {
-      setFailed(`无法播放原视频：${errorMessage(cause)}`);
+      if (lifetime.current.active)
+        setFailed(`无法播放原视频：${errorMessage(cause)}`);
     }
   }
   async function playSelection() {
@@ -183,8 +193,10 @@ export function ClipPreview({
     stopAt.current = end;
     try {
       await player.play();
+      if (!lifetime.current.active) player.pause();
     } catch (cause) {
-      setFailed(`无法播放原视频：${errorMessage(cause)}`);
+      if (lifetime.current.active)
+        setFailed(`无法播放原视频：${errorMessage(cause)}`);
     }
   }
   return (
@@ -205,16 +217,29 @@ export function ClipPreview({
             const player = event.currentTarget;
             setPosition(player.currentTime);
           }}
-          onPlay={() => setPlaying(true)}
+          onPlay={(event) => {
+            if (!lifetime.current.active) event.currentTarget.pause();
+            else setPlaying(true);
+          }}
           onPause={() => setPlaying(false)}
           onEnded={() => {
-            if (loop && stopAt.current !== null && start < end) {
+            if (
+              lifetime.current.active &&
+              loop &&
+              stopAt.current !== null &&
+              start < end
+            ) {
               seek(start);
-              void video.current
-                ?.play()
-                .catch((cause: unknown) =>
-                  setFailed(`无法播放原视频：${errorMessage(cause)}`),
-                );
+              const player = video.current;
+              void player?.play().then(
+                () => {
+                  if (!lifetime.current.active) player.pause();
+                },
+                (cause: unknown) => {
+                  if (lifetime.current.active)
+                    setFailed(`无法播放原视频：${errorMessage(cause)}`);
+                },
+              );
             } else setPlaying(false);
           }}
           onError={() =>

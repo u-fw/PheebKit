@@ -45,6 +45,13 @@ func (s *Service) GetMediaPreviewURL(uri string) (string, error) {
 	if s.previewTokens == nil {
 		s.previewTokens = make(map[string]core.Media)
 	}
+	// Reopening comparisons must not exhaust session capabilities and revoke an
+	// existing player's URL for the same unchanged imported source.
+	for key, cached := range s.previewTokens {
+		if cached.Source.URI == media.Source.URI && cached.SourceFingerprint == media.SourceFingerprint {
+			return "/__media/" + key, nil
+		}
+	}
 	// URLs are session capabilities; bound tokens and avoid exposing filesystem paths.
 	if len(s.previewTokens) >= 64 {
 		s.previewTokens = make(map[string]core.Media)

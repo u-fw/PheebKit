@@ -1,5 +1,11 @@
 # PheebKit task workflows — 0.2.0-beta.8
 
+## Current Material workbench iteration — 2026-10-25
+
+The dated beta sections below are historical. The current source uses stable Wails v2, Material seed palettes/density, a grouped workbench, full-source previews, loops, nominal frame steps, filmstrip thumbnails and bounded waveform windows. Actual native source-preview evidence and remaining release checks are recorded in the [active iteration](uiux-iteration.md).
+
+Sample comparison now offers synchronized playback and static side-by-side/split reveal. The original player uses the recorded sample-start offset; seek/play/pause act on both players, and one audio source is audible at a time. Playback support depends on the installed WebView2 codec support. Failure retains an explicit FFmpeg-frame fallback. Static images are bounded to 512px and are not an objective quality/loudness assessment. Changing comparison position does not alter the project or start another encode. Reopening unchanged media reuses its session preview URL; each request still validates the source fingerprint. Native comparison verification remains pending; browser/real-media evidence is listed in the iteration record.
+
 Beta.8 adds ordered same-source segment joins/independent exports, typed subtitle burn-in and searchable local FFmpeg catalogs/help. New edits participate in project/recovery/undo snapshots. Samples use the first ordered range; source-specific ranges and burn references are excluded from portable defaults/presets and unrelated multi-file batches. See [expansion scope and evidence](ffmpeg-expansion.md).
 
 Beta.7 adds [local diagnostic preview/export](diagnostics.md) and [release acceptance checks](release-acceptance.md), including actual headless process-interruption recovery and previous-version installer verification. Diagnostics use structured allowlists and are never uploaded automatically. Native/clean-machine/hosted-CI gates remain separate.

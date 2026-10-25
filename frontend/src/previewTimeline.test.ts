@@ -4,9 +4,26 @@ import {
   filmstripPositions,
   framePosition,
   selectionPlayback,
+  comparisonDuration,
+  comparisonPosition,
 } from "./previewTimeline";
 
 describe("source preview timing", () => {
+  it("maps sample time to the original nonzero offset and shortest actual duration", () => {
+    const duration = comparisonDuration(12, 5.02, 2.5, 5);
+    expect(duration).toBe(5);
+    expect(comparisonPosition(1.25, 2.5, duration)).toEqual({
+      sample: 1.25,
+      source: 3.75,
+    });
+    expect(comparisonPosition(99, 2.5, duration)).toEqual({
+      sample: 5,
+      source: 7.5,
+    });
+    expect(comparisonDuration(3, 5, 2.5, 5)).toBe(0.5);
+    expect(comparisonDuration(3, 5, 4, 5)).toBe(0);
+    expect(comparisonDuration(Infinity, 5, 0, 5)).toBe(0);
+  });
   it("bounds seeking and steps without accumulating millisecond rounding", () => {
     expect(boundedPosition(NaN, 3)).toBe(0);
     expect(boundedPosition(10, 3)).toBe(3);
