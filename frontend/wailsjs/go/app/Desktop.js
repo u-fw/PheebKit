@@ -70,6 +70,10 @@ export function ExportPreset(arg1) {
   return window['go']['app']['Desktop']['ExportPreset'](arg1);
 }
 
+export function GetAudioWaveform(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['Desktop']['GetAudioWaveform'](arg1, arg2, arg3, arg4);
+}
+
 export function GetDiagnosticPreview(arg1) {
   return window['go']['app']['Desktop']['GetDiagnosticPreview'](arg1);
 }

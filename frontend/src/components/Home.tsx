@@ -101,11 +101,11 @@ export function Home({
         </section>
       )}
       {!media && (
-        <section className="workflow-section" aria-label={t("处理流程")}>
-          <div className="section-title">
-            <h2>{t("处理流程")}</h2>
+        <details className="workflow-section" aria-label={t("处理流程")}>
+          <summary className="section-title">
+            <span>{t("处理流程")}</span>
             <span className="subtle-label">{t("简单的三步")}</span>
-          </div>
+          </summary>
           <div className="workflow-grid">
             <article className="workflow-card">
               <span className="step-number">01</span>
@@ -138,7 +138,7 @@ export function Home({
               </p>
             </article>
           </div>
-        </section>
+        </details>
       )}
       <div className="local-note">
         <Icon name="info" />

@@ -23,7 +23,7 @@ for (const line of lines) {
   const [name, version, directory] = line.split("|");
   if (name && name !== "pheebkit") modules.set(name, { version, directory });
 }
-for (const name of ["react", "react-dom", "scheduler"]) {
+for (const name of ["react", "react-dom", "scheduler", "@material/material-color-utilities"]) {
   const directory = resolve("frontend/node_modules", name);
   const metadata = JSON.parse(
     readFileSync(join(directory, "package.json"), "utf8"),

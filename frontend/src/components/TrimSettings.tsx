@@ -13,6 +13,7 @@ export function TrimSettings({
   visible = true,
   exportParts,
   canExport = false,
+  preview = true,
 }: {
   media: Media;
   settings: Settings;
@@ -20,6 +21,7 @@ export function TrimSettings({
   visible?: boolean;
   exportParts?: () => void;
   canExport?: boolean;
+  preview?: boolean;
 }) {
   const trim = settings.trim;
   const total = media.durationSeconds;
@@ -68,7 +70,7 @@ export function TrimSettings({
       <div className="section-title">
         <h2 id="trim-heading">{t("处理范围")}</h2>
       </div>
-      <div className="segmented" aria-label={t("处理范围")}>
+      <div className="segmented" role="group" aria-label={t("处理范围")}>
         <button
           type="button"
           aria-pressed={!trim && !settings.segments?.length}
@@ -228,13 +230,15 @@ export function TrimSettings({
               )}
             </p>
           )}
-          <ClipPreview
-            media={media}
-            start={trim.startSeconds}
-            end={trim.endSeconds}
-            visible={visible}
-            onBoundary={change}
-          />
+          {preview && (
+            <ClipPreview
+              media={media}
+              start={trim.startSeconds}
+              end={trim.endSeconds}
+              visible={visible}
+              onBoundary={change}
+            />
+          )}
         </>
       )}
     </section>

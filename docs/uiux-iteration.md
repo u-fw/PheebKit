@@ -1,0 +1,44 @@
+# Material 3 workbench iteration
+
+Owner objective: refactor UI/UX first, then complete the media workflows. This is an active implementation plan, not completed release evidence.
+
+## Preserved contracts
+
+Keep stable Wails v2, Go compiler/runner, local-only media, schema-1 projects, no-overwrite publication, explicit job admission, Undo/Redo, draft recovery and Chinese/English support. Adopt Material 3 and Material You design through the existing React UI; no Kotlin/Compose runtime migration. Glass is reserved for app chrome and floating elements; editing surfaces use tonal containers. No remote font, analytics or translation requests.
+
+## Ordered deliverables
+
+1. **Appearance and component foundation:** semantic Material color roles generated from a validated custom seed; preset palettes; system/light/dark mode; comfortable/compact density; persistence and old-theme compatibility; keyboard focus, contrast, reduced motion and forced-color fallback. Avoid layout-shifting press feedback.
+2. **Workbench:** source preview and range editing stay central; inspector categories expose output, tracks, adjustments and advanced tools without a single long form. Keep state when switching categories. Preserve project/preset, sample, recovery and batch controls. Output checks and submit action stay easy to reach. Responsive layout works with English and enlarged text.
+3. **Editing depth:** full-source preview, filmstrip and bounded waveform overview, selected-range loop, frame-step controls, accessible range editing and button/keyboard segment ordering. Never silently change output intent just by seeking or playing.
+4. **Sample comparison:** synchronized original/output playback with explicit source time offset, seek/play/pause, visible compatibility fallback and split-frame comparison. Preserve raw paths and original media. Do not claim universal browser codec support or full-output quality from one sample.
+5. **Batch recipes and preflight:** reusable bounded processing recipes, per-file planned operations/track choices/names and actionable errors before atomic queue admission. Recipes never start jobs on import/apply and do not silently reuse source-specific track indexes/ranges.
+6. **Delivery:** update bilingual usage/screenshots and exact implementation limits; verify frontend checks, real media/core integration, actual native window and clean committed candidate packaging. Match installer provenance to source. Existing clean-client stable-release gates remain separate.
+
+## Evidence required
+
+- Pure tests for palette validation/contrast, preference migration, timing synchronization, range bounds and recipe/preflight invariants.
+- Interaction QA for tab keyboard navigation, state retained across tab/theme/language changes, narrow layouts, both themes, reduced motion and readable focus states.
+- Real original/output media playback or explicit codec fallback, source-offset seek, selected-range loop and bounded background thumbnail/waveform work.
+- Existing processing, queue cancellation, project recovery and output protection must continue passing. No placeholder panels, invented metadata or decorative progress.
+
+## Current status
+
+The iteration is in progress. No stable release or replacement of the verified rc.3 installer is implied by the development builds below.
+
+### Implemented and checked on 2026-10-25
+
+- Material Color Utilities 0.4.0 supplies HCT-derived roles. Appearance supports system/light/dark, five palettes, validated custom seeds, comfortable/compact density, persisted preferences and old-theme migration. Contrast tests cover ten arbitrary seeds in both themes; blocked storage remains usable for the current session.
+- The React workbench has a central source preview, four keyboard-accessible inspector categories, retained editor panels and a persistent output dock. Output details retain audio/recovery/estimate explanations and close with Escape or an outside pointer. The dock reports its actual height to reserve content/focus space when text or validation messages grow. Multiple errors use separate, scrollable rows. Text-relative container queries reflow the actions at enlarged text sizes; viewports at most 520px high use an in-flow output section so it cannot cover the app bar.
+- Source preview now includes selection looping, nominal frame steps (average-rate approximation for variable-rate media), and explicitly loaded filmstrip thumbnails. Extraction is sequential and limited to eight frames; hiding the editor stops further requests. Segment ordering has visible buttons and Alt+ArrowUp/ArrowDown with focus following the moved segment.
+- Audio waveform extraction is limited to a requested source window of at most 120 seconds, one extraction at a time, a 15-second total deadline, bounded PCM/stderr buffers and at most 512 peaks. It validates imported source identity and audio-track index before decoding and rechecks identity afterward. The UI exposes source-track choice, explicit loading, window times and seek controls. It represents a downmixed mono overview, not a loudness meter or full-file integrity check.
+
+### Evidence and limits
+
+- `npm --prefix frontend test`: 132 tests in 27 files pass, including actual Material palette contrast and preview timing bounds. Translation guard passes with 1,285 entries. Further edits require rerunning these checks.
+- `npm --prefix frontend run build`: strict TypeScript and production bundling pass. Queue/settings/workbench are separate chunks; the current main chunk is about 497 KB before gzip. `npm --prefix frontend audit --omit=dev`: zero known findings at the time of this check.
+- `PHEEBKIT_INTEGRATION=1 go test ./... -count=1` and `go vet ./...` passed against the pinned local FFmpeg manifest both before and after waveform work. Dedicated waveform checks include actual silent/tone windows and rejection of stale sources, invalid windows and unknown tracks. The renderer boundary test reviews 60 application methods and keeps lifecycle/asset-handler internals unbound.
+- An isolated browser fixture exercised real React components with synthetic media and explicit IPC stubs: inspector pointer/arrow navigation, target-size retention across tabs, system-theme changes, invalid seed rejection, Chinese/English, 375px portrait and 812px landscape without horizontal overflow. Axe reported zero violations and three incomplete checks on the earlier desktop fixture; clipped/offscreen contrast remains manually assessed, not asserted as a complete accessibility audit. Enlarged-text testing so far covered appearance, not every workbench state.
+- The actual native Wails development build `.tools/uiux-native/PheebKit.exe` restored the owned eight-second test-media draft, displayed its real cover/source preview and actual GPU plan, changed inspector category and opened/closed output details. A subsequent build repeatedly looped the source; one 30 FPS step advanced the paused position from about 0.194 to 0.227 seconds. It loaded eight real filmstrip frames and a real waveform from about 0.227 to 8 seconds. Settings loaded, dark mode/Iris purple/English applied, and returning retained source, position, all thumbnails and waveform. Actual screenshots are recorded in [images](images/README.md). These are dirty development builds, separate from `bin/PheebKit.exe` and immutable release artifacts.
+- Follow-up browser checks of the final output layout used actual components in an isolated synthetic fixture. Seven simultaneous errors had non-overlapping rows in a bounded scroll region; Escape closed details and returned focus to its toggle. At 812×375 with 200% text, the output section reflowed in the page; the submit button was fully reachable and horizontal width remained 812px. At 375×812, English/200% text had width 375px, a full-width readable submit button and an output-path focus rectangle wholly above the dock. Axe 4.12.1 reported zero violations, with two incomplete checks (background/overlap contrast and source-video captions); `.tools/uiux-axe-final-mobile.json` retains the raw local record. The fixture was moved out of the frontend and its dev server/browser session were stopped afterward. Final native/package verification of these last layout edits remains pending.
+- Sample synchronized playback/split comparison and batch recipes/per-file preflight are still incomplete. Final bilingual screenshots, committed candidate packaging, matching hosted CI and the existing clean Windows-client release gates are still pending. These items remain part of this plan.

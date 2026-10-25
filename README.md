@@ -17,6 +17,12 @@
 
 ![真实设置页：草稿恢复设置与自定义开关](docs/images/desktop-settings-en-rc3.png)
 
+当前源码正在迭代 Material 3 / Material You 工作台：可切换明暗、自定义主题色与界面密度，分组参数和固定输出栏，另有循环预览、按帧微调、时间轴缩略图与有界波形。下面为 2026-10-25 **开发构建**的真实窗口，尚未替换上述 rc.3 验收包。[进度与验证范围](docs/uiux-iteration.md)
+
+![开发构建：Material 深色工作台与分组参数](docs/images/desktop-workbench-material-dev.png)
+
+![开发构建：可选主题色、明暗与界面密度](docs/images/desktop-appearance-material-dev.png)
+
 ## 可以做什么
 
 - **压缩与剪辑**：H.264、HEVC、AV1；质量、目标码率、目标体积；完整视频、单区间剪辑、最多 16 个同源片段拼接或分段输出。时间可直接输入或使用选择器、滑块微调。

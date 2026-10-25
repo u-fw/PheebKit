@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ExecutionPlan, Media, Settings } from "../bridge";
 import { formatBytes } from "../format";
 import { codecOptions } from "./EncodingSettings";
@@ -22,6 +23,7 @@ export function OutputSummary({
   starting,
   canStart,
   start,
+  compact = false,
 }: {
   media: Media;
   settings: Settings;
@@ -37,7 +39,53 @@ export function OutputSummary({
   starting: boolean;
   canStart: boolean;
   start: () => void;
+  compact?: boolean;
 }) {
+  const [details, setDetails] = useState(false);
+  const detailsID = useId();
+  const container = useRef<HTMLElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!compact || !details) return;
+    function dismiss(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        !container.current?.contains(event.target)
+      )
+        setDetails(false);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setDetails(false);
+      toggle.current?.focus();
+    }
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [compact, details]);
+  useEffect(() => {
+    const node = container.current;
+    const workbench = node?.closest<HTMLElement>(".material-workbench");
+    const dock = node?.parentElement;
+    if (!compact || !workbench || !dock) return;
+    const observer = new ResizeObserver(() => {
+      const height = `${dock.getBoundingClientRect().height}px`;
+      workbench.style.setProperty("--output-dock-height", height);
+      document.documentElement.style.setProperty(
+        "--output-dock-height",
+        height,
+      );
+    });
+    observer.observe(dock);
+    return () => {
+      observer.disconnect();
+      workbench.style.removeProperty("--output-dock-height");
+      document.documentElement.style.removeProperty("--output-dock-height");
+    };
+  }, [compact]);
   const operation = operationOf(settings);
   const compress = operation === "compress";
   const subtitleCount = selectedTracks(media, "subtitle", settings).length;
@@ -59,14 +107,48 @@ export function OutputSummary({
               selectedDuration(settings, media.durationSeconds),
           )
         : null;
-  return (
-    <section className="surface estimate-card">
-      <div className="section-eyebrow">{t("输出概览")}</div>
-      {settings.audioProcessing && (
-        <p>
-          {t("声音处理：")} {t(audioProcessingSummary(settings))}
-        </p>
+  const audioContext = settings.audioProcessing && (
+    <p className="summary-context">
+      {t("声音处理：")} {t(audioProcessingSummary(settings))}
+    </p>
+  );
+  const recoveryContext = settings.recovery && (
+    <p className="summary-context">
+      {t("恢复：")}{" "}
+      {t(
+        settings.recovery.mode === "delete"
+          ? "删除失败区间"
+          : "黑画面与静音填补",
       )}
+      {" · "}
+      {t("预计")}{" "}
+      {formatTimecode(
+        plan?.durationSeconds ??
+          selectedDuration(settings, media.durationSeconds),
+      )}
+      {t("。完整解码复检通过后保存。")}
+    </p>
+  );
+  const estimateContext = (
+    <p className="summary-context">
+      {t(
+        !compress
+          ? operation === "remux"
+            ? "保留原始编码，转换容器。实际大小取决于保留的轨道和容器开销。"
+            : "仅保存所选轨道，完成后显示实际输出大小。"
+          : estimate
+            ? "估算供参考，以完成后的实际大小为准。"
+            : "质量模式无法准确预测体积。处理完成后会显示实际节省空间。",
+      )}
+    </p>
+  );
+  return (
+    <section
+      ref={container}
+      className={`surface estimate-card ${compact ? "compact-summary" : ""}`}
+    >
+      <div className="section-eyebrow">{t("输出概览")}</div>
+      {!compact && audioContext}
       <h2>
         {compress
           ? codecOptions.find((codec) => codec.value === settings.codec)?.title
@@ -101,39 +183,32 @@ export function OutputSummary({
           </strong>
         </div>
       </div>
-      {settings.recovery && (
-        <p>
-          {t("恢复：")}{" "}
-          {t(
-            settings.recovery.mode === "delete"
-              ? "删除失败区间"
-              : "黑画面与静音填补",
-          )}
-          {t(" ")}
-          {t("· 预计")}
-          {t(" ")}
-          {t(
-            formatTimecode(
-              plan?.durationSeconds ??
-                selectedDuration(settings, media.durationSeconds),
-            ),
-          )}{" "}
-          {t("。完整解码复检通过后保存。")}
-        </p>
+      {!compact && recoveryContext}
+      {!compact && estimateContext}
+      {compact && (
+        <button
+          ref={toggle}
+          className="button text summary-details-toggle"
+          aria-expanded={details}
+          aria-controls={detailsID}
+          onClick={() => setDetails(!details)}
+        >
+          {t(details ? "收起输出详情" : "展开输出详情")}
+        </button>
       )}
-      <p>
-        {t(
-          !compress
-            ? operation === "remux"
-              ? "保留原始编码，转换容器。实际大小取决于保留的轨道和容器开销。"
-              : "仅保存所选轨道，完成后显示实际输出大小。"
-            : estimate
-              ? "估算供参考，以完成后的实际大小为准。"
-              : "质量模式无法准确预测体积。处理完成后会显示实际节省空间。",
+      <div className="summary-divider" hidden={compact && !details} />
+      <div
+        className="output-summary"
+        id={detailsID}
+        hidden={compact && !details}
+      >
+        {compact && (
+          <>
+            {audioContext}
+            {recoveryContext}
+            {estimateContext}
+          </>
         )}
-      </p>
-      <div className="summary-divider" />
-      <div className="output-summary">
         <span>{t("处理范围")}</span>
         <strong>
           {t(
@@ -218,50 +293,52 @@ export function OutputSummary({
           )}
         </strong>
       </div>
-      {compress && !hasVideo && (
-        <p className="inline-error">
-          {t("源媒体没有视频轨，请选择视频文件。")}
-        </p>
-      )}
-      {compress && capabilitiesLoaded && !encoderAvailable && (
-        <p className="inline-error">
-          {t("所选编码方式在当前设备上不可用，请更换处理方式或视频编码。")}
-        </p>
-      )}
-      {validation.length > 0 && (
-        <div className="validation-errors" role="alert">
-          {validation.map((message) => (
-            <p key={message}>{t(message)}</p>
-          ))}
-        </div>
-      )}
-      {actionError && (
-        <p className="inline-error" role="alert">
-          {t(actionError)}
-        </p>
-      )}
-      {previewError && (
-        <p className="inline-error" role="alert">
-          {t("执行方案无法生成：")} {t(previewError)}
-        </p>
-      )}
-      {!connected && (
-        <p className="inline-error">
-          {t("原生媒体处理服务未连接，请在 菲比工具箱 应用中操作。")}
-        </p>
-      )}
-      {(previewLoading || (compress && !capabilitiesLoaded)) &&
-        !validation.length &&
-        !previewError &&
-        connected && (
-          <p className="plan-status" role="status">
-            {t(
-              compress && !capabilitiesLoaded
-                ? "正在检测设备与编码器…"
-                : "正在检查输出设置…",
-            )}
+      <div className="summary-messages">
+        {compress && !hasVideo && (
+          <p className="inline-error">
+            {t("源媒体没有视频轨，请选择视频文件。")}
           </p>
         )}
+        {compress && capabilitiesLoaded && !encoderAvailable && (
+          <p className="inline-error">
+            {t("所选编码方式在当前设备上不可用，请更换处理方式或视频编码。")}
+          </p>
+        )}
+        {validation.length > 0 && (
+          <div className="validation-errors" role="alert">
+            {validation.map((message) => (
+              <p key={message}>{t(message)}</p>
+            ))}
+          </div>
+        )}
+        {actionError && (
+          <p className="inline-error" role="alert">
+            {t(actionError)}
+          </p>
+        )}
+        {previewError && (
+          <p className="inline-error" role="alert">
+            {t("执行方案无法生成：")} {t(previewError)}
+          </p>
+        )}
+        {!connected && (
+          <p className="inline-error">
+            {t("原生媒体处理服务未连接，请在 菲比工具箱 应用中操作。")}
+          </p>
+        )}
+        {(previewLoading || (compress && !capabilitiesLoaded)) &&
+          !validation.length &&
+          !previewError &&
+          connected && (
+            <p className="plan-status" role="status">
+              {t(
+                compress && !capabilitiesLoaded
+                  ? "正在检测设备与编码器…"
+                  : "正在检查输出设置…",
+              )}
+            </p>
+          )}
+      </div>
       <button
         className="button primary start-button"
         onClick={start}

@@ -1,4 +1,5 @@
-import { t, useI18n, saveLocalPreference } from "./i18n";
+import { t, useI18n } from "./i18n";
+import { applyAppearance, useAppearance } from "./appearance";
 import {
   lazy,
   Suspense,
@@ -9,15 +10,12 @@ import {
 } from "react";
 import { UnsavedDialog } from "./components/UnsavedDialog";
 import type { Draft } from "./draft";
-import { Compress } from "./components/Compress";
 import { Home } from "./components/Home";
 import { Icon } from "./components/Icon";
 import type { IconName } from "./components/Icon";
-import { Queue } from "./components/Queue";
 import { WindowControls } from "./components/WindowControls";
 import { useStudio } from "./hooks/useStudio";
 import { BRAND_NAME, BRAND_ENGLISH } from "./brand";
-import { legacyThemeKey } from "./legacy";
 import { BrandLogo } from "./components/BrandLogo";
 import { API } from "./bridge";
 import { ExitDialog } from "./components/ExitDialog";
@@ -34,6 +32,14 @@ const SettingsPage = lazy(() =>
     default: module.SettingsPage,
   })),
 );
+const Compress = lazy(() =>
+  import("./components/Compress").then((module) => ({
+    default: module.Compress,
+  })),
+);
+const Queue = lazy(() =>
+  import("./components/Queue").then((module) => ({ default: module.Queue })),
+);
 
 type Page = "home" | "compress" | "queue" | "settings";
 const navigation: {
@@ -48,26 +54,12 @@ const navigation: {
   { id: "settings", label: "设置", english: "Settings", icon: "settings" },
 ];
 
-function initialTheme(): "light" | "dark" {
-  const stored = (() => {
-    try {
-      return (
-        localStorage.getItem("pheebkit-theme") ??
-        localStorage.getItem(legacyThemeKey)
-      );
-    } catch {
-      return null;
-    }
-  })();
-  if (stored === "light" || stored === "dark") return stored;
-  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 export default function App() {
   const { language } = useI18n();
   const [page, setPage] = useState<Page>("home");
   const [compressVisited, setCompressVisited] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">(initialTheme);
+  const appearance = useAppearance();
+  const { theme, preferences: appearancePreferences } = appearance;
   const draft = useRef<Draft | null>(null);
   const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
   const [library, setLibrary] = useState<Library | null>(null);
@@ -162,11 +154,13 @@ export default function App() {
   const currentNav = navigation.find((item) => item.id === page);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    saveLocalPreference("pheebkit-theme", theme);
-  }, [theme]);
+    applyAppearance(document.documentElement, {
+      preferences: appearancePreferences,
+      theme,
+    });
+  }, [appearancePreferences, theme]);
   const toggleTheme = () =>
-    setTheme((value) => (value === "light" ? "dark" : "light"));
+    appearance.setAppearance({ mode: theme === "light" ? "dark" : "light" });
   function navigate(nextPage: Page) {
     setPage(nextPage);
     if (nextPage === "compress") setCompressVisited(true);
@@ -189,6 +183,7 @@ export default function App() {
   return (
     <div
       className={`app-shell ${studio.connected && studio.platform === "windows" ? "desktop-native" : ""}`}
+      data-page={page}
     >
       <a className="skip-link" href="#workspace">
         {t("跳到工作区")}
@@ -336,7 +331,7 @@ export default function App() {
           )}
           {(page === "home" || page === "compress") && (
             <section
-              className="surface media-collection"
+              className={`surface media-collection ${page === "compress" ? "workbench-media-library" : ""}`}
               aria-label={t("已导入媒体与项目")}
             >
               <div className="section-title">
@@ -400,6 +395,15 @@ export default function App() {
             </section>
           )}
           {page === "home" && (
+            <Home
+              media={studio.media}
+              busy={studio.busy}
+              connected={studio.connected}
+              chooseMedia={() => protect(() => studio.chooseMedia())}
+              compress={() => navigate("compress")}
+            />
+          )}
+          {page === "home" && (
             <ProjectLibrary
               library={library}
               connected={connected}
@@ -412,79 +416,86 @@ export default function App() {
               }
             />
           )}
-          {page === "home" && (
-            <Home
-              media={studio.media}
-              busy={studio.busy}
-              connected={studio.connected}
-              chooseMedia={() => protect(() => studio.chooseMedia())}
-              compress={() => navigate("compress")}
-            />
-          )}
           {compressVisited && (
             <div hidden={page !== "compress"}>
-              <Compress
-                key={
-                  studio.media
-                    ? `${studio.media.source.uri}:${studio.media.sourceFingerprint || ""}:${studio.reuse?.nonce ?? ""}`
-                    : "empty"
+              <Suspense
+                fallback={
+                  <div className="page" role="status">
+                    {t("正在加载工作区…")}
+                  </div>
                 }
-                media={studio.media}
-                initialSettings={studio.reuse?.settings ?? studio.savedSettings}
-                initialOutput={studio.reuse?.output}
-                needsSave={studio.reuse?.needsSave}
-                undoLimit={library?.preferences.undoLimit ?? 50}
-                renderBatch={(settings) =>
-                  studio.mediaList.length > 1 ? (
-                    <BatchPanel
-                      key={settings.operation || "compress"}
-                      files={studio.mediaList}
-                      settings={settings}
+              >
+                <Compress
+                  key={
+                    studio.media
+                      ? `${studio.media.source.uri}:${studio.media.sourceFingerprint || ""}:${studio.reuse?.nonce ?? ""}`
+                      : "empty"
+                  }
+                  media={studio.media}
+                  initialSettings={
+                    studio.reuse?.settings ?? studio.savedSettings
+                  }
+                  initialOutput={studio.reuse?.output}
+                  needsSave={studio.reuse?.needsSave}
+                  undoLimit={library?.preferences.undoLimit ?? 50}
+                  renderBatch={(settings) =>
+                    studio.mediaList.length > 1 ? (
+                      <BatchPanel
+                        key={settings.operation || "compress"}
+                        files={studio.mediaList}
+                        settings={settings}
+                        connected={studio.connected}
+                        outputDirectory={studio.outputDirectory}
+                        onOutputDirectory={studio.setOutputDirectory}
+                        onNotice={studio.setError}
+                        onJobs={studio.addJobs}
+                        showQueue={() => navigate("queue")}
+                      />
+                    ) : null
+                  }
+                  onDraft={onDraft}
+                  outputDirectory={studio.outputDirectory}
+                  onOutputDirectory={studio.setOutputDirectory}
+                  onNotice={studio.setError}
+                  projectActions={(project, markSaved) => (
+                    <ProjectActions
+                      project={project}
+                      onSaved={(project) => {
+                        markSaved(project);
+                        studio.setNotice("");
+                        void refreshLibrary().catch((cause) =>
+                          setError(`最近项目刷新失败：${String(cause)}`),
+                        );
+                      }}
+                      dirty={dirty}
+                      autosaveMessage={autosave.error || autosave.message}
+                      autosaveError={Boolean(autosave.error)}
                       connected={studio.connected}
-                      outputDirectory={studio.outputDirectory}
-                      onOutputDirectory={studio.setOutputDirectory}
-                      onNotice={studio.setError}
-                      onJobs={studio.addJobs}
+                      load={loadProject}
+                      onJob={studio.addJob}
                       showQueue={() => navigate("queue")}
                     />
-                  ) : null
-                }
-                onDraft={onDraft}
-                outputDirectory={studio.outputDirectory}
-                onOutputDirectory={studio.setOutputDirectory}
-                onNotice={studio.setError}
-                projectActions={(project, markSaved) => (
-                  <ProjectActions
-                    project={project}
-                    onSaved={(project) => {
-                      markSaved(project);
-                      studio.setNotice("");
-                      void refreshLibrary().catch((cause) =>
-                        setError(`最近项目刷新失败：${String(cause)}`),
-                      );
-                    }}
-                    dirty={dirty}
-                    autosaveMessage={autosave.error || autosave.message}
-                    autosaveError={Boolean(autosave.error)}
-                    connected={studio.connected}
-                    load={loadProject}
-                    onJob={studio.addJob}
-                    showQueue={() => navigate("queue")}
-                  />
-                )}
-                onSaved={studio.setSavedSettings}
-                reused={Boolean(studio.reuse)}
-                visible={page === "compress"}
-                capabilities={studio.capabilities}
-                connected={studio.connected}
-                chooseMedia={() => protect(() => studio.chooseMedia())}
-                onJob={studio.addJob}
-                showQueue={() => navigate("queue")}
-              />
+                  )}
+                  onSaved={studio.setSavedSettings}
+                  reused={Boolean(studio.reuse)}
+                  visible={page === "compress"}
+                  capabilities={studio.capabilities}
+                  connected={studio.connected}
+                  chooseMedia={() => protect(() => studio.chooseMedia())}
+                  onJob={studio.addJob}
+                  showQueue={() => navigate("queue")}
+                />
+              </Suspense>
             </div>
           )}
           {page === "queue" && (
-            <>
+            <Suspense
+              fallback={
+                <div className="page" role="status">
+                  {t("正在加载任务队列…")}
+                </div>
+              }
+            >
               <Queue
                 jobs={studio.jobs}
                 cancel={(id) => void studio.cancelJob(id)}
@@ -517,7 +528,7 @@ export default function App() {
                   />
                 </div>
               )}
-            </>
+            </Suspense>
           )}
           {page === "settings" && (
             <Suspense
@@ -556,8 +567,6 @@ export default function App() {
                 refreshEnvironment={studio.refreshEnvironment}
                 chooseFFmpeg={studio.chooseFFmpeg}
                 configureFFmpeg={studio.configureFFmpeg}
-                theme={theme}
-                toggleTheme={toggleTheme}
               />
             </Suspense>
           )}

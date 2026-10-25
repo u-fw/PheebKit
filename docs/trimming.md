@@ -1,5 +1,13 @@
 # Optional trimming with compression
 
+## Active Material preview iteration (2026-10-25)
+
+The source preview is available for the full video, not only after enabling trim. Selection playback can loop, and previous/next controls seek by the source's declared average frame duration (0.1-second controls when the rate is unknown). This is approximate for variable-frame-rate sources and does not promise exact decoded-frame cuts. Stepping pauses playback; seeking alone never changes project boundaries. Source and selected-range playback remain separate actions.
+
+Filmstrip thumbnails load only on request, at up to eight evenly spaced positions. Work is serial and bounded by the existing frame-extraction deadline/gate; leaving the editor stops the remaining requests. A failed cell still provides a time-position button. Waveform preview explicitly selects a source audio track and reads at most the next 120 seconds from the current preview position, returning up to 512 mono peaks. It has a 15-second total deadline and bounded output, is not a loudness/quality measurement, and does not alter selected export tracks. Hidden/stale UI results are discarded. Multi-segment ordering supports visible move buttons and Alt+ArrowUp/ArrowDown while a segment is focused. The player remains mounted when the active range is adjusted.
+
+The [active iteration record](uiux-iteration.md) separates current automated/native evidence and remaining checks from the historical beta evidence below.
+
 ## Beta.8: ordered ranges and subtitles
 
 The original single-range flow below remains. **多片段拼接** additionally stores an ordered `settings.segments` list (1–16 ranges), mutually exclusive with `trim`. Every range must be finite, within known source duration and at least one video frame. Repeated/overlapping ranges are intentional repetitions. Add/delete/up/down controls work without dragging; the existing direct-entry time picker edits the selected range. Range changes position its original-source preview at the selected start.

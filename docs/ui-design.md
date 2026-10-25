@@ -1,5 +1,15 @@
 # Shared UI design
 
+## Active Material workbench iteration (2026-10-25)
+
+The current source keeps Wails v2 and React and implements Material 3 / Material You visual roles without introducing Kotlin or Jetpack Compose. The official Material Color Utilities generate HCT palettes from a validated seed. Settings exposes system/light/dark mode, preset/custom palettes and comfortable/compact density. Tonal surfaces carry editor hierarchy; translucent chrome remains limited to navigation, app bar and the floating output dock. This section supersedes the fixed palette/opacity/layout values in the earlier spike record below.
+
+The processing workbench places source preview and ranges in the main editing column and retains four inspector panels (output, tracks, adjustments and tools). Keyboard arrow/Home/End navigation follows tab semantics; switching categories does not discard field state. A measured bottom dock keeps validation and submit reachable, with an expandable explanation/details panel and Escape/outside dismissal. The home import action precedes draft history, the three-step guide is collapsed, and appearance is the first Settings section.
+
+The preview offers selected-range looping, nominal average-rate frame steps, explicitly loaded source filmstrip thumbnails and bounded mono waveform windows. These operations seek the source without changing output ranges. See [iteration status and exact verification limits](uiux-iteration.md); a development build is not release acceptance. The existing editor/compiler/queue and no-overwrite contracts remain unchanged.
+
+## Earlier spike design record
+
 The technical spike implements Home, Media Processing, Queue and Settings. Processing includes compression, remux, audio/text-subtitle extraction, basic transforms, batch controls, project/preset files and samples. The UI uses shared React components, TypeScript models generated from Go and a small binding adapter. Behavior is documented in [workflows](workflows.md) and [media tools](media-tools.md).
 
 Material Design 3 inspired tonal surfaces, teal accent and a consistent 4/8px spacing scale form the visual system. The supplied PheebKit artwork is shared by navigation and the favicon and converted to Windows icons; the Chinese brand is 菲比工具箱. A restrained mint/lilac canvas sits behind the glass navigation: sidebar opacity is 60% light / 62% dark, while chrome opacity is 80% light / 84% dark. Glass is limited to the sidebar, top app bar and mobile bottom navigation, with 26px backdrop blur and a subtle inset highlight. Cards use opaque tonal surfaces without repeated blur. All colors, spacing, radii, elevation and motion use semantic CSS tokens.
@@ -12,7 +22,7 @@ The vendor-prefixed backdrop declaration precedes the standard declaration. The 
 
 `frontend/src/styles.css` is the stylesheet entrypoint. Tokens, base rules, shell, workspace, media, compression, select, execution, queue, settings and responsive rules live in separate files under `frontend/src/styles/`. Their declaration order is preserved; the split produces identical production assets.
 
-Windows uses a frameless Wails window with an integrated glass app bar, native drag region and custom minimize/maximize/restore/close controls calling the Wails Window API. OS shadows and Windows 11 corner decorations remain enabled. Composition hosting is not enabled. Android/browser layouts do not show desktop window controls. The native title is `菲比工具箱 · PheebKit`. Native closing hooks protect active work; the styled modal uses dialog semantics, safe default focus and Esc/trigger-focus restoration. See the [Wails frameless window documentation](https://v3.wails.io/features/windows/frameless/).
+Windows uses a frameless Wails window with an integrated glass app bar, native drag region and custom minimize/maximize/restore/close controls calling the Wails Window API. OS shadows and Windows 11 corner decorations remain enabled. Composition hosting is not enabled. Android/browser layouts do not show desktop window controls. The native title is `菲比工具箱 · PheebKit`. Native closing hooks protect active work; the styled modal uses dialog semantics, safe default focus and Esc/trigger-focus restoration. The current implementation uses stable Wails v2; see the local [stability record](stability.md).
 
 Desktop uses a sidebar. Widths up to 960px switch to a bottom navigation rather than shrinking the desktop sidebar, including phone landscape. Safe-area insets, 44+ px targets, focus outlines, semantic controls and reduced-motion settings support touch and keyboard use. Light and dark themes use local persistence; fonts use the local system stack so the application works offline.
 

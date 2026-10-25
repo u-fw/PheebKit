@@ -1,5 +1,11 @@
 export namespace app {
 
+	export interface AudioWaveform {
+	    startSeconds: number;
+	    durationSeconds: number;
+	    streamIndex: number;
+	    peaks: number[];
+	}
 	export interface BinaryStatus {
 	    path: string;
 	    version: string;

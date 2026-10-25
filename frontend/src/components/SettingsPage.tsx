@@ -1,5 +1,6 @@
 import { t, useI18n } from "../i18n";
 import { MaterialSelect } from "./MaterialSelect";
+import { AppearanceSettings } from "./AppearanceSettings";
 import { useState, type ReactNode } from "react";
 import type {
   BinaryStatus,
@@ -70,8 +71,6 @@ export function SettingsPage({
   startFFmpegSetup,
   startCustomFFmpegSetup,
   cancelFFmpegSetup,
-  theme,
-  toggleTheme,
 }: {
   editorSettings?: ReactNode;
   platform: string;
@@ -91,8 +90,6 @@ export function SettingsPage({
     trustBuild: boolean,
   ) => Promise<void>;
   cancelFFmpegSetup: () => Promise<void>;
-  theme: "light" | "dark";
-  toggleTheme: () => void;
 }) {
   const [ffmpegPath, setFFmpegPath] = useState<string | null>(null);
   const { language, setLanguage, persistent } = useI18n();
@@ -123,8 +120,38 @@ export function SettingsPage({
           <p>{t("外观、FFmpeg 路径与设备编码能力。")}</p>
         </div>
       </header>
-      {editorSettings}
-      <section className="surface preferences-card">
+      <section className="surface preferences-card" id="settings-appearance">
+        <div className="section-title">
+          <h2>{t("外观")}</h2>
+          <Icon name="sun" />
+        </div>
+        <MaterialSelect
+          label={t("界面语言")}
+          value={language}
+          options={[
+            { value: "zh-CN", label: "简体中文", translate: false },
+            { value: "en-US", label: "English", translate: false },
+          ]}
+          onChange={(value) => {
+            if (value === "zh-CN" || value === "en-US") setLanguage(value);
+          }}
+        />
+        {!persistent && (
+          <p className="inline-error" role="status">
+            {t(
+              "当前环境无法保存本机偏好，本次切换仍有效。重启后将使用系统语言。",
+            )}
+          </p>
+        )}
+        <p className="field-hint">
+          {t(
+            "语言立即生效并保存在本机，不会重置当前编辑。FFmpeg 原始日志与用户文件名保持原样。",
+          )}
+        </p>
+        <AppearanceSettings />
+      </section>
+      <div id="settings-editor">{editorSettings}</div>
+      <section className="surface preferences-card" id="settings-environment">
         <div className="section-title">
           <h2>{t("FFmpeg 环境")}</h2>
           <span
@@ -346,45 +373,6 @@ export function SettingsPage({
             <p>{t(capabilityError || "正在检测设备和可用编码器…")}</p>
           </div>
         )}
-      </section>
-      <section className="surface preferences-card">
-        <div className="section-title">
-          <h2>{t("外观")}</h2>
-          <Icon name="sun" />
-        </div>
-        <MaterialSelect
-          label={t("界面语言")}
-          value={language}
-          options={[
-            { value: "zh-CN", label: "简体中文", translate: false },
-            { value: "en-US", label: "English", translate: false },
-          ]}
-          onChange={(value) => {
-            if (value === "zh-CN" || value === "en-US") setLanguage(value);
-          }}
-        />
-        {!persistent && (
-          <p className="inline-error" role="status">
-            {t(
-              "当前环境无法保存本机偏好，本次切换仍有效。重启后将使用系统语言。",
-            )}
-          </p>
-        )}
-        <p className="field-hint">
-          {t(
-            "语言立即生效并保存在本机，不会重置当前编辑。FFmpeg 原始日志与用户文件名保持原样。",
-          )}
-        </p>
-        <div className="preference-row">
-          <div>
-            <h3>{t("主题")}</h3>
-            <p>{t("使用明亮或深色工作台。")}</p>
-          </div>
-          <button className="button outlined" onClick={toggleTheme}>
-            <Icon name={theme === "light" ? "moon" : "sun"} />
-            {t(theme === "light" ? "切换深色" : "切换浅色")}
-          </button>
-        </div>
       </section>
       {platform === "android" && (
         <div className="notice">

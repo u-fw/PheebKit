@@ -41,8 +41,6 @@ function settings() {
       startFFmpegSetup={action}
       startCustomFFmpegSetup={action}
       cancelFFmpegSetup={action}
-      theme="light"
-      toggleTheme={() => undefined}
     />,
   );
 }

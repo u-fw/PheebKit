@@ -17,6 +17,12 @@ Unedited captures of the Windows 11 desktop candidate on 2026-10-18, using a sel
 
 ![Native settings with draft recovery controls and a custom switch](docs/images/desktop-settings-en-rc3.png)
 
+The current source is iterating on a Material 3 / Material You workbench: light/dark modes, custom seed palettes, density, grouped parameters and a persistent output dock, plus looping, nominal frame steps, filmstrip thumbnails and bounded waveform previews. These are actual windows from the **2026-10-25 development build**; they have not replaced the verified rc.3 package above. [Progress and verification limits](docs/uiux-iteration.md)
+
+![Development build: dark Material workbench and grouped parameters](docs/images/desktop-workbench-material-dev.png)
+
+![Development build: theme seed, color mode and density controls](docs/images/desktop-appearance-material-dev.png)
+
 ## Features
 
 - **Compression and trimming:** H.264, HEVC and AV1; quality, bitrate or target-size modes; full duration, one trimmed range, or up to 16 ordered ranges from one source, joined or exported separately. Enter times directly or use selectors and sliders.

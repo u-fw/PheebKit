@@ -1,5 +1,5 @@
 import { t } from "../i18n";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { Media, Settings, TimeRange } from "../bridge";
 import { formatTimecode, selectedDuration, trimError } from "../trim";
 import { moveSegment } from "../segments";
@@ -25,6 +25,7 @@ export function SegmentsEditor({
   const ranges = settings.segments ?? [];
   const helpID = useId();
   const [active, setActive] = useState(0);
+  const list = useRef<HTMLOListElement>(null);
   const index = Math.min(active, Math.max(0, ranges.length - 1));
   const selected = ranges[index];
   const max = Math.floor(media.durationSeconds * 1000) / 1000;
@@ -44,6 +45,19 @@ export function SegmentsEditor({
       ranges.map((range, i) =>
         i === index ? { ...range, [key]: value } : range,
       ),
+    );
+  }
+  function reorder(index: number, direction: -1 | 1) {
+    const next = index + direction;
+    if (next < 0 || next >= ranges.length) return;
+    change(moveSegment(ranges, index, direction));
+    setActive(next);
+    // Keep keyboard focus with the moved segment after React commits its list.
+    requestAnimationFrame(() =>
+      list.current
+        ?.querySelectorAll<HTMLButtonElement>(".segment-select")
+        .item(next)
+        ?.focus(),
     );
   }
   return (
@@ -66,12 +80,25 @@ export function SegmentsEditor({
           {t("移除软字幕轨道以启用拼接")}
         </button>
       )}
-      <ol className="segment-list">
+      <p className="field-hint">
+        {t("聚焦片段后，按 Alt + ↑ / ↓ 调整拼接顺序。")}
+      </p>
+      <ol className="segment-list" ref={list}>
         {ranges.map((range, i) => (
           <li key={i} className={index === i ? "selected" : ""}>
             <button
-              className="button text"
+              className="button text segment-select"
               aria-pressed={index === i}
+              aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+              onKeyDown={(event) => {
+                if (
+                  !event.altKey ||
+                  (event.key !== "ArrowUp" && event.key !== "ArrowDown")
+                )
+                  return;
+                event.preventDefault();
+                reorder(i, event.key === "ArrowUp" ? -1 : 1);
+              }}
               onClick={() => setActive(i)}
             >
               {t("片段")} {i + 1} · {t(formatTimecode(range.startSeconds))} →
@@ -83,10 +110,7 @@ export function SegmentsEditor({
                 className="button text"
                 aria-label={t("片段 {{0}} 上移", [i + 1])}
                 disabled={i === 0}
-                onClick={() => {
-                  change(moveSegment(ranges, i, -1));
-                  setActive(i - 1);
-                }}
+                onClick={() => reorder(i, -1)}
               >
                 {t("上移")}
               </button>
@@ -94,10 +118,7 @@ export function SegmentsEditor({
                 className="button text"
                 aria-label={t("片段 {{0}} 下移", [i + 1])}
                 disabled={i === ranges.length - 1}
-                onClick={() => {
-                  change(moveSegment(ranges, i, 1));
-                  setActive(i + 1);
-                }}
+                onClick={() => reorder(i, 1)}
               >
                 {t("下移")}
               </button>
@@ -157,7 +178,7 @@ export function SegmentsEditor({
             />
           </div>
           <ClipPreview
-            key={`${index}:${selected.startSeconds}:${selected.endSeconds}`}
+            key={media.source.uri}
             media={media}
             start={selected.startSeconds}
             end={selected.endSeconds}

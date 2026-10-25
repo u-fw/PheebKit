@@ -1,5 +1,13 @@
 # Desktop capture record — 2026-10-18
 
+## Material iteration captures — 2026-10-25
+
+`desktop-appearance-material-dev.png` and `desktop-workbench-material-dev.png` are unedited captures of the actual Wails v2 development EXE at `.tools/uiux-native/PheebKit.exe`, on this Windows workstation. They show English with the Iris purple seed in dark mode. The workbench uses the same owned eight-second test video described below. No personal media was used. The executable reports modified source and is not the released rc.3 payload, even though the version has not yet been advanced during this iteration.
+
+Native testing confirmed repeated full-range loop playback, paused 30 FPS stepping from about 0.194 to 0.227 seconds, eight real extracted thumbnails, and a real audio waveform window from about 0.227 to 8 seconds. Switching to Settings, changing the seed/theme/language and returning retained the source, preview position, eight thumbnails and waveform. New output-message layout/focus padding is a later source edit and requires fresh interaction verification. Full release/client acceptance is separate.
+
+## Earlier rc.3 candidate captures
+
 Current rc.3 captures are unedited screenshots of the native Wails v2.17.0 application on Windows 11 Pro build 26300:
 
 - `desktop-workspace-rc3.png`: Chinese media-processing workspace with an actual thumbnail/probed metadata for a self-generated eight-second 640×360, 30 fps H.264/AAC source named `测试 & clip.mp4`.

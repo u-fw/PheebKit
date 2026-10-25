@@ -20,6 +20,7 @@
     "format:check": "prettier --check src index.html package.json tsconfig.json vite.config.ts eslint.config.js"
   },
   "dependencies": {
+    "@material/material-color-utilities": "0.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

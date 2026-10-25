@@ -37,6 +37,8 @@ export function ExportDiagnosticReport(arg1:string):Promise<string>;
 
 export function ExportPreset(arg1:string):Promise<string>;
 
+export function GetAudioWaveform(arg1:string,arg2:number,arg3:number,arg4:number):Promise<app.AudioWaveform>;
+
 export function GetDiagnosticPreview(arg1:app.DiagnosticOptions):Promise<app.DiagnosticPreview>;
 
 export function GetEnvironment():Promise<app.Environment>;

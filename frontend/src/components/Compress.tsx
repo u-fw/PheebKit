@@ -1,5 +1,5 @@
 import { t } from "../i18n";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { draftFingerprint, inOutputDirectory, type Draft } from "../draft";
 import { directoryOf } from "../batch";
 import { API } from "../bridge";
@@ -26,6 +26,8 @@ import {
   AudioEncodingSettings,
 } from "./EncodingSettings";
 import { Icon } from "./Icon";
+import { InspectorTabs, type InspectorTab } from "./InspectorTabs";
+import { ClipPreview } from "./ClipPreview";
 import { MediaCard } from "./MediaCard";
 import { OutputSummary } from "./OutputSummary";
 import { TrimSettings } from "./TrimSettings";
@@ -87,6 +89,8 @@ export function Compress({
   onOutputDirectory,
   onNotice,
 }: Props) {
+  const [inspector, setInspector] = useState<InspectorTab>("output");
+  const inspectorID = useId();
   const editor = useEditorHistory(() => {
     const settings = media
       ? settingsForMedia(initialSettings ?? defaultSettings, media)
@@ -326,7 +330,7 @@ export function Compress({
     );
 
   return (
-    <div className="page compress-page">
+    <div className="page compress-page material-workbench">
       <header className="page-heading">
         <div>
           <h1>{t(operationLabels[operation] ?? "媒体处理")}</h1>
@@ -337,98 +341,73 @@ export function Compress({
           {t("本地处理")}
         </span>
       </header>
-      <MediaCard media={media} compact />
-      <div className="action-row editor-history" aria-label={t("编辑历史")}>
-        <button
-          className="button outlined"
-          disabled={!editor.canUndo || starting || choosingOutput}
-          title={t("Ctrl+Z（输入框使用文字撤销）")}
-          onClick={() => {
-            editor.undo();
-            setAdvancedRevision((v) => v + 1);
-            setCustomResolution(false);
-            setActionError("");
-          }}
-        >
-          {t("撤销")}
-        </button>
-        <button
-          className="button outlined"
-          disabled={!editor.canRedo || starting || choosingOutput}
-          title="Ctrl+Shift+Z / Ctrl+Y"
-          onClick={() => {
-            editor.redo();
-            setAdvancedRevision((v) => v + 1);
-            setCustomResolution(false);
-            setActionError("");
-          }}
-        >
-          {t("重做")}
-        </button>
-        <span className="field-hint">
-          {t("当前文件最多保留")} {undoLimit}{" "}
-          {t("步；仅还原编辑设置，不撤回已提交任务。")}
-        </span>
-      </div>
-      <div className="compress-layout">
-        <div className="settings-column">
-          <ScenarioPresets media={media} apply={applySettings} />
-          <SavedSettings
-            onSaved={onSaved}
-            settings={settings}
-            apply={applySettings}
-          />
-          {settingsNotice && (
-            <p className="field-hint" role="status">
-              {t(settingsNotice)}
-            </p>
-          )}
-          {projectActions?.(
-            makeProject(media, settings, output, projectID),
-            markSaved,
-          )}
-          <OperationSettings
-            media={media}
-            settings={settings}
-            onChange={(value) => {
-              const next = changeOperation(settings, value, media);
-              setSettingsNotice("");
-              setAdvancedRevision((current) => current + 1);
-              const suffix = {
-                compress: "compressed",
-                remux: "remux",
-                "extract-audio": "audio",
-                "extract-subtitle": "subtitle",
-              }[value];
-              editor.update((current) => ({
-                settings: next,
-                output: current.output
-                  ? current.output
-                      .replace(
-                        /-(compressed|remux|audio|subtitle)(?=\.[^./\\]+$)/,
-                        `-${suffix}`,
-                      )
-                      .replace(/\.[^./\\]+$/, `.${outputExtension(next)}`)
-                  : suggestedOperationOutput(media.source.uri, next),
-              }));
-              setActionError("");
-            }}
-          />
-          {compress && (
-            <MediaRecovery
-              key={media.sourceFingerprint}
-              media={media}
-              settings={settings}
-              connected={connected}
-              onChange={(next) => {
-                setSettings(next, "recovery");
+      <div className="workbench-layout">
+        <div className="workbench-stage">
+          <MediaCard media={media} compact />
+          <div
+            className="action-row editor-history"
+            role="group"
+            aria-label={t("编辑历史")}
+          >
+            <button
+              className="button outlined"
+              disabled={!editor.canUndo || starting || choosingOutput}
+              title={t("Ctrl+Z（输入框使用文字撤销）")}
+              onClick={() => {
+                editor.undo();
                 setAdvancedRevision((v) => v + 1);
+                setCustomResolution(false);
                 setActionError("");
               }}
-            />
+            >
+              {t("撤销")}
+            </button>
+            <button
+              className="button outlined"
+              disabled={!editor.canRedo || starting || choosingOutput}
+              title="Ctrl+Shift+Z / Ctrl+Y"
+              onClick={() => {
+                editor.redo();
+                setAdvancedRevision((v) => v + 1);
+                setCustomResolution(false);
+                setActionError("");
+              }}
+            >
+              {t("重做")}
+            </button>
+            <span className="field-hint">
+              {t("当前文件最多保留")} {undoLimit}{" "}
+              {t("步；仅还原编辑设置，不撤回已提交任务。")}
+            </span>
+          </div>
+          {hasVideo && !settings.segments?.length && (
+            <section className="surface stage-player">
+              <ClipPreview
+                media={media}
+                start={settings.trim?.startSeconds ?? 0}
+                end={settings.trim?.endSeconds ?? media.durationSeconds}
+                onBoundary={
+                  compress && settings.trim && !settings.recovery
+                    ? (boundary, value) => {
+                        setSettings(
+                          {
+                            ...settings,
+                            trim: { ...settings.trim!, [boundary]: value },
+                          },
+                          "trim",
+                        );
+                        setActionError("");
+                      }
+                    : undefined
+                }
+                visible={visible}
+                showFrames={false}
+              />
+            </section>
           )}
           {compress && !settings.recovery && (
             <TrimSettings
+              preview={false}
               visible={visible}
               media={media}
               settings={settings}
@@ -447,130 +426,239 @@ export function Compress({
               }}
             />
           )}
-          {compress && (
-            <EncodingSettings
+          {projectActions?.(
+            makeProject(media, settings, output, projectID),
+            markSaved,
+          )}
+          {renderBatch?.(settings)}
+        </div>
+        <aside className="workbench-inspector" aria-label={t("处理参数")}>
+          <div className="inspector-heading">
+            <h2>{t("处理参数")}</h2>
+            <span className="subtle-label">{t("所有修改即时预览")}</span>
+          </div>
+          <InspectorTabs
+            value={inspector}
+            onChange={setInspector}
+            prefix={inspectorID}
+          />
+          <div
+            role="tabpanel"
+            id={`${inspectorID}-panel-output`}
+            aria-labelledby={`${inspectorID}-tab-output`}
+            hidden={inspector !== "output"}
+            tabIndex={0}
+            className="inspector-panel"
+          >
+            <OperationSettings
               media={media}
               settings={settings}
-              update={update}
-              capabilities={capabilities}
-              customResolution={
-                customResolution ||
-                ![0, 720, 1080, 1440, 2160].includes(settings.resolution)
-              }
-              setCustomResolution={setCustomResolution}
-              plan={preview.plan}
-            />
-          )}
-          {operation === "extract-audio" && (
-            <AudioEncodingSettings settings={settings} update={update} />
-          )}
-          <TrackSettings media={media} settings={settings} update={update} />
-          {compress && !settings.recovery && (
-            <SubtitleBurnSettings
-              media={media}
-              settings={settings}
-              onChange={(next) => setSettings(next, "subtitles")}
-              capabilities={capabilities}
-              connected={connected}
-            />
-          )}
-          {(compress || operation === "extract-audio") && (
-            <TransformSettings
-              media={media}
-              settings={settings}
-              update={update}
-            />
-          )}
-          {(compress || operation === "extract-audio") &&
-            !settings.recovery && (
-              <AudioProcessingSettings
-                media={media}
-                settings={settings}
-                capabilities={capabilities}
-                update={update}
-              />
-            )}
-          {compress && !settings.recovery && (
-            <AdvancedSettings
-              key={advancedRevision}
-              settings={settings}
-              update={update}
-            />
-          )}
-          <section className="surface output-card">
-            <div className="section-title">
-              <h2>{t("保存到")}</h2>
-              <Icon name="folder" />
-            </div>
-            <MaterialSelect
-              label={t("输出文件格式")}
-              value={output.split(".").pop()?.toLowerCase() ?? ""}
-              options={operationExtensions(settings).map((extension) => ({
-                value: extension,
-                label: extension.toUpperCase(),
-              }))}
-              onChange={(extension) => {
-                setOutput((current) =>
-                  /\.[^./\\]+$/.test(current)
-                    ? current.replace(/\.[^./\\]+$/, `.${extension}`)
-                    : `${current}.${extension}`,
-                );
+              onChange={(value) => {
+                const next = changeOperation(settings, value, media);
+                setSettingsNotice("");
+                setAdvancedRevision((current) => current + 1);
+                const suffix = {
+                  compress: "compressed",
+                  remux: "remux",
+                  "extract-audio": "audio",
+                  "extract-subtitle": "subtitle",
+                }[value];
+                editor.update((current) => ({
+                  settings: next,
+                  output: current.output
+                    ? current.output
+                        .replace(
+                          /-(compressed|remux|audio|subtitle)(?=\.[^./\\]+$)/,
+                          `-${suffix}`,
+                        )
+                        .replace(/\.[^./\\]+$/, `.${outputExtension(next)}`)
+                    : suggestedOperationOutput(media.source.uri, next),
+                }));
                 setActionError("");
               }}
             />
-            <label className="field-label" htmlFor="output-path">
-              {t("输出文件")}
-            </label>
-            <div className="output-field">
-              <input
-                id="output-path"
-                value={output}
-                onChange={(event) => {
-                  setOutput(event.target.value);
-                  setActionError("");
-                }}
-                spellCheck={false}
+            {compress && (
+              <EncodingSettings
+                media={media}
+                settings={settings}
+                update={update}
+                capabilities={capabilities}
+                customResolution={
+                  customResolution ||
+                  ![0, 720, 1080, 1440, 2160].includes(settings.resolution)
+                }
+                setCustomResolution={setCustomResolution}
+                plan={preview.plan}
               />
-              <button
-                className="button outlined"
-                onClick={() => void chooseOutput()}
-                disabled={choosingOutput || !connected}
-              >
-                {t(choosingOutput ? "选择中…" : "浏览")}
-              </button>
-            </div>
-            <p className="field-hint">
-              {t("最终文件名：")} {output.split(/[\\/]/).pop() || t("尚未设置")}
-            </p>
-            <div className="action-row">
-              <button
-                className="button text"
-                disabled={!connected || choosingOutput || !output}
-                onClick={async () => {
-                  setChoosingOutput(true);
+            )}
+            {operation === "extract-audio" && (
+              <AudioEncodingSettings settings={settings} update={update} />
+            )}
+            <section className="surface output-card">
+              <div className="section-title">
+                <h2>{t("保存到")}</h2>
+                <Icon name="folder" />
+              </div>
+              <MaterialSelect
+                label={t("输出文件格式")}
+                value={output.split(".").pop()?.toLowerCase() ?? ""}
+                options={operationExtensions(settings).map((extension) => ({
+                  value: extension,
+                  label: extension.toUpperCase(),
+                }))}
+                onChange={(extension) => {
+                  setOutput((current) =>
+                    /\.[^./\\]+$/.test(current)
+                      ? current.replace(/\.[^./\\]+$/, `.${extension}`)
+                      : `${current}.${extension}`,
+                  );
                   setActionError("");
-                  try {
-                    setOutput(await API.suggestOutputPath(output));
-                  } catch (cause) {
-                    setActionError(errorMessage(cause));
-                  } finally {
-                    setChoosingOutput(false);
-                  }
                 }}
-              >
-                {t("自动避开重名")}
-              </button>
-              <span className="field-hint">
-                {t(
-                  "不会覆盖源文件或已有结果。上次选择的输出文件夹会用于下次导入。",
-                )}
-              </span>
-            </div>
-          </section>
-          {renderBatch?.(settings)}
-        </div>
-        <aside className="preview-column">
+              />
+              <label className="field-label" htmlFor="output-path">
+                {t("输出文件")}
+              </label>
+              <div className="output-field">
+                <input
+                  id="output-path"
+                  value={output}
+                  onChange={(event) => {
+                    setOutput(event.target.value);
+                    setActionError("");
+                  }}
+                  spellCheck={false}
+                />
+                <button
+                  className="button outlined"
+                  onClick={() => void chooseOutput()}
+                  disabled={choosingOutput || !connected}
+                >
+                  {t(choosingOutput ? "选择中…" : "浏览")}
+                </button>
+              </div>
+              <p className="field-hint">
+                {t("最终文件名：")}{" "}
+                {output.split(/[\\/]/).pop() || t("尚未设置")}
+              </p>
+              <div className="action-row">
+                <button
+                  className="button text"
+                  disabled={!connected || choosingOutput || !output}
+                  onClick={async () => {
+                    setChoosingOutput(true);
+                    setActionError("");
+                    try {
+                      setOutput(await API.suggestOutputPath(output));
+                    } catch (cause) {
+                      setActionError(errorMessage(cause));
+                    } finally {
+                      setChoosingOutput(false);
+                    }
+                  }}
+                >
+                  {t("自动避开重名")}
+                </button>
+                <span className="field-hint">
+                  {t(
+                    "不会覆盖源文件或已有结果。上次选择的输出文件夹会用于下次导入。",
+                  )}
+                </span>
+              </div>
+            </section>
+          </div>
+          <div
+            role="tabpanel"
+            id={`${inspectorID}-panel-tracks`}
+            aria-labelledby={`${inspectorID}-tab-tracks`}
+            hidden={inspector !== "tracks"}
+            tabIndex={0}
+            className="inspector-panel"
+          >
+            <TrackSettings media={media} settings={settings} update={update} />
+            {compress && !settings.recovery && (
+              <SubtitleBurnSettings
+                media={media}
+                settings={settings}
+                onChange={(next) => setSettings(next, "subtitles")}
+                capabilities={capabilities}
+                connected={connected}
+              />
+            )}
+          </div>
+          <div
+            role="tabpanel"
+            id={`${inspectorID}-panel-adjust`}
+            aria-labelledby={`${inspectorID}-tab-adjust`}
+            hidden={inspector !== "adjust"}
+            tabIndex={0}
+            className="inspector-panel"
+          >
+            {(compress || operation === "extract-audio") && (
+              <TransformSettings
+                media={media}
+                settings={settings}
+                update={update}
+              />
+            )}
+            {(compress || operation === "extract-audio") &&
+              !settings.recovery && (
+                <AudioProcessingSettings
+                  media={media}
+                  settings={settings}
+                  capabilities={capabilities}
+                  update={update}
+                />
+              )}
+          </div>
+          <div
+            role="tabpanel"
+            id={`${inspectorID}-panel-tools`}
+            aria-labelledby={`${inspectorID}-tab-tools`}
+            hidden={inspector !== "tools"}
+            tabIndex={0}
+            className="inspector-panel"
+          >
+            <ScenarioPresets media={media} apply={applySettings} />
+            <SavedSettings
+              onSaved={onSaved}
+              settings={settings}
+              apply={applySettings}
+            />
+            {settingsNotice && (
+              <p className="field-hint" role="status">
+                {t(settingsNotice)}
+              </p>
+            )}
+            {compress && !settings.recovery && (
+              <AdvancedSettings
+                key={advancedRevision}
+                settings={settings}
+                update={update}
+              />
+            )}
+            {compress && (
+              <MediaRecovery
+                key={media.sourceFingerprint}
+                media={media}
+                settings={settings}
+                connected={connected}
+                onChange={(next) => {
+                  setSettings(next, "recovery");
+                  setAdvancedRevision((v) => v + 1);
+                  setActionError("");
+                }}
+              />
+            )}
+            <CommandPreview
+              plan={preview.plan}
+              loading={preview.loading}
+              error={preview.error}
+            />
+          </div>
+        </aside>
+        <aside className="workbench-summary" aria-label={t("输出检查与执行")}>
           <OutputSummary
+            compact
             media={media}
             settings={settings}
             hasVideo={hasVideo}
@@ -593,11 +681,6 @@ export function Compress({
               validation.length === 0
             }
             start={() => void start()}
-          />
-          <CommandPreview
-            plan={preview.plan}
-            loading={preview.loading}
-            error={preview.error}
           />
         </aside>
       </div>

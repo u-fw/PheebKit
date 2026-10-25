@@ -45,6 +45,7 @@ type DesktopAPI interface {
 	GetFFmpegSetupStatus() FFmpegSetupStatus
 	GetMediaHealthScan() core.MediaHealth
 	GetMediaPreviewURL(uri string) (string, error)
+	GetAudioWaveform(uri string, start, duration float64, streamIndex int) (AudioWaveform, error)
 	GetPlatform() string
 	GetProjectLibrary() ProjectLibrary
 	GetSampleComparison(id string) (SampleComparison, error)

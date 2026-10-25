@@ -88,6 +88,12 @@ export interface Thumbnail {
   width: number;
   height: number;
 }
+export interface AudioWaveform {
+  startSeconds: number;
+  durationSeconds: number;
+  streamIndex: number;
+  peaks: number[];
+}
 export interface Job {
   verification?: Core.OutputVerification | null;
   project?: Project | null;
@@ -395,6 +401,20 @@ export const API = {
     preferencesView(await Service.SaveSettings(settings, name)),
   getMediaPreviewURL: async (uri: string): Promise<string> =>
     Service.GetMediaPreviewURL(uri),
+  getAudioWaveform: async (
+    uri: string,
+    start: number,
+    duration: number,
+    streamIndex: number,
+  ): Promise<AudioWaveform> => {
+    const result = await Service.GetAudioWaveform(
+      uri,
+      start,
+      duration,
+      streamIndex,
+    );
+    return { ...result, peaks: result.peaks ?? [] };
+  },
   getVideoFrame: async (uri: string, seconds: number): Promise<Thumbnail> =>
     Service.GetVideoFrame(uri, seconds),
   getFFmpegSetupStatus: async (): Promise<FFmpegSetupStatus> =>
