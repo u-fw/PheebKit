@@ -8,7 +8,7 @@ $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 Set-Location -LiteralPath $workspace
 
 $taskGoVersion = go env GOVERSION
-if ($LASTEXITCODE -ne 0 -or $taskGoVersion -notmatch '^go(\d+\.\d+\.\d+)$' -or [Version]$Matches[1] -lt [Version]'1.27.2') { throw 'Security release builds require stable Go 1.27.2 or newer; enable automatic toolchain selection.' }
+if ($LASTEXITCODE -ne 0 -or $taskGoVersion -notmatch '^go(\d+\.\d+\.\d+)$' -or [Version]$Matches[1] -lt [Version]'1.27.3') { throw 'Security release builds require stable Go 1.27.3 or newer; enable automatic toolchain selection.' }
 
 function Invoke-Checked([string]$Program, [string[]]$Arguments) {
     & $Program @Arguments

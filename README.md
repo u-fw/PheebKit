@@ -52,7 +52,7 @@ FFmpeg 查找顺序为 `PHEEBKIT_FFMPEG` / `PHEEBKIT_FFPROBE` → `FFMPEG_PATH` 
 
 ## 开发与验证
 
-需要 Windows x64、PowerShell 7、Node 24+，以及 Go 1.26+（自动选择固定的 Go 1.27.2 工具链）；正式构建强制要求 Go 1.27.2+。使用固定 Wails CLI 并保留仓库锁文件：
+需要 Windows x64、PowerShell 7、Node 24+，以及 Go 1.26+（自动选择固定的 Go 1.27.3 工具链）；正式构建强制要求 Go 1.27.3+。使用固定 Wails CLI 并保留仓库锁文件：
 
 ```powershell
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0

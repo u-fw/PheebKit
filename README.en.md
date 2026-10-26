@@ -52,7 +52,7 @@ Public environment variables use `PHEEBKIT_*`. New settings live in `%APPDATA%/P
 
 ## Development and verification
 
-Requires Windows x64, PowerShell 7, Node 24+ and Go 1.26+ with automatic selection of the pinned Go 1.27.2 toolchain. Release builds enforce Go 1.27.2+. Use the exact Wails CLI and retain the lockfiles:
+Requires Windows x64, PowerShell 7, Node 24+ and Go 1.26+ with automatic selection of the pinned Go 1.27.3 toolchain. Release builds enforce Go 1.27.3+. Use the exact Wails CLI and retain the lockfiles:
 
 ```powershell
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0

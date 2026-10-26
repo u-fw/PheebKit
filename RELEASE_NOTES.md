@@ -1,5 +1,7 @@
 # PheebKit 0.2.0-rc.4
 
+- 安全构建工具链更新为 Go 1.27.3，修复下载链路可达的标准库证书验证风险 GO-2026-6809；本地发布门槛与 CI 同步要求修复版。
+
 - Material 3 / Material You 工作台：使用官方 HCT 算法生成种子色主题，支持系统／浅色／深色、预设和自定义主题色、舒适／紧凑密度及本机持久保存。保留稳定 Wails v2 + React。
 - 参数分为输出、轨道、调整和工具四组，切换保留状态；长桌面使用固定参数面板，底部输出检查栏适配窄屏、放大字体与多条错误。毛玻璃仅用于应用框架和浮层。
 - 源视频支持完整预览、所选范围循环、近似按帧步进、最多八张显式加载的缩略图、有界单声道波形窗口，以及片段按钮／键盘排序。浏览预览不会改变输出范围。
@@ -9,6 +11,8 @@
 - 当前为新的验收候选；打包、托管 CI 和干净 Windows 客户端门槛按各自证据记录。Android 继续暂缓，不将交互同步声称为逐解码帧锁定，也不将单个样片视为全片质量评估。
 
 ## English
+
+- Pin Go 1.27.3 and require it for release builds/CI to address the reachable standard-library certificate-validation advisory GO-2026-6809.
 
 - Material seed palettes, system/light/dark modes and density settings in the existing stable Wails v2 / React app. Grouped, retained parameter panels and a responsive output dock keep editing and validation reachable.
 - Source looping, nominal frame steps, bounded filmstrip/waveform extraction and accessible segment ordering. Preview navigation does not change output intent.
