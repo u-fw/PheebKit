@@ -28,6 +28,7 @@ func runtimeArchive(t *testing.T, mutate func(map[string][]byte)) []byte {
 		ArchiveSHA256:       strings.Repeat("1", 64),
 		FFmpegSHA256:        digest(ffmpeg),
 		FFprobeSHA256:       digest(ffprobe),
+		PackagedAt:          "2026-10-26T00:00:00Z",
 	}
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
@@ -74,7 +75,7 @@ func TestPreparePayloadExtractsAndReusesRuntime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if first.Metadata.Version != "1.0" || first.PayloadSHA256 != expected {
+	if first.Metadata.Version != "1.0" || first.Metadata.PackagedAt != "2026-10-26T00:00:00Z" || first.PayloadSHA256 != expected {
 		t.Fatalf("unexpected runtime: %+v", first)
 	}
 	for _, path := range []string{first.FFmpeg, first.FFprobe, filepath.Join(first.Directory, "LICENSE.txt")} {

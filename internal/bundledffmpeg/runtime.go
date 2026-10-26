@@ -48,6 +48,7 @@ type Metadata struct {
 	ArchiveSHA256       string `json:"archiveSHA256"`
 	FFmpegSHA256        string `json:"ffmpegSHA256"`
 	FFprobeSHA256       string `json:"ffprobeSHA256"`
+	PackagedAt          string `json:"packagedAt,omitempty"`
 }
 
 type Runtime struct {
