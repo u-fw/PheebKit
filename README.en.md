@@ -7,21 +7,26 @@
 
 A local-first Windows media toolkit powered by FFmpeg. Compress, trim, remux and process tracks with editable parameters, actual command previews and independent queued jobs. Media stays on your computer.
 
-Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Targets Windows 10/11 x64; Android is deferred. The current `0.2.0-rc.3` is a verification candidate, with no final installer release yet. See the [stabilization evidence and remaining checks](docs/stability.md).
+Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Targets Windows 10/11 x64; Android is deferred. The current `0.2.0-rc.4` is the Material-workbench verification candidate, with no final installer release yet. See the [stabilization evidence and remaining checks](docs/stability.md).
 
 ## Real desktop screenshots
 
-Unedited captures of the Windows 11 desktop candidate on 2026-10-18, using a self-generated eight-second H.264/AAC test video. The interface supports Simplified Chinese and English, with immediate language switching and locally saved preferences. [Capture record and verification limits](docs/images/README.md)
-
-![Native media workspace with actual thumbnail, metadata and output summary](docs/images/desktop-workspace-rc3.png)
-
-![Native settings with draft recovery controls and a custom switch](docs/images/desktop-settings-en-rc3.png)
-
-The current source is iterating on a Material 3 / Material You workbench: light/dark modes, custom seed palettes, density, grouped parameters and a persistent output dock, plus looping, nominal frame steps, filmstrip thumbnails and bounded waveform previews. These are actual windows from the **2026-10-25 development build**; they have not replaced the verified rc.3 package above. [Progress and verification limits](docs/uiux-iteration.md)
+The Material 3 / Material You workbench offers seed palettes, light/dark modes, density, grouped parameters, a persistent output dock, looping, nominal frame steps, filmstrip thumbnails and bounded waveforms. These unedited captures are from actual Wails **development builds on 2026-10-25/26**, using owned test media. They are not package or clean-client acceptance records. Simplified Chinese and English are supported. [Capture record](docs/images/README.md) · [Evidence and limits](docs/uiux-iteration.md)
 
 ![Development build: dark Material workbench and grouped parameters](docs/images/desktop-workbench-material-dev.png)
 
 ![Development build: theme seed, color mode and density controls](docs/images/desktop-appearance-material-dev.png)
+
+<details>
+<summary>Actual batch preflight and synchronized sample comparison</summary>
+
+![Native per-file GPU preflight, tracks and output names](docs/images/desktop-batch-material-dev.jpg)
+
+![Native synchronized comparison with source offset and actual encoded sample](docs/images/desktop-comparison-material-dev.jpg)
+
+</details>
+
+Earlier rc.3 captures remain in the [historical capture record](docs/images/README.md).
 
 ## Features
 

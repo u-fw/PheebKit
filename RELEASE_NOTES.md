@@ -1,4 +1,22 @@
-# PheebKit 0.2.0-rc.3
+# PheebKit 0.2.0-rc.4
+
+- Material 3 / Material You 工作台：使用官方 HCT 算法生成种子色主题，支持系统／浅色／深色、预设和自定义主题色、舒适／紧凑密度及本机持久保存。保留稳定 Wails v2 + React。
+- 参数分为输出、轨道、调整和工具四组，切换保留状态；长桌面使用固定参数面板，底部输出检查栏适配窄屏、放大字体与多条错误。毛玻璃仅用于应用框架和浮层。
+- 源视频支持完整预览、所选范围循环、近似按帧步进、最多八张显式加载的缩略图、有界单声道波形窗口，以及片段按钮／键盘排序。浏览预览不会改变输出范围。
+- 样片支持带原片偏移的同步播放、单路试听、并排静帧和分屏揭示；不支持的播放编码可回退到 FFmpeg 静帧。修复首次按需加载及媒体信息到达后的比较区定位，并在关闭后恢复入口焦点。
+- 批量处理复用已保存的通用配方，支持逐文件轨道、名称、实际编码器和命令预检。全部通过后显式整批入队；设置变化使预检失效，提交时再次原子检查且不覆盖已有结果。停止预检在当前检查结束后生效。
+- 原生实测已覆盖中文路径双文件导入、GPU 样片／批量编码、同步及静帧比较；独立完整解码通过。开发实测截图和准确边界见 docs/uiux-iteration.md 与 docs/images/README.md。
+- 当前为新的验收候选；打包、托管 CI 和干净 Windows 客户端门槛按各自证据记录。Android 继续暂缓，不将交互同步声称为逐解码帧锁定，也不将单个样片视为全片质量评估。
+
+## English
+
+- Material seed palettes, system/light/dark modes and density settings in the existing stable Wails v2 / React app. Grouped, retained parameter panels and a responsive output dock keep editing and validation reachable.
+- Source looping, nominal frame steps, bounded filmstrip/waveform extraction and accessible segment ordering. Preview navigation does not change output intent.
+- Offset-aware synchronized sample playback with one audible audio source, static side-by-side/split comparison and an explicit codec fallback. First-open lazy/metadata navigation and return focus are fixed.
+- Reusable portable batch recipes and sequential per-file preflight with actual encoder/track/command decisions. All files must pass before explicit atomic admission; edits invalidate review and existing outputs remain protected.
+- Actual native sample/batch encoding and independent full-output decoding passed on the current workstation. This is a verification candidate; package/CI provenance and clean-client acceptance are recorded separately. Android remains deferred.
+
+## Previous candidate: 0.2.0-rc.3
 
 - 统一公开命名：环境变量、集成测试、CI、构建常量和 Go 模块使用 PHEEBKIT / pheebkit。旧环境变量、数据目录、主题键和安装运行保护仅在隔离兼容层中保留；不删除、搬移或重写旧用户配置。
 - 新增简体中文 / English 界面切换，首次按系统语言选择，之后保存本机偏好；切换不重载窗口、不重置项目、轨道、剪辑或参数。原生文件选择器标题及文件类型同步语言；Windows 自有按钮遵循系统语言。

@@ -7,21 +7,26 @@
 
 本地优先的 Windows 媒体工具。用 FFmpeg 完成压缩、剪辑、转封装与轨道处理，提供可修改的参数、真实执行预览和独立任务队列。媒体无需上传。
 
-技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前 `0.2.0-rc.3` 用于稳定版验收，尚未发布正式版安装包；已验证范围和缺口见[稳定化记录](docs/stability.md)。
+技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前 `0.2.0-rc.4` 是 Material 工作台验收候选，尚未发布正式版安装包；已验证范围和缺口见[稳定化记录](docs/stability.md)。
 
 ## 实际运行截图
 
-2026-10-18 在 Windows 11 桌面候选程序上的原始截图，使用自建的 8 秒 H.264/AAC 测试视频。界面支持简体中文和 English，可在设置中即时切换并保存偏好。[截图与实测说明](docs/images/README.md)
-
-![真实桌面媒体工作区：缩略图、媒体信息和输出概览](docs/images/desktop-workspace-rc3.png)
-
-![真实设置页：草稿恢复设置与自定义开关](docs/images/desktop-settings-en-rc3.png)
-
-当前源码正在迭代 Material 3 / Material You 工作台：可切换明暗、自定义主题色与界面密度，分组参数和固定输出栏，另有循环预览、按帧微调、时间轴缩略图与有界波形。下面为 2026-10-25 **开发构建**的真实窗口，尚未替换上述 rc.3 验收包。[进度与验证范围](docs/uiux-iteration.md)
+Material 3 / Material You 工作台支持主题色、明暗与密度、分组参数、固定输出检查栏、循环预览、近似按帧微调、缩略图与有界波形。下图来自 2026-10-25/26 本机 Wails **开发构建**的原始截图，使用自建测试视频，不代表安装包或干净客户端验收。界面支持简体中文与 English。[截图记录](docs/images/README.md) · [实测与边界](docs/uiux-iteration.md)
 
 ![开发构建：Material 深色工作台与分组参数](docs/images/desktop-workbench-material-dev.png)
 
 ![开发构建：可选主题色、明暗与界面密度](docs/images/desktop-appearance-material-dev.png)
+
+<details>
+<summary>实际批量预检和样片同步对照</summary>
+
+![原生逐文件 GPU 预检、轨道与输出名称](docs/images/desktop-batch-material-dev.jpg)
+
+![原生样片同步对照：原片偏移与实际编码结果](docs/images/desktop-comparison-material-dev.jpg)
+
+</details>
+
+上一候选 rc.3 的界面截图保留在[历史截图记录](docs/images/README.md)。
 
 ## 可以做什么
 
