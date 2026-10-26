@@ -48,7 +48,7 @@ Multi-file timelines, HDR output, unrestricted commands/filter graphs, network/l
 
 ## Installation and FFmpeg
 
-Releases provide four usage modes plus SHA-256 sums:
+Releases provide four usage modes plus SHA-256 sums and GitHub build provenance:
 
 - `PheebKit-<version>-windows-x64.exe`: lightweight direct-run application using external FFmpeg.
 - `PheebKit-<version>-windows-x64-ffmpeg.exe`: single-file direct-run application with embedded FFmpeg 9.0.2.
@@ -56,6 +56,14 @@ Releases provide four usage modes plus SHA-256 sums:
 - `PheebKit-<version>-windows-x64-setup-ffmpeg.exe`: optional installer with embedded FFmpeg.
 
 The embedded single-file build atomically verifies and extracts its runtime to `%LOCALAPPDATA%/PheebKit/runtime/ffmpeg` on first launch, then reuses it. The ZIP uses FFmpeg and ffprobe from its adjacent runtime directory. All editions require Microsoft WebView2 Runtime, so bundled FFmpeg is not a fully offline guarantee. Final downloads appear in [GitHub Releases](https://github.com/u-fw/PheebKit/releases); Actions artifacts are verification candidates.
+
+Later release assets include Sigstore build provenance binding the repository, workflow, commit and file digests. With GitHub CLI installed, verify a downloaded file:
+
+```powershell
+gh attestation verify .\PheebKit-<version>-windows-x64.exe --repo u-fw/PheebKit
+```
+
+Provenance complements, but does not replace, the SHA-256 manifest, publisher code signing or clean-machine acceptance. The earlier `rc.5` publication predates this mechanism and is not represented as retroactively attested.
 
 The lightweight build can download FFmpeg or select local executables in Settings; downloads are disabled while both tools are usable. The default uses the FFmpeg-recommended Gyan stable build, trying gyan.dev and then the same-version GitHub release. The older domestic fallback requires explicit selection and never silently downgrades. Custom archives require an explicit source-trust confirmation and publisher SHA-256. [Download and validation policy](docs/ffmpeg-downloads.md)
 

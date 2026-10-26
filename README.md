@@ -48,7 +48,7 @@ Material 3 / Material You 工作台支持跟随 Windows 强调色、预设或自
 
 ## 使用与安装
 
-发布包提供四种使用方式，并附 SHA-256 清单：
+发布包提供四种使用方式，并附 SHA-256 清单与 GitHub 构建来源证明：
 
 - `PheebKit-<版本>-windows-x64.exe`：轻量直跑版，使用外部 FFmpeg。
 - `PheebKit-<版本>-windows-x64-ffmpeg.exe`：内置 FFmpeg 9.0.2 的单文件直跑版。
@@ -56,6 +56,14 @@ Material 3 / Material You 工作台支持跟随 Windows 强调色、预设或自
 - `PheebKit-<版本>-windows-x64-setup-ffmpeg.exe`：内置 FFmpeg 的可选安装版。
 
 单文件内置版在首次启动时原子解压经过 SHA-256 校验的运行时到 `%LOCALAPPDATA%/PheebKit/runtime/ffmpeg`，后续复用。ZIP 可直接使用同名目录中的 FFmpeg 和 ffprobe。所有版本都需要 Microsoft WebView2 Runtime；内置 FFmpeg 不等于完全离线。正式下载以 [GitHub Releases](https://github.com/u-fw/PheebKit/releases) 为准；Actions 构建产物是验收候选。
+
+后续发布资产会附带绑定仓库、工作流、提交和文件摘要的 Sigstore 构建来源证明。安装 GitHub CLI 后可验证下载文件：
+
+```powershell
+gh attestation verify .\PheebKit-<版本>-windows-x64.exe --repo u-fw/PheebKit
+```
+
+来源证明补充但不能替代 SHA-256 清单、代码签名或干净机器验收。更早发布的 `rc.5` 产生于该机制启用前，不对其追溯声称已有证明。
 
 轻量版缺失 FFmpeg 时可在设置中下载或选择本机文件；已找到可用工具时禁止重复下载。默认来源为 FFmpeg 官网推荐的 Gyan 稳定构建，先尝试 gyan.dev，再尝试同版 GitHub 线路；国内旧版备用源需手动选择，不静默降级。自定义包必须明确确认来源并提供发布者 SHA-256。[下载与安全策略](docs/ffmpeg-downloads.md)
 

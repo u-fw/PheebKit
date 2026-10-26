@@ -48,18 +48,26 @@ The installer installs per user to `%LOCALAPPDATA%/Programs/PheebKit`, supports 
 
 `.github/workflows/windows.yml` always verifies source, real FFmpeg processing, frontend quality and a production binary. Ordinary PR/main verification does not require stable-release evidence, even when `VERSION` is final. The tested event planner selects packaging separately:
 
-| Event | Verification | Packaging and installer lifecycle | Publication |
-| --- | --- | --- | --- |
-| PR or main push, any version | Always | No | No |
-| Matching prerelease tag push | Always | Yes | Prerelease |
-| Matching final tag push | Always | No; dispatch with reviewed evidence | No |
-| Manual `checks_only=true` | Always | No | No |
-| Manual candidate, no `release_tag` | Always | Yes; final versions require `stable_evidence` | No |
-| Manual matching `release_tag` | Always | Yes; final versions require `stable_evidence` | Prerelease or final |
+| Event                              | Verification | Packaging and installer lifecycle             | Publication         |
+| ---------------------------------- | ------------ | --------------------------------------------- | ------------------- |
+| PR or main push, any version       | Always       | No                                            | No                  |
+| Matching prerelease tag push       | Always       | Yes                                           | Prerelease          |
+| Matching final tag push            | Always       | No; dispatch with reviewed evidence           | No                  |
+| Manual `checks_only=true`          | Always       | No                                            | No                  |
+| Manual candidate, no `release_tag` | Always       | Yes; final versions require `stable_evidence` | No                  |
+| Manual matching `release_tag`      | Always       | Yes; final versions require `stable_evidence` | Prerelease or final |
 
-Official actions remain pinned to verified release commit SHAs. The verification job has `contents: read`; only a dependent publish job receives `contents: write`. Initial checkout uses the event SHA or selected existing tag, and publication checks out the exact verified commit. Before upload and again before publishing the draft, the remote lightweight/annotated tag must still resolve to that commit. The upload validator compares the checksum manifest with the digest emitted by the verification job, checks all four asset digests and exact filenames, and reads the portable ZIP's bounded `BUILD_INFO.json` and application hash without executing an artifact in the write-permission job. Publication refuses an existing release, creates a draft with `--verify-tag` and uploads without overwrite. GitHub's immutable-release setting and tag-protection rules are still separate repository-owner controls.
+Official actions remain pinned to verified release commit SHAs. The verification job has `contents: read`; only a dependent publish job receives `contents: write`. A separate attestation job receives only `attestations: write`, `contents: read` and `id-token: write`; it downloads the candidate artifact, attests all five files without executing them, and must succeed before publication starts. `actions/attest` v4.2.2 creates Sigstore-backed SLSA build provenance binding each file digest to this repository, workflow and source revision. Initial checkout uses the event SHA or selected existing tag, and publication checks out the exact verified commit. Before upload and again before publishing the draft, the remote lightweight/annotated tag must still resolve to that commit. The upload validator compares the checksum manifest with the digest emitted by the verification job, checks all four asset digests and exact filenames, and reads the portable ZIP's bounded `BUILD_INFO.json` and application hash without executing an artifact in the write-permission job. Publication refuses an existing release, creates a draft with `--verify-tag` and uploads without overwrite. GitHub's immutable-release setting and tag-protection rules are still separate repository-owner controls.
 
-Packaged candidates remain available as workflow artifacts. Source revision `94665cb` passed [packaging run 40275376229](https://github.com/u-fw/PheebKit/actions/runs/40275376229) and [checks-only run 40275353795](https://github.com/u-fw/PheebKit/actions/runs/40275353795); rc.5 is published as a prerelease. Those runs predate the event-planning and isolated-upload audit changes; new source requires its own hosted result.
+Packaged candidates remain available as workflow artifacts. Source revision `94665cb` passed [packaging run 40275376229](https://github.com/u-fw/PheebKit/actions/runs/40275376229) and [checks-only run 40275353795](https://github.com/u-fw/PheebKit/actions/runs/40275353795); rc.5 is published as a prerelease. Those runs predate the event-planning, isolated-upload and artifact-attestation changes, so rc.5 has no retroactive provenance claim; new source requires its own hosted result and attested candidate.
+
+Verify a downloaded candidate or publication with GitHub CLI:
+
+```powershell
+gh attestation verify .\PheebKit-<版本>-windows-x64.exe --repo u-fw/PheebKit
+```
+
+Run the command against each downloaded file, including the ZIP and installer. Provenance establishes the workflow and source identity behind exact bytes; it does not replace the SHA-256 manifest, publisher code signing or the clean-machine acceptance matrix.
 
 CI downloads the publisher-pinned test FFmpeg via `scripts/setup-test-ffmpeg.ps1` and runs real media tests. For cross-version checks, manual dispatch accepts `upgrade_from_tag`; `scripts/prepare-upgrade-baseline.ps1` builds that reviewed local tag in an isolated worktree, then `verify-windows-release.ps1 -PreviousReleaseDirectory <candidate-directory>` installs it before the new candidate. Default lifecycle checks do not by themselves establish cross-version upgrade compatibility. See [release acceptance](release-acceptance.md) for commands and gates.
 

@@ -20,6 +20,14 @@ const workflow = readFileSync(
 
 test("verification is read-only and publication has isolated write permission", () => {
   assert.match(workflow, /^permissions:\n  contents: read$/m);
+  const verification = workflow
+    .split("\n  windows:\n")[1]
+    .split("\n  attest:\n")[0];
+  assert.doesNotMatch(
+    verification,
+    /^\s+(?:attestations|id-token|packages):\s+write$/m,
+  );
+  assert.doesNotMatch(verification, /^\s+contents:\s+write$/m);
   assert.match(
     workflow,
     /  publish:\n(?:.|\n)*?    permissions:\n      contents: write/,
@@ -192,7 +200,7 @@ test("workflow executes the tested plan and all verification paths use the same 
 
 test("publication binds the tested revision and digest and refuses asset replacement", () => {
   const publish = workflow.split("\n  publish:\n")[1];
-  assert.match(publish, /needs: windows/);
+  assert.match(publish, /needs: \[windows, attest\]/);
   assert.match(publish, /needs\.windows\.outputs\.publish == 'true'/);
   assert.match(publish, /github\.event_name == 'push'/);
   assert.match(publish, /github\.event_name == 'workflow_dispatch'/);
@@ -206,6 +214,25 @@ test("publication binds the tested revision and digest and refuses asset replace
   assert.match(publish, /--verify-tag --draft/);
   assert.doesNotMatch(publish, /--clobber/);
   assert.doesNotMatch(publish, /--build-info|Start-Process/);
+});
+
+test("packaged artifacts are attested in an isolated OIDC job before publication", () => {
+  assert.match(
+    workflow,
+    /  windows:\n(?:.|\n)*?      version: \$\{\{ steps\.plan\.outputs\.version \}\}\n      package: \$\{\{ steps\.plan\.outputs\.package \}\}/,
+  );
+  const attest = workflow.split("\n  attest:\n")[1].split("\n  publish:\n")[0];
+  assert.match(attest, /needs: windows/);
+  assert.match(attest, /needs\.windows\.outputs\.package == 'true'/);
+  assert.match(
+    attest,
+    /permissions:\n      attestations: write\n      contents: read\n      id-token: write/,
+  );
+  assert.match(
+    attest,
+    /name: Generate release artifact provenance\n        uses: actions\/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4\.2\.2\n        with:\n          subject-path: release-upload\/\$\{\{ needs\.windows\.outputs\.version \}\}\/\*/,
+  );
+  assert.doesNotMatch(attest, /--build-info|Start-Process|release-windows/);
 });
 
 test("planner CLI emits the actual checked-out revision and refuses a retargeted tag before writing outputs", () => {
@@ -273,7 +300,7 @@ test("planner CLI emits the actual checked-out revision and refuses a retargeted
     assert.equal(result.status, 0, result.stderr);
     assert.equal(
       readFileSync(outputPath, "utf8"),
-      `source_revision=${revision}\nrelease_tag=\npackage=false\npublish=false\n`,
+      `source_revision=${revision}\nrelease_tag=\nversion=0.2.0\npackage=false\npublish=false\n`,
     );
     result = run("workflow_dispatch", "refs/heads/main", {
       release_tag: "v0.2.0",
@@ -282,7 +309,7 @@ test("planner CLI emits the actual checked-out revision and refuses a retargeted
     assert.equal(result.status, 0, result.stderr);
     assert.match(
       readFileSync(outputPath, "utf8"),
-      /release_tag=v0\.2\.0\npackage=true\npublish=true/,
+      /release_tag=v0\.2\.0\nversion=0\.2\.0\npackage=true\npublish=true/,
     );
     result = run("push", "refs/tags/v0.2.0");
     assert.equal(result.status, 0, result.stderr);

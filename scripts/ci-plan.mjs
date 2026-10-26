@@ -37,6 +37,7 @@ export function planWindowsCI({ eventName, ref, inputs = {}, version }) {
       : "Verify and package a reviewable candidate";
   }
   return {
+    version,
     packageArtifacts,
     publish: packageArtifacts && Boolean(releaseTag),
     releaseTag,
@@ -74,6 +75,7 @@ if (
     [
       `source_revision=${revision}`,
       `release_tag=${plan.releaseTag}`,
+      `version=${plan.version}`,
       `package=${plan.packageArtifacts}`,
       `publish=${plan.publish}`,
       "",
