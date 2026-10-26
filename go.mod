@@ -6,9 +6,9 @@ toolchain go1.27.3
 
 require (
 	github.com/bodgit/sevenzip v1.6.5
-	github.com/nwaples/rardecode/v2 v2.4.2
+	github.com/nwaples/rardecode/v2 v2.4.5
 	github.com/ulikunitz/xz v0.5.17
-	golang.org/x/sys v0.48.0
+	golang.org/x/sys v0.49.0
 )
 
 require (
