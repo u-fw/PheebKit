@@ -28,20 +28,21 @@ if ($LASTEXITCODE -ne 0) { throw 'Cannot determine build source status' }
 $taskModified = if ($taskDirty) { 'true' } else { 'false' }
 $taskLinkerFlags = "-X pheebkit/internal/buildinfo.Revision=$taskRevision -X pheebkit/internal/buildinfo.Modified=$taskModified"
 $embeddedPayload = Join-Path $workspace 'internal/bundledffmpeg/runtime.zip'
-$buildArguments = @('build', '-trimpath', '-webview2', 'error', '-skipbindings', '-nosyncgomod', '-nocolour', '-ldflags', $taskLinkerFlags)
-if ($SkipFrontend) { $buildArguments += '-s' }
+$buildTags = ''
 if ($BundleArchive) {
     if (-not $BundleVersion) { throw 'Bundled builds require -BundleVersion.' }
     $taskBundleArchive = (Resolve-Path -LiteralPath $BundleArchive).Path
     if (-not $taskBundleArchive.StartsWith($workspace + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Bundled FFmpeg archive must remain inside this workspace.' }
     $taskBundleSHA256 = (Get-FileHash -LiteralPath $taskBundleArchive -Algorithm SHA256).Hash.ToLowerInvariant()
     $taskLinkerFlags += " -X pheebkit/internal/bundledffmpeg.PayloadSHA256=$taskBundleSHA256 -X pheebkit/internal/bundledffmpeg.DistributionVersion=$BundleVersion"
-    $buildArguments[$buildArguments.Count - 1] = $taskLinkerFlags
-    $buildArguments += @('-tags', 'pheebkit_bundled_ffmpeg')
+    $buildTags = 'pheebkit_bundled_ffmpeg'
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $embeddedPayload) | Out-Null
     if (Test-Path -LiteralPath $embeddedPayload) { throw 'Generated bundled FFmpeg payload is already present.' }
     Copy-Item -LiteralPath $taskBundleArchive -Destination $embeddedPayload
 }
+$buildArguments = @('build', '-trimpath', '-webview2', 'error', '-skipbindings', '-nosyncgomod', '-nocolour', '-ldflags', $taskLinkerFlags)
+if ($SkipFrontend) { $buildArguments += '-s' }
+if ($buildTags) { $buildArguments += @('-tags', $buildTags) }
 try {
     wails @buildArguments
     if ($LASTEXITCODE -ne 0) { throw 'Wails production build failed' }
