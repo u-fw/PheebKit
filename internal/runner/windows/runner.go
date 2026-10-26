@@ -272,7 +272,7 @@ func (r *Runner) Cancel(jobID string) error {
 
 func localFile(source core.Source, mustExist bool) error {
 	if source.Kind != core.SourceLocalFile || !filepath.IsAbs(source.URI) || strings.ContainsRune(source.URI, 0) {
-		return fmt.Errorf("Windows runner requires an absolute local-file source")
+		return fmt.Errorf("windows runner requires an absolute local-file source")
 	}
 	if mustExist {
 		stat, err := os.Stat(source.URI)

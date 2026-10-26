@@ -154,7 +154,7 @@ func TestSourcesAreTriedInDeclaredOrderWithoutProbes(t *testing.T) {
 			t.Error("unexpected speed probe")
 		}
 		if r.URL.Path == "/primary" {
-			http.Error(w, "unavailable", 503)
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
 			return
 		}
 		w.Write(data)

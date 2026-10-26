@@ -54,7 +54,7 @@ func validateAudioProcessing(s core.Settings) error {
 		return fmt.Errorf("请选择支持的输出采样率")
 	}
 	if s.Audio == "opus" && p.SampleRate != 0 && p.SampleRate != 48000 {
-		return fmt.Errorf("Opus 解码采样率固定为 48000 Hz，请选择自动或 48000 Hz")
+		return fmt.Errorf("当前 Opus 解码采样率固定为 48000 Hz，请选择自动或 48000 Hz")
 	}
 	if s.Audio == "mp3" && p.SampleRate > 48000 {
 		return fmt.Errorf("MP3 输出采样率不能高于 48000 Hz")

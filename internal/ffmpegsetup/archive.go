@@ -210,7 +210,7 @@ func extract(ctx context.Context, archive, destination string, artifact Artifact
 		if err != nil {
 			return errors.New("下载内容不是有效的压缩包，请使用 ZIP、7z、RAR 或 TAR 压缩包的文件直链。加密、分卷和自解压包不受支持。")
 		}
-		if entry.Typeflag != tar.TypeReg && entry.Typeflag != tar.TypeRegA && entry.Typeflag != tar.TypeDir {
+		if entry.Typeflag != tar.TypeReg && entry.Typeflag != tar.TypeDir {
 			return errors.New("压缩包包含链接或特殊文件")
 		}
 		if err := out.write(entry.Name, entry.FileInfo().Mode(), entry.Size, reader); err != nil {

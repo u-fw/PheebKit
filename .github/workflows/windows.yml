@@ -92,6 +92,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go vet @packages
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 @packages
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 @packages
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm --prefix frontend audit --audit-level=low

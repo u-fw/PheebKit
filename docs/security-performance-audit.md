@@ -26,7 +26,7 @@ Beta.8 (2026-10-15) extends those boundaries: fixed-category/name-checked FFmpeg
 
 ## Verification and maintenance
 
-Current source verification uses the project-scoped package list from `scripts/project-go-packages.ps1`, pinned `govulncheck@v1.9.0`, 151 frontend tests in 32 files, 1,413 translation entries, typecheck/lint/format/build and real FFmpeg integration for compiler, app and Windows runner. `npm audit --audit-level=low` reports zero advisories. Release packaging repeats these checks with Go 1.27.3+ / Node 24 and retains installer/ZIP checksums. Installer lifecycle acceptance is run separately.
+Current source verification uses the project-scoped package list from `scripts/project-go-packages.ps1`, `go vet`, pinned `staticcheck@v0.8.2`, pinned `govulncheck@v1.9.0`, 151 frontend tests in 32 files, 1,413 translation entries, typecheck/lint/format/build and real FFmpeg integration for compiler, app and Windows runner. `npm audit --audit-level=low` reports zero advisories. Release packaging repeats these checks with Go 1.27.3+ / Node 24 and retains installer/ZIP checksums. Installer lifecycle acceptance is run separately.
 
 Versioned Dependabot schedules now cover Go, npm and GitHub Actions. Repository-level alerts, mandatory branch protection, immutable releases and required status checks remain owner-controlled settings; the dated public API snapshot and recommended pre-stable actions are in [open-source readiness](open-source-readiness.md).
 

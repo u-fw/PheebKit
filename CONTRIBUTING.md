@@ -10,6 +10,7 @@ npm --prefix frontend run build
 $packages = @(& ./scripts/project-go-packages.ps1)
 go test @packages
 go vet @packages
+go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 @packages
 npm --prefix frontend run test
 npm --prefix frontend run typecheck
 npm --prefix frontend run lint

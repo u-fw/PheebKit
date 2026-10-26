@@ -53,7 +53,7 @@ func platformThumbnail(ctx context.Context, path string) ([]byte, error) {
 	select {
 	case thumbnailSlots <- struct{}{}:
 	default:
-		return nil, errors.New("Windows 缩略图服务正在忙碌。")
+		return nil, errors.New("缩略图服务正在忙碌。")
 	}
 	type result struct {
 		data []byte
@@ -73,13 +73,13 @@ func platformThumbnail(ctx context.Context, path string) ([]byte, error) {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	case <-timer.C:
-		return nil, errors.New("Windows 缩略图读取超时。")
+		return nil, errors.New("缩略图读取超时。")
 	}
 }
 
 func extractShellThumbnail(path string) ([]byte, error) {
 	if strconv.IntSize != 64 {
-		return nil, errors.New("Windows 缩略图暂不支持 32 位进程。")
+		return nil, errors.New("缩略图读取暂不支持 32 位进程。")
 	}
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()

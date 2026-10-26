@@ -55,7 +55,7 @@ export function audioProcessingErrors(
   if (p.sampleRate !== 0 && !audioSampleRates.includes(p.sampleRate))
     errors.push("请选择支持的输出采样率。");
   if (s.audio === "opus" && p.sampleRate !== 0 && p.sampleRate !== 48000)
-    errors.push("Opus 解码采样率固定为 48000 Hz，请选择自动或 48000 Hz。");
+    errors.push("当前 Opus 解码采样率固定为 48000 Hz，请选择自动或 48000 Hz。");
   if (s.audio === "mp3" && p.sampleRate > 48000)
     errors.push("MP3 输出采样率不能高于 48000 Hz。");
   if (!["", "source", "mono", "stereo"].includes(p.channels))

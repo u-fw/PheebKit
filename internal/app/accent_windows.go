@@ -22,7 +22,7 @@ func systemAccentColor() (string, error) {
 		return "", err
 	}
 	if value > 0xffffffff {
-		return "", errors.New("Windows accent color is outside the ARGB range")
+		return "", errors.New("system accent color is outside the ARGB range")
 	}
 	return rgbHexFromARGB(uint32(value)), nil
 }

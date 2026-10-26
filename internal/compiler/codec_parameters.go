@@ -127,9 +127,7 @@ func decimalParameter(minimum, maximum float64) parameterValidator {
 // Reject quoting/escaping, whitespace, exponent notation, Unicode lookalikes,
 // NaN and trailing material that upstream atoi/atof might silently ignore.
 func decimalSyntax(value string, allowDot bool) bool {
-	if strings.HasPrefix(value, "-") {
-		value = value[1:]
-	}
+	value = strings.TrimPrefix(value, "-")
 	if value == "" {
 		return false
 	}

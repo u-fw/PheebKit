@@ -173,6 +173,10 @@ test("workflow executes the tested plan and all verification paths use the same 
   assert.doesNotMatch(checks, /\n\s+if:/);
   assert.match(checks, /release-workflow\.test\.mjs/);
   assert.match(
+    checks,
+    /go vet @packages[\s\S]*staticcheck@v0\.8\.2 @packages[\s\S]*govulncheck@v1\.9\.0/,
+  );
+  assert.match(
     workflow,
     /Verify production binary without publishing\n\s+if: steps\.plan\.outputs\.package != 'true'/,
   );

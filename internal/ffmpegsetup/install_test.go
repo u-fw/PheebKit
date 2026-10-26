@@ -38,7 +38,7 @@ func TestInstallerRetriesAndRetainsNotices(t *testing.T) {
 	data := zipBytes(t, map[string]string{"ffmpeg/bin/ffmpeg.exe": "binary", "ffmpeg/bin/ffprobe.exe": "probe", "ffmpeg/LICENSE": "upstream", "ffmpeg/README.txt": "source references"})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/failed" {
-			http.Error(w, "unavailable", 503)
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
 			return
 		}
 		w.Write(data)

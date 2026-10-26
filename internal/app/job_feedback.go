@@ -37,13 +37,6 @@ type feedbackJob struct {
 	active   bool
 }
 
-type feedbackBatch struct {
-	completed int
-	failed    int
-	jobID     string
-	jobName   string
-}
-
 type feedbackUpdate struct {
 	taskbar      TaskbarProgress
 	notification *JobNotification
