@@ -54,7 +54,7 @@ The planned UI/UX source work is implemented and locally verified. Packaging, cl
 - Queue pause/resume and waiting-task reordering now raise one inverse-color Material snackbar with a real Undo operation. The snackbar replaces stale feedback, pauses expiry while hovered or keyboard-focused, dismisses with Escape, disables its action while a server request is running and keeps an accessible error state if that request fails.
 - A disposable real-component browser fixture verified 1176px desktop and 375×812 embedded narrow layouts with no horizontal overflow. At 200% root text the snackbar wrapped from 60px to 100px high without clipping.
 - Measured text/action contrast was 11.58:1 / 7.72:1 in light mode and 10.19:1 / 5.03:1 in dark mode. Keyboard Tab reached Undo, Escape removed the snackbar, hover retained it beyond the 6000ms deadline and leaving the surface let it auto-dismiss. The fixture and local server were removed after verification.
-- This establishes the renderer interaction and layout layer. Native queue admission is already covered elsewhere; a fresh committed package still requires native click-through and hosted CI for this exact source revision.
+- This establishes the renderer interaction and layout layer. Native queue admission is already covered elsewhere. Clean source `8f296f7` passed [hosted Windows run 40259965174](https://github.com/u-fw/PheebKit/actions/runs/40259965174), including production packaging and isolated installer lifecycle; current-installer native click-through remains a release gate.
 
 ### Evidence and limits
 
