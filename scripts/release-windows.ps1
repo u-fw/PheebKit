@@ -213,9 +213,11 @@ try {
 
     $lightBuild = Join-Path $stage 'build-light/PheebKit.exe'
     $bundledBuild = Join-Path $stage 'build-bundled/PheebKit.exe'
-    & (Join-Path $workspace 'scripts/build-windows.ps1') -OutputPath $lightBuild
+    & (Join-Path $workspace 'scripts/build-windows.ps1') -OutputPath $lightBuild -SkipFrontend
     if ($LASTEXITCODE -ne 0) { throw 'Lightweight native build failed.' }
-    & (Join-Path $workspace 'scripts/build-windows.ps1') -OutputPath $bundledBuild -BundleArchive $bundleArchive -BundleVersion $ffmpegVersion
+    $afterLightDirty = git status --porcelain --untracked-files=normal
+    if ($LASTEXITCODE -ne 0 -or $afterLightDirty) { throw "Lightweight production build modified the source tree: $($afterLightDirty -join '; ')" }
+    & (Join-Path $workspace 'scripts/build-windows.ps1') -OutputPath $bundledBuild -BundleArchive $bundleArchive -BundleVersion $ffmpegVersion -SkipFrontend
     if ($LASTEXITCODE -ne 0) { throw 'Bundled native build failed.' }
 
     Invoke-Checked go @('run', 'golang.org/x/vuln/cmd/govulncheck@v1.9.0', '-mode=binary', $lightBuild)

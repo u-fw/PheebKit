@@ -1,7 +1,8 @@
 param(
     [string]$OutputPath,
     [string]$BundleArchive,
-    [string]$BundleVersion
+    [string]$BundleVersion,
+    [switch]$SkipFrontend
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -28,6 +29,7 @@ $taskModified = if ($taskDirty) { 'true' } else { 'false' }
 $taskLinkerFlags = "-X pheebkit/internal/buildinfo.Revision=$taskRevision -X pheebkit/internal/buildinfo.Modified=$taskModified"
 $embeddedPayload = Join-Path $workspace 'internal/bundledffmpeg/runtime.zip'
 $buildArguments = @('build', '-trimpath', '-webview2', 'error', '-skipbindings', '-nosyncgomod', '-nocolour', '-ldflags', $taskLinkerFlags)
+if ($SkipFrontend) { $buildArguments += '-s' }
 if ($BundleArchive) {
     if (-not $BundleVersion) { throw 'Bundled builds require -BundleVersion.' }
     $taskBundleArchive = (Resolve-Path -LiteralPath $BundleArchive).Path
