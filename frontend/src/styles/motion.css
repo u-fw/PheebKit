@@ -1,0 +1,55 @@
+/* Compose-style state feedback stays in the presentation layer. */
+button:not(:disabled),
+a[href] {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+button:not(:disabled)::after,
+a[href]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    currentColor 0,
+    transparent 62%
+  );
+}
+button.ripple-active::after,
+a.ripple-active::after {
+  animation: material-ripple 480ms var(--easing);
+}
+.inspector-panel:not([hidden]) {
+  animation: material-panel-enter var(--motion-standard) var(--easing);
+}
+@keyframes material-ripple {
+  0% {
+    opacity: 0.16;
+    transform: scale(0.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+@keyframes material-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.ripple-active::after,
+  a.ripple-active::after,
+  .inspector-panel:not([hidden]) {
+    animation: none;
+  }
+}

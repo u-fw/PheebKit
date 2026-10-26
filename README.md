@@ -11,14 +11,18 @@
 
 ## 实际运行截图
 
-Material 3 / Material You 工作台支持主题色、明暗与密度、分组参数、固定输出检查栏、循环预览、近似按帧微调、缩略图与有界波形。下图来自 2026-10-25/26 本机 Wails **开发构建**的原始截图，使用自建测试视频，不代表安装包或干净客户端验收。界面支持简体中文与 English。[截图记录](docs/images/README.md) · [实测与边界](docs/uiux-iteration.md)
+Material 3 / Material You 工作台支持跟随 Windows 强调色、预设或自定义主题色、明暗与界面密度、波纹和减少动效、`Ctrl+K` 快速操作、分组参数、固定输出检查栏、循环预览、近似按帧微调、缩略图与有界波形。桌面端在现有 React/Wails 外壳中实现 Compose 与 Material 3 的设计原则；未来 Android 端再使用原生 Jetpack Compose。下图来自 2026-10-25/26 本机 Wails **开发构建**的原始截图，使用自建测试视频，不代表安装包或干净客户端验收。界面支持简体中文与 English。[截图记录](docs/images/README.md) · [实测与边界](docs/uiux-iteration.md) · [设计与功能路线](docs/design-roadmap.md)
 
-![开发构建：Material 深色工作台与分组参数](docs/images/desktop-workbench-material-dev.png)
+![开发构建：跟随 Windows 动态色的 Material You 工作台](docs/images/desktop-workspace-materialyou-light.png)
 
-![开发构建：可选主题色、明暗与界面密度](docs/images/desktop-appearance-material-dev.png)
+![开发构建：Material You 深色设置与动态主题色](docs/images/desktop-settings-materialyou-dark.png)
 
 <details>
-<summary>实际批量预检和样片同步对照</summary>
+<summary>快速操作、浅色设置、批量预检和样片同步对照</summary>
+
+![Ctrl+K 快速操作面板](docs/images/desktop-command-palette-materialyou-dark.png)
+
+![Material You 浅色设置](docs/images/desktop-settings-materialyou-light.png)
 
 ![原生逐文件 GPU 预检、轨道与输出名称](docs/images/desktop-batch-material-dev.jpg)
 

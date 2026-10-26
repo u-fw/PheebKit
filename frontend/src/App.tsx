@@ -1,5 +1,5 @@
 import { t, useI18n } from "./i18n";
-import { applyAppearance, useAppearance } from "./appearance";
+import { applyAppearance, seedPattern, useAppearance } from "./appearance";
 import {
   lazy,
   Suspense,
@@ -22,7 +22,10 @@ import { ExitDialog } from "./components/ExitDialog";
 import { ProjectActions } from "./components/ProjectActions";
 import { ProjectLibrary } from "./components/ProjectLibrary";
 import { EditorPreferences } from "./components/EditorPreferences";
+import { CommandPalette } from "./components/CommandPalette";
+import type { CommandAction } from "./commandPalette";
 import { useAutosaveDraft } from "./hooks/useAutosaveDraft";
+import { useMaterialRipple } from "./hooks/useMaterialRipple";
 import type { ProjectLibrary as Library, LoadedProject } from "./bridge";
 
 const SettingsPage = lazy(() =>
@@ -64,10 +67,18 @@ const navigation: {
 
 export default function App() {
   const { language } = useI18n();
-  const [page, setPage] = useState<Page>("home");
-  const [compressVisited, setCompressVisited] = useState(false);
+  useMaterialRipple();
   const appearance = useAppearance();
   const { theme, preferences: appearancePreferences } = appearance;
+  const [page, setPage] = useState<Page>("home");
+  const [compressVisited, setCompressVisited] = useState(false);
+  const [systemAccent, setSystemAccent] = useState(appearance.preferences.seed);
+  const [systemAccentError, setSystemAccentError] = useState<
+    "" | "invalid" | "read"
+  >("");
+  const [commandOpen, setCommandOpen] = useState(false);
+  const commandTrigger = useRef<HTMLElement | null>(null);
+  const bottomNav = useRef<HTMLElement | null>(null);
   const draft = useRef<Draft | null>(null);
   const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
   const [library, setLibrary] = useState<Library | null>(null);
@@ -83,6 +94,34 @@ export default function App() {
   }, []);
   const studio = useStudio(protect);
   const { connected, setError } = studio;
+  const systemAccentSupported = connected && studio.platform === "windows";
+  const refreshSystemAccent = useCallback(async () => {
+    if (!connected || studio.platform !== "windows") return;
+    try {
+      const value = await API.getSystemAccent();
+      if (!seedPattern.test(value)) {
+        setSystemAccentError("invalid");
+        return;
+      }
+      setSystemAccent(value.toLowerCase());
+      setSystemAccentError("");
+    } catch {
+      setSystemAccentError("read");
+    }
+  }, [connected, studio.platform]);
+  useEffect(() => {
+    if (!systemAccentSupported) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") void refreshSystemAccent();
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [refreshSystemAccent, systemAccentSupported]);
   useEffect(() => {
     document.documentElement.lang = language;
     document.title =
@@ -166,8 +205,32 @@ export default function App() {
     applyAppearance(document.documentElement, {
       preferences: appearancePreferences,
       theme,
+      systemAccent,
     });
-  }, [appearancePreferences, theme]);
+  }, [appearancePreferences, systemAccent, theme]);
+  useEffect(() => {
+    const nav = bottomNav.current;
+    if (!nav) return;
+    const root = document.documentElement;
+    const syncInset = () => {
+      root.style.setProperty(
+        "--bottom-nav-height-actual",
+        `${Math.ceil(nav.getBoundingClientRect().height)}px`,
+      );
+    };
+    syncInset();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(syncInset);
+    observer?.observe(nav);
+    window.addEventListener("resize", syncInset);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", syncInset);
+      root.style.removeProperty("--bottom-nav-height-actual");
+    };
+  }, []);
   const toggleTheme = () =>
     appearance.setAppearance({ mode: theme === "light" ? "dark" : "light" });
   function navigate(nextPage: Page) {
@@ -175,6 +238,36 @@ export default function App() {
     if (nextPage === "compress") setCompressVisited(true);
     document.documentElement.scrollTop = 0;
   }
+  const openCommandPalette = useCallback((trigger?: HTMLElement) => {
+    commandTrigger.current =
+      trigger ??
+      (document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null);
+    setCommandOpen(true);
+  }, []);
+  const closeCommandPalette = useCallback(() => {
+    setCommandOpen(false);
+    requestAnimationFrame(() => {
+      if (commandTrigger.current?.isConnected) commandTrigger.current.focus();
+    });
+  }, []);
+  useEffect(() => {
+    function onShortcut(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        if (commandOpen) closeCommandPalette();
+        else
+          openCommandPalette(
+            document.activeElement instanceof HTMLElement
+              ? document.activeElement
+              : undefined,
+          );
+      }
+    }
+    window.addEventListener("keydown", onShortcut);
+    return () => window.removeEventListener("keydown", onShortcut);
+  }, [closeCommandPalette, commandOpen, openCommandPalette]);
   async function loadProject() {
     openStoredProject(API.loadProject);
   }
@@ -188,6 +281,74 @@ export default function App() {
       }
     });
   }
+  const commandActions: CommandAction[] = [
+    {
+      id: "add-media",
+      label: "添加媒体文件",
+      description: "使用 Windows 文件选择器导入视频或音频。",
+      keywords: ["add media", "import", "open file", "video", "audio"],
+      icon: "plus",
+      disabled: !connected || studio.busy,
+      run: () => protect(() => studio.chooseMedia()),
+    },
+    {
+      id: "open-project",
+      label: "打开项目",
+      description: "继续编辑已保存的菲比工具箱项目。",
+      keywords: ["load project", "project", "open"],
+      icon: "folder",
+      disabled: !connected || studio.busy,
+      run: () => loadProject(),
+    },
+    {
+      id: "workspace",
+      label: "返回工作台",
+      description: "查看当前媒体、最近项目和恢复记录。",
+      keywords: ["home", "workspace", "workbench"],
+      icon: "home",
+      run: () => navigate("home"),
+    },
+    {
+      id: "process",
+      label: "打开媒体处理",
+      description: "调整输出、剪辑范围、轨道和 FFmpeg 参数。",
+      keywords: ["compress", "edit", "media processing", "process", "ffmpeg"],
+      icon: "compress",
+      run: () => navigate("compress"),
+    },
+    {
+      id: "queue",
+      label: "查看任务队列",
+      description: "查看进度、取消任务或比较生成的样片。",
+      keywords: ["jobs", "progress", "queue", "tasks"],
+      icon: "queue",
+      run: () => navigate("queue"),
+    },
+    {
+      id: "settings",
+      label: "打开设置",
+      description: "配置外观、FFmpeg、GPU 和编辑恢复选项。",
+      keywords: [
+        "appearance",
+        "configuration",
+        "ffmpeg",
+        "gpu",
+        "preferences",
+        "settings",
+        "theme",
+      ],
+      icon: "settings",
+      run: () => navigate("settings"),
+    },
+    {
+      id: "theme",
+      label: theme === "light" ? "切换到深色主题" : "切换到浅色主题",
+      description: "在明暗模式之间切换；也可在设置中跟随系统。",
+      keywords: ["dark", "light", "appearance", "color", "theme"],
+      icon: theme === "light" ? "moon" : "sun",
+      run: toggleTheme,
+    },
+  ];
 
   return (
     <div
@@ -260,6 +421,16 @@ export default function App() {
               <span className="tiny-dot" />
               {t(studio.connected ? "本地处理" : "界面预览")}
             </span>
+            <button
+              className="command-trigger"
+              aria-label={t("打开快速操作")}
+              aria-keyshortcuts="Control+K Meta+K"
+              onClick={(event) => openCommandPalette(event.currentTarget)}
+            >
+              <Icon name="search" />
+              <span>{t("快速操作")}</span>
+              <kbd>Ctrl K</kbd>
+            </button>
             <button
               className="icon-button"
               onClick={toggleTheme}
@@ -573,6 +744,10 @@ export default function App() {
               }
             >
               <SettingsPage
+                systemAccent={systemAccent}
+                systemAccentError={systemAccentError}
+                systemAccentSupported={systemAccentSupported}
+                refreshSystemAccent={refreshSystemAccent}
                 editorSettings={
                   library && (
                     <EditorPreferences
@@ -606,7 +781,11 @@ export default function App() {
           )}
         </main>
       </div>
-      <nav className="bottom-nav glass" aria-label={t("移动端主导航")}>
+      <nav
+        ref={bottomNav}
+        className="bottom-nav glass"
+        aria-label={t("移动端主导航")}
+      >
         {navigation.map((item) => (
           <button
             key={item.id}
@@ -624,6 +803,9 @@ export default function App() {
           </button>
         ))}
       </nav>
+      {commandOpen && (
+        <CommandPalette commands={commandActions} close={closeCommandPalette} />
+      )}
       {closeRequest && (
         <ExitDialog
           request={{ ...closeRequest, unsaved: closeRequest.unsaved || dirty }}

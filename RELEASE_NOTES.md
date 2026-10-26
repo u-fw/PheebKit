@@ -1,8 +1,9 @@
 # PheebKit 0.2.0-rc.4
 
 - 安全构建工具链更新为 Go 1.27.3，修复下载链路可达的标准库证书验证风险 GO-2026-6809；本地发布门槛与 CI 同步要求修复版。
+- 前端锁文件将 ESLint Hooks 插件的间接 `zod` 依赖固定到 4.6.7，修复 GHSA-mrhx-c7xc-m3w5；Node 24 `npm audit` 当前为零已知问题。该依赖仅处于开发/校验链，不进入桌面运行时。
 
-- Material 3 / Material You 工作台：使用官方 HCT 算法生成种子色主题，支持系统／浅色／深色、预设和自定义主题色、舒适／紧凑密度及本机持久保存。保留稳定 Wails v2 + React。
+- Material 3 / Material You 工作台：使用官方 HCT 算法生成种子色主题，支持跟随 Windows 强调色、系统／浅色／深色、预设和自定义主题色、舒适／紧凑密度及本机持久保存。新增 `Ctrl+K` 快速操作、指针波纹、减少动效与高对比兼容；桌面端直接在稳定 Wails v2 + React 中落实 Compose/Material 设计原则。未来 Android 端可使用原生 Jetpack Compose。
 - 参数分为输出、轨道、调整和工具四组，切换保留状态；长桌面使用固定参数面板，底部输出检查栏适配窄屏、放大字体与多条错误。毛玻璃仅用于应用框架和浮层。
 - 源视频支持完整预览、所选范围循环、近似按帧步进、最多八张显式加载的缩略图、有界单声道波形窗口，以及片段按钮／键盘排序。浏览预览不会改变输出范围。
 - 样片支持带原片偏移的同步播放、单路试听、并排静帧和分屏揭示；不支持的播放编码可回退到 FFmpeg 静帧。修复首次按需加载及媒体信息到达后的比较区定位，并在关闭后恢复入口焦点。
@@ -13,8 +14,9 @@
 ## English
 
 - Pin Go 1.27.3 and require it for release builds/CI to address the reachable standard-library certificate-validation advisory GO-2026-6809.
+- Refresh the transitive `zod` development dependency used by the ESLint Hooks plugin to 4.6.7, addressing GHSA-mrhx-c7xc-m3w5. `npm audit` is clean under Node 24; the package is not part of the desktop runtime.
 
-- Material seed palettes, system/light/dark modes and density settings in the existing stable Wails v2 / React app. Grouped, retained parameter panels and a responsive output dock keep editing and validation reachable.
+- Material HCT seed palettes now include Windows Material You dynamic color, preset/custom seeds, system/light/dark modes and density in the stable Wails v2 / React app. A `Ctrl+K` command palette, pointer ripples, reduced motion and forced-colour support join the grouped, retained parameter panels and responsive output dock. The desktop shell applies Compose/Material principles; a future Android client can use native Jetpack Compose.
 - Source looping, nominal frame steps, bounded filmstrip/waveform extraction and accessible segment ordering. Preview navigation does not change output intent.
 - Offset-aware synchronized sample playback with one audible audio source, static side-by-side/split comparison and an explicit codec fallback. First-open lazy/metadata navigation and return focus are fixed.
 - Reusable portable batch recipes and sequential per-file preflight with actual encoder/track/command decisions. All files must pass before explicit atomic admission; edits invalidate review and existing outputs remain protected.

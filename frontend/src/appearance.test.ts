@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { argbFromHex, Contrast } from "@material/material-color-utilities";
 import {
+  applyAppearance,
   appearanceKey,
   appearanceTokens,
   defaultAppearance,
@@ -36,6 +37,16 @@ describe("Material appearance contracts", () => {
         JSON.stringify({ ...defaultAppearance, mode: "constructor" }),
       ),
     ).toBeNull();
+    expect(
+      parseAppearance(
+        JSON.stringify({ ...defaultAppearance, seedMode: "wallpaper" }),
+      ),
+    ).toBeNull();
+    const legacyShape = { ...defaultAppearance } as Record<string, unknown>;
+    delete legacyShape.seedMode;
+    expect(parseAppearance(JSON.stringify(legacyShape))?.seedMode).toBe(
+      "custom",
+    );
     expect(readAppearance({ getItem: () => "broken" }).recovered).toBe(true);
     expect(
       readAppearance({
@@ -114,5 +125,43 @@ describe("Material appearance contracts", () => {
         }
       }
     }
+  });
+  it("uses a valid system accent only for Material You system-seed mode", () => {
+    const values = new Map<string, string>();
+    const target = {
+      dataset: {},
+      style: {
+        setProperty: (name: string, value: string) => values.set(name, value),
+      },
+    } as unknown as HTMLElement;
+    const systemPreferences = {
+      ...defaultAppearance,
+      seed: "#236956",
+      seedMode: "system" as const,
+    };
+    applyAppearance(target, {
+      preferences: systemPreferences,
+      theme: "light",
+      systemAccent: "#0078d4",
+    });
+    expect(values.get("--primary")).toBe(
+      appearanceTokens("#0078d4", false)["--primary"],
+    );
+    applyAppearance(target, {
+      preferences: systemPreferences,
+      theme: "light",
+      systemAccent: "not-a-color",
+    });
+    expect(values.get("--primary")).toBe(
+      appearanceTokens("#236956", false)["--primary"],
+    );
+    applyAppearance(target, {
+      preferences: { ...systemPreferences, seedMode: "custom" },
+      theme: "light",
+      systemAccent: "#0078d4",
+    });
+    expect(values.get("--primary")).toBe(
+      appearanceTokens("#236956", false)["--primary"],
+    );
   });
 });

@@ -28,7 +28,7 @@ Beta.7 local acceptance passed on 2026-10-14: pinned FFmpeg real-media integrati
 
 - Windows production Wails window, native bridge, real media artwork and GPU/CPU compilation.
 - Real NVENC HEVC/AAC output inspected independently with ffprobe.
-- Full Go integration/unit checks, vet and formatting; 38 frontend tests, typecheck, lint, formatting and production build.
+- The current Material You source passes the full Go integration/unit suite, vet and source vulnerability scan; 142 frontend tests in 29 files, 1,366 translation entries, strict typecheck, lint, formatting and the production build. Older baseline entries below are dated history.
 - Native light/dark, phone/landscape, enlarged text, reduced motion and axe checks; details in [verification](verification.md).
 - Lockfile preserved; npm registry audit returned zero known vulnerabilities. Basic tracked-file/key-pattern checks found no matches. Neither check guarantees complete supply-chain or security coverage.
 - Current build is `bin/PheebKit.exe`. Generated binaries, dependency folders, local verification media, test configs and archived prototypes are ignored by Git. Historical screenshots show earlier kompeg builds; they are not current branding evidence.
@@ -36,8 +36,8 @@ Beta.7 local acceptance passed on 2026-10-14: pinned FFmpeg real-media integrati
 ## Before publishing
 
 1. The owner selected `GPL-3.0-only`; the full license is in the repository's `LICENSE` and the scope is recorded in the README. FFmpeg is discovered locally or explicitly downloaded from upstream/mirror sources into a private directory; see [download policy](ffmpeg-downloads.md). It is not bundled in the executable. Distribution notices and corresponding-source policy must still be settled before distributing project-hosted copies or offline bundles of third-party binaries.
-2. Choose the remote repository and publication identity. No Git remote is configured. Review author/contact metadata and any machine-specific verification notes before making history public.
+2. The owner authorized and configured the public `u-fw/PheebKit` remote. Before each push/release, review author/contact metadata, machine-specific verification notes and the exact source revision; never publish private screenshots, paths, logs or credentials.
 3. Windows CI configuration now provisions publisher-pinned FFmpeg and runs real media checks, builds/packages candidates and verifies installer lifecycle. Manual dispatch accepts a reviewed previous-version tag for isolated build/upgrade acceptance. Hosted execution is still unverified. GPU qualification needs an appropriate test machine and cannot be inferred from a generic hosted CPU runner.
-4. Keep the experimental scope clear: pinned Wails v3 Beta was approved only for this Technical Spike; Android is deferred. APK/device execution, HDR encoding, signing, clean-machine installation and multi-clip editing remain unverified or unimplemented. New native dialogs and sample comparison need native click-through. Local installer lifecycle checks are in [Windows distribution](windows-distribution.md). Windows 10 also needs a separate runtime smoke test before a broad binary-release claim.
+4. Keep the scope clear: the release shell is stable Wails v2.17.0, while Wails v3 Beta was approved only for the historical Technical Spike. Android is deferred and may later use native Jetpack Compose. APK/device execution, HDR encoding, signing, clean-machine installation and a multi-source timeline remain unverified or unimplemented. Native sample/batch workflows now have click-through evidence, but clean Windows and CPU-only machines still need separate acceptance. Local installer lifecycle checks are in [Windows distribution](windows-distribution.md).
 
 An Android shared-package cross-build verifies source portability only. The full cross-platform acceptance criteria remain open until an APK launches on a device or emulator and proves the Go bridge.

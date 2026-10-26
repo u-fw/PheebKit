@@ -12,6 +12,8 @@ export type IconName =
   | "check"
   | "close"
   | "copy"
+  | "refresh"
+  | "search"
   | "sun"
   | "moon"
   | "folder"
@@ -40,6 +42,9 @@ const paths: Record<IconName, string> = {
   check: "M5 12l4 4L19 6",
   close: "M6 6l12 12 M6 18L18 6",
   copy: "M8 8h12v13H8z M16 8V3H3v13h5",
+  refresh:
+    "M20 7v5h-5 M4 17v-5h5 M6.1 9a7 7 0 0 1 11.5-2L20 12 M4 12l2.4 5a7 7 0 0 0 11.5-2",
+  search: "M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15 M16 16l5 5",
   sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2 M12 20v2 M2 12h2 M20 12h2 M5 5l1 1 M18 18l1 1 M5 19l1-1 M18 6l1-1",
   moon: "M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11z",
   folder: "M3 7V4h7l3 3h8v13H3z",

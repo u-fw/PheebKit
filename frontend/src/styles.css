@@ -12,3 +12,5 @@
 @import "./styles/batch.css";
 @import "./styles/responsive.css";
 @import "./styles/material.css";
+@import "./styles/motion.css";
+@import "./styles/command-palette.css";

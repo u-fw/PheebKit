@@ -28,6 +28,10 @@ const action = async () => undefined;
 function settings() {
   return renderToStaticMarkup(
     <SettingsPage
+      systemAccent="#0078d4"
+      systemAccentError=""
+      systemAccentSupported
+      refreshSystemAccent={action}
       platform="windows"
       connected
       capabilities={null}

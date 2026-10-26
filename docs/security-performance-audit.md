@@ -6,6 +6,8 @@ Beta.9 (2026-10-15) adds conservative local decode recovery. One cancellable sca
 
 Scope: native Windows 11 x64, PowerShell 7, PheebKit Technical Spike. Reviewed compiler argv, runner process/output boundaries, media assets/cache, download/archives, project/preset persistence, queue events/history, frontend edit state and pinned dependencies. Findings below are confirmed and remediated locally; publication is separate.
 
+Current dependency note (2026-10-26): the Windows release candidate uses stable Wails v2.17.0 and Go 1.27.3+. The Node 24 frontend lockfile now resolves the transitive ESLint-Hooks `zod` package to 4.6.7 for GHSA-mrhx-c7xc-m3w5. `npm audit --audit-level=low`, `npm ci`, frontend tests/typecheck/lint/format/build and source `govulncheck` pass. The zod package is development-only and does not enter the desktop bundle.
+
 Beta.8 (2026-10-15) extends those boundaries: fixed-category/name-checked FFmpeg inspection with 10-second operation deadlines including lock waits, 4 MiB accepted query output, binary-identity cache invalidation and 50-row GUI pages; same-source concat limited to 16 input seeks/four audio tracks and bounded decoding/filter concurrency; subtitle preparation uses forced external text formats/file-only input, bounded capture, a 16 MiB accepted ASS limit and source fingerprints. Generated fixed-name ASS is read from private scratch; user paths/fonts never become arbitrary filter expressions. These limits are not an OS process/memory sandbox or a general FFmpeg security audit. [Expansion evidence and unverified cases](ffmpeg-expansion.md) records actual tests.
 
 | Finding | Severity / evidence | Correction and verification |

@@ -123,6 +123,10 @@ func (s *Service) GetPlatform() string {
 	return runtime.GOOS
 }
 
+func (s *Service) GetSystemAccent() (string, error) {
+	return systemAccentColor()
+}
+
 func source(uri string) core.Source {
 	kind := core.SourceLocalFile
 	if strings.HasPrefix(uri, "content://") {

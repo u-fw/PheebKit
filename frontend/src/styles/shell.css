@@ -171,6 +171,7 @@
 .topbar {
   --glass: var(--glass-chrome);
   min-height: var(--topbar-height);
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -185,6 +186,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  flex-shrink: 0;
 }
 .desktop-native .topbar {
   --wails-draggable: drag;
@@ -200,6 +202,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
   font-size: var(--font-md);
 }
 .workspace-title > .icon {
@@ -209,6 +212,10 @@
 }
 .workspace-title strong {
   font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .window-controls {
   display: flex;

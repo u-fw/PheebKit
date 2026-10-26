@@ -40,7 +40,9 @@
 }
 @media (max-width: 960px) {
   html {
-    scroll-padding-block-end: calc(var(--bottom-nav-height) + var(--space-4));
+    scroll-padding-block-end: calc(
+      var(--bottom-nav-height-actual, var(--bottom-nav-height)) + var(--space-4)
+    );
   }
   :root {
     --font-display: 1.875rem;
@@ -53,7 +55,8 @@
     margin-left: 0;
     width: 100%;
     padding-bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom)
+      var(--bottom-nav-height-actual, var(--bottom-nav-height)) +
+        env(safe-area-inset-bottom)
     );
   }
   .topbar {
@@ -169,9 +172,19 @@
   }
   .topbar {
     padding-left: var(--space-5);
-    padding-right: var(--space-3);
+    padding-right: 0;
   }
-  .desktop-native .platform-badge {
+  .topbar-actions {
+    gap: 0;
+  }
+  .topbar-actions > .command-trigger,
+  .topbar-actions > .icon-button {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    min-height: 44px;
+  }
+  .platform-badge {
     display: none;
   }
   .desktop-native .window-controls {
@@ -464,6 +477,14 @@
   }
   .environment-grid dd {
     font-size: var(--font-xs);
+  }
+}
+@media (max-width: 420px) {
+  .topbar .workspace-title > strong {
+    display: none;
+  }
+  .topbar {
+    padding-left: var(--space-3);
   }
 }
 @media (prefers-reduced-motion: reduce) {

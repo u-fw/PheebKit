@@ -59,6 +59,8 @@ export function GetProjectLibrary():Promise<app.ProjectLibrary>;
 
 export function GetSampleComparison(arg1:string):Promise<app.SampleComparison>;
 
+export function GetSystemAccent():Promise<string>;
+
 export function GetThumbnail(arg1:string):Promise<app.Thumbnail>;
 
 export function GetVideoFrame(arg1:string,arg2:number):Promise<app.Thumbnail>;

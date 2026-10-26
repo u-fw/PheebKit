@@ -114,6 +114,10 @@ export function GetSampleComparison(arg1) {
   return window['go']['app']['Desktop']['GetSampleComparison'](arg1);
 }
 
+export function GetSystemAccent() {
+  return window['go']['app']['Desktop']['GetSystemAccent']();
+}
+
 export function GetThumbnail(arg1) {
   return window['go']['app']['Desktop']['GetThumbnail'](arg1);
 }

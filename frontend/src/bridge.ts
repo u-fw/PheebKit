@@ -429,6 +429,7 @@ export const API = {
     Service.StartCustomFFmpegSetup(link, sha256, trustBuild),
   cancelFFmpegSetup: async (): Promise<void> => Service.CancelFFmpegSetup(),
   getPlatform: async (): Promise<string> => Service.GetPlatform(),
+  getSystemAccent: async (): Promise<string> => Service.GetSystemAccent(),
   getEnvironment: async (): Promise<EnvironmentStatus> =>
     Service.GetEnvironment(),
   configureFFmpeg: async (

@@ -1,12 +1,12 @@
 # Android technical spike
 
-Android development and APK distribution are deferred by the owner as of 2026-10-10. The findings below are retained for a future milestone; current release packaging targets Windows x64 only.
+Android development and APK distribution are deferred by the owner as of 2026-10-10. The findings below are retained as a historical Technical Spike record. The current repository no longer depends on Wails v3 or its npm runtime; the Windows release uses stable Wails v2.17.0. A future Android milestone must reassess current stable Android and Compose support, and current release packaging targets Windows x64 only.
 
 Status recorded on 2026-10-09 (Asia/Singapore). Shared Go packages cross-compiled for Android arm64 with cgo disabled, and Android main-overlay generation succeeded. An Android build attempt failed before native compilation. No Android APK, device launch or frontend-to-Go call has been verified on this machine. Native FFmpeg integration follows the shell spike; it is not implemented by this milestone.
 
 ## Version and support boundary
 
-The repository deliberately pins `github.com/wailsapp/wails/v3 v3.0.0-beta.27` for a reproducible spike. The user explicitly approved Wails v3 Beta and experimental Android support on 2026-10-09. The current upstream release is [beta.28](https://github.com/wailsapp/wails/releases/tag/v3.0.0-beta.28); this project does not upgrade just because a newer release exists.
+At the time of the spike, a separate experimental checkout deliberately pinned `github.com/wailsapp/wails/v3 v3.0.0-beta.27`. The owner explicitly approved Wails v3 Beta and experimental Android support only for that spike on 2026-10-09. That dependency was later removed when the desktop release moved to stable Wails v2.17.0. Wails [beta.28](https://github.com/wailsapp/wails/releases/tag/v3.0.0-beta.28) was already available then; no upgrade was made merely because a newer beta existed.
 
 Wails documents a native Android WebView backed by the Go asset server, with service bindings and events sharing the desktop frontend. Android Go is compiled as a C shared library, `libwails.so`. Mobile remains outside the desktop beta compatibility promise. See [mobile overview](https://v3.wails.io/guides/mobile/) and the [official beta announcement](https://v3.wails.io/blog/wails-v3-beta/).
 

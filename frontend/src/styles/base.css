@@ -2,6 +2,8 @@
   box-sizing: border-box;
 }
 html {
+  max-width: 100%;
+  overflow-x: clip;
   scrollbar-width: thin;
   scrollbar-color: var(--outline) transparent;
   scroll-padding-block-start: calc(var(--topbar-height) + var(--space-4));
@@ -9,7 +11,12 @@ html {
 }
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+#root {
+  min-width: 0;
 }
 button,
 input,

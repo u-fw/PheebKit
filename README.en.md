@@ -11,14 +11,18 @@ Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Tar
 
 ## Real desktop screenshots
 
-The Material 3 / Material You workbench offers seed palettes, light/dark modes, density, grouped parameters, a persistent output dock, looping, nominal frame steps, filmstrip thumbnails and bounded waveforms. These unedited captures are from actual Wails **development builds on 2026-10-25/26**, using owned test media. They are not package or clean-client acceptance records. Simplified Chinese and English are supported. [Capture record](docs/images/README.md) · [Evidence and limits](docs/uiux-iteration.md)
+The Material 3 / Material You workbench can follow the Windows accent, use preset or custom seeds, and switch light/dark modes, density, ripples and reduced motion. It also adds a `Ctrl+K` command palette, grouped parameters, a persistent output dock, looping, nominal frame steps, filmstrip thumbnails and bounded waveforms. The desktop app applies Compose and Material 3 design principles inside the existing React/Wails shell; a future Android client can use native Jetpack Compose. These unedited captures are from actual Wails **development builds on 2026-10-25/26**, using owned test media. They are not package or clean-client acceptance records. Simplified Chinese and English are supported. [Capture record](docs/images/README.md) · [Evidence and limits](docs/uiux-iteration.md) · [Design and feature roadmap](docs/design-roadmap.md)
 
-![Development build: dark Material workbench and grouped parameters](docs/images/desktop-workbench-material-dev.png)
+![Development build: Material You workbench following the Windows dynamic accent](docs/images/desktop-workspace-materialyou-light.png)
 
-![Development build: theme seed, color mode and density controls](docs/images/desktop-appearance-material-dev.png)
+![Development build: dark Material You settings with dynamic color](docs/images/desktop-settings-materialyou-dark.png)
 
 <details>
-<summary>Actual batch preflight and synchronized sample comparison</summary>
+<summary>Command palette, light settings, batch preflight and synchronized comparison</summary>
+
+![Ctrl+K command palette](docs/images/desktop-command-palette-materialyou-dark.png)
+
+![Light Material You settings](docs/images/desktop-settings-materialyou-light.png)
 
 ![Native per-file GPU preflight, tracks and output names](docs/images/desktop-batch-material-dev.jpg)
 

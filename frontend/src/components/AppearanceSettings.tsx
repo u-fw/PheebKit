@@ -11,19 +11,38 @@ const palettes = [
   { seed: "#805600", name: "琥珀金" },
 ] as const;
 
-export function AppearanceSettings() {
+export function AppearanceSettings({
+  systemAccent,
+  systemAccentError,
+  systemAccentSupported,
+  refreshSystemAccent,
+}: {
+  systemAccent: string;
+  systemAccentError: "" | "invalid" | "read";
+  systemAccentSupported: boolean;
+  refreshSystemAccent: () => Promise<void>;
+}) {
   const { preferences, persistent, recovered, setAppearance } = useAppearance();
   const [seedDraft, setSeedDraft] = useState<string | null>(null);
   const [invalid, setInvalid] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const draft = seedDraft ?? preferences.seed;
   function applySeed() {
     if (!seedPattern.test(draft)) {
       setInvalid(true);
       return;
     }
-    setAppearance({ seed: draft });
+    setAppearance({ seed: draft, seedMode: "custom" });
     setSeedDraft(null);
     setInvalid(false);
+  }
+  async function refreshAccent() {
+    setRefreshing(true);
+    try {
+      await refreshSystemAccent();
+    } finally {
+      setRefreshing(false);
+    }
   }
   return (
     <div className="appearance-controls">
@@ -55,14 +74,41 @@ export function AppearanceSettings() {
           {t("从主题色生成 Material 明暗配色，编辑内容保持不变。")}
         </p>
         <div className="palette-options">
+          <button
+            className={`palette-option system-palette ${preferences.seedMode === "system" ? "selected" : ""}`}
+            type="button"
+            aria-pressed={preferences.seedMode === "system"}
+            disabled={!systemAccentSupported}
+            onClick={() => {
+              setAppearance({ seedMode: "system" });
+              setSeedDraft(null);
+              setInvalid(false);
+            }}
+          >
+            <span
+              className="palette-dot system-palette-dot"
+              style={{ backgroundColor: systemAccent }}
+              aria-hidden="true"
+            />
+            <span>
+              <strong>{t("跟随 Windows")}</strong>
+              <small>{t("Material You 动态取色")}</small>
+            </span>
+            <span className="palette-selected" aria-hidden="true">
+              {preferences.seedMode === "system" && <Icon name="check" />}
+            </span>
+          </button>
           {palettes.map((palette) => (
             <button
-              className="palette-option"
+              className={`palette-option ${preferences.seedMode === "custom" && preferences.seed === palette.seed ? "selected" : ""}`}
               type="button"
               key={palette.seed}
-              aria-pressed={preferences.seed === palette.seed}
+              aria-pressed={
+                preferences.seedMode === "custom" &&
+                preferences.seed === palette.seed
+              }
               onClick={() => {
-                setAppearance({ seed: palette.seed });
+                setAppearance({ seed: palette.seed, seedMode: "custom" });
                 setSeedDraft(null);
                 setInvalid(false);
               }}
@@ -74,10 +120,43 @@ export function AppearanceSettings() {
               />
               {t(palette.name)}
               <span className="palette-selected" aria-hidden="true">
-                {preferences.seed === palette.seed && <Icon name="check" />}
+                {preferences.seedMode === "custom" &&
+                  preferences.seed === palette.seed && <Icon name="check" />}
               </span>
             </button>
           ))}
+        </div>
+        <div className="system-accent-row">
+          <div>
+            <p className="field-hint">
+              {systemAccentSupported
+                ? t(
+                    "当前 Windows 强调色 {{0}}。切换系统主题后，可重新读取并立即更新整套 Material 配色。",
+                    [systemAccent],
+                  )
+                : t(
+                    "Windows 强调色仅在原生桌面应用中可用；当前继续使用自定义色。",
+                  )}
+            </p>
+            {systemAccentError && (
+              <p className="inline-error" role="alert">
+                {t(
+                  systemAccentError === "invalid"
+                    ? "Windows 返回了无效的强调色。"
+                    : "无法读取 Windows 强调色。",
+                )}
+              </p>
+            )}
+          </div>
+          <button
+            className="button text"
+            type="button"
+            disabled={!systemAccentSupported || refreshing}
+            onClick={() => void refreshAccent()}
+          >
+            <Icon name="refresh" />
+            {t(refreshing ? "正在读取…" : "重新读取系统色")}
+          </button>
         </div>
         <label className="field-label" htmlFor="theme-seed">
           {t("自定义主题色")}

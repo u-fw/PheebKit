@@ -9,12 +9,14 @@ import { legacyThemeKey } from "./legacy";
 export type Appearance = {
   schemaVersion: 1;
   mode: "system" | "light" | "dark";
+  seedMode: "custom" | "system";
   seed: string;
   density: "comfortable" | "compact";
 };
 export const defaultAppearance: Appearance = {
   schemaVersion: 1,
   mode: "system",
+  seedMode: "custom",
   seed: "#236956",
   density: "comfortable",
 };
@@ -29,6 +31,8 @@ export function parseAppearance(value: string): Appearance | null {
     if (
       input.schemaVersion !== 1 ||
       !["system", "light", "dark"].includes(String(input.mode)) ||
+      (input.seedMode !== undefined &&
+        !["custom", "system"].includes(String(input.seedMode))) ||
       !["comfortable", "compact"].includes(String(input.density)) ||
       typeof input.seed !== "string" ||
       !seedPattern.test(input.seed)
@@ -37,6 +41,10 @@ export function parseAppearance(value: string): Appearance | null {
     return {
       schemaVersion: 1,
       mode: input.mode as Appearance["mode"],
+      seedMode:
+        input.seedMode === "system"
+          ? "system"
+          : ("custom" as Appearance["seedMode"]),
       seed: input.seed.toLowerCase(),
       density: input.density as Appearance["density"],
     };
@@ -244,12 +252,21 @@ export function appearanceTokens(
 }
 export function applyAppearance(
   target: HTMLElement,
-  value: Pick<ReturnType<typeof getAppearance>, "preferences" | "theme">,
+  value: Pick<ReturnType<typeof getAppearance>, "preferences" | "theme"> & {
+    systemAccent?: string | null;
+  },
 ) {
+  const seed =
+    value.preferences.seedMode === "system" &&
+    value.systemAccent &&
+    seedPattern.test(value.systemAccent)
+      ? value.systemAccent
+      : value.preferences.seed;
   target.dataset.theme = value.theme;
   target.dataset.density = value.preferences.density;
+  target.dataset.seedMode = value.preferences.seedMode;
   for (const [name, color] of Object.entries(
-    appearanceTokens(value.preferences.seed, value.theme === "dark"),
+    appearanceTokens(seed, value.theme === "dark"),
   ))
     target.style.setProperty(name, color);
 }

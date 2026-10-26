@@ -49,6 +49,7 @@ type DesktopAPI interface {
 	GetPlatform() string
 	GetProjectLibrary() ProjectLibrary
 	GetSampleComparison(id string) (SampleComparison, error)
+	GetSystemAccent() (string, error)
 	GetThumbnail(uri string) (Thumbnail, error)
 	GetVideoFrame(uri string, seconds float64) (Thumbnail, error)
 	GetWorkspace() WorkspaceStatus

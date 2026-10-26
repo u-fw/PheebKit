@@ -1,4 +1,15 @@
-# Desktop capture record — 2026-10-18
+# Desktop capture record — updated 2026-10-26
+
+## Material You and command-palette captures — 2026-10-26
+
+These four 1100×860 captures show the actual Wails v2.17.0 development window on the current Windows 11 workstation. The source is the dirty `0.2.0-rc.4` Material You iteration; these are interaction/design evidence, not installed-package, clean-client or release evidence.
+
+- `desktop-settings-materialyou-dark.png`: the fully regenerated dark Material palette after choosing “Follow Windows”; the displayed system seed is `#0078d4`. It also shows the language/mode controls, compact/comfortable density area and custom-seed fallback.
+- `desktop-settings-materialyou-light.png`: the same Windows-derived palette in light mode, including the selected/pressed visual state and refreshed system accent.
+- `desktop-workspace-materialyou-light.png`: Home with the Windows-derived accent, 44px top-bar action, glass chrome and responsive workbench hierarchy.
+- `desktop-command-palette-materialyou-dark.png`: the actual `Ctrl+K` Material command palette over a blurred backdrop. Command filtering, Arrow selection, Enter navigation and Escape dismissal were exercised in the native window.
+
+The screenshot API returned JPEG bytes for this batch. They were decoded and converted in place to real PNG containers with unchanged pixel content; the earlier byte signature was not a valid PNG despite the initial file extension. The conversion did not alter the UI or evidence.
 
 ## Material iteration captures — 2026-10-25
 

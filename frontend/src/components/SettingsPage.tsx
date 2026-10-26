@@ -58,6 +58,10 @@ function BinaryDetails({
 
 export function SettingsPage({
   editorSettings,
+  systemAccent,
+  systemAccentError,
+  systemAccentSupported,
+  refreshSystemAccent,
   platform,
   connected,
   capabilities,
@@ -73,6 +77,10 @@ export function SettingsPage({
   cancelFFmpegSetup,
 }: {
   editorSettings?: ReactNode;
+  systemAccent: string;
+  systemAccentError: "" | "invalid" | "read";
+  systemAccentSupported: boolean;
+  refreshSystemAccent: () => Promise<void>;
   platform: string;
   connected: boolean;
   capabilities: Capabilities | null;
@@ -148,7 +156,12 @@ export function SettingsPage({
             "语言立即生效并保存在本机，不会重置当前编辑。FFmpeg 原始日志与用户文件名保持原样。",
           )}
         </p>
-        <AppearanceSettings />
+        <AppearanceSettings
+          systemAccent={systemAccent}
+          systemAccentError={systemAccentError}
+          systemAccentSupported={systemAccentSupported}
+          refreshSystemAccent={refreshSystemAccent}
+        />
       </section>
       <div id="settings-editor">{editorSettings}</div>
       <section className="surface preferences-card" id="settings-environment">
