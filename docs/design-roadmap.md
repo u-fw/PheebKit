@@ -2,12 +2,20 @@
 
 This document separates the interface running today from ideas that remain future work. The Windows application keeps its Go, stable Wails v2 and React architecture. It applies Jetpack Compose, Material Design 3 and Material You principles without pretending that a React renderer is a Compose runtime. A future Android client can use native Compose while sharing product rules and the Go media core where practical.
 
+## Compose and Material You fidelity boundary
+
+- **Current Windows client:** React renders the interface inside the stable Wails v2 WebView2 shell. It uses Compose interaction patterns and Material 3 semantic roles, but it is not a Kotlin/Compose runtime and should not be described as one.
+- **Visual and interaction parity:** HCT-derived tonal palettes, Windows-accent personalization, light/dark/system modes, density, state layers, ripples, tonal containers, adaptive navigation, keyboard focus, snackbars and reduced-motion behavior can follow Material 3 and Material You closely.
+- **Platform integration:** Windows title controls, taskbar progress, notifications, dialogs and file thumbnails remain native adapter responsibilities. They do not require moving the desktop renderer to Compose.
+- **Future Android client:** native Jetpack Compose is the preferred implementation for Android when that platform resumes. Shared product rules, data schemas and the media core should remain independent of React and Compose where practical.
+
 ## Material foundation in the current client
 
 - Official Material Color Utilities derive coordinated HCT tonal roles from a validated seed. Users can keep a brand/custom seed or follow the current Windows accent.
 - Light, dark and system modes; comfortable and compact density; semantic surfaces; one restrained glass layer for app chrome and floating controls.
 - Shared Material controls cover segmented choices, listbox selectors, switches, dialogs, progress and keyboard focus. The command palette is available with `Ctrl+K`.
 - Pointer ripples and short spatial transitions provide state feedback. Reduced-motion and Windows forced-colours modes remove or replace those effects.
+- Reversible queue changes use an inverse-color Material snackbar with an Undo action. Hover or focus pauses expiry, Escape dismisses it, and failed Undo keeps the feedback visible with an accessible explanation.
 - Desktop navigation becomes a bottom navigation at narrow widths. Touch targets remain at least 44px, large text can reflow controls, and the bottom inset follows the measured navigation height rather than a hard-coded estimate.
 - The app remains offline and local-first: no remote fonts, analytics, telemetry or translation service is required.
 
@@ -16,10 +24,9 @@ This document separates the interface running today from ideas that remain futur
 ### P0: close release-quality UX gaps
 
 1. **First-run guidance:** detect FFmpeg, GPU capabilities and language once, then show a short actionable checklist. A usable environment should lead directly to media import without setup noise.
-2. **Material snackbar with Undo:** report low-risk reversible changes such as preset application, queue reordering and preference resets near the action that caused them. Destructive or irreversible actions still require confirmation.
-3. **Taskbar and notification feedback:** synchronize job progress with the Windows taskbar; send a dismissible completion or failure notification only when the app is minimized or unfocused.
-4. **Complete large-text and contrast matrix:** exercise 100–300% text, English/Chinese, portrait/landscape, light/dark, forced colours and both mouse and keyboard across Home, Editor, Batch, Queue and Settings.
-5. **Focused empty and failure states:** every panel should explain what is missing, why an action is disabled and the next safe action. Errors should preserve entered settings and offer a retry path that does not duplicate jobs.
+2. **Taskbar and notification feedback:** synchronize job progress with the Windows taskbar; send a dismissible completion or failure notification only when the app is minimized or unfocused.
+3. **Complete large-text and contrast matrix:** exercise 100–300% text, English/Chinese, portrait/landscape, light/dark, forced colours and both mouse and keyboard across Home, Editor, Batch, Queue and Settings.
+4. **Focused empty and failure states:** every panel should explain what is missing, why an action is disabled and the next safe action. Errors should preserve entered settings and offer a retry path that does not duplicate jobs.
 
 ### P1: high-value media workflow design
 

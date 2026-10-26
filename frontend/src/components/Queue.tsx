@@ -12,6 +12,7 @@ import {
   orderQueueJobs,
   type QueueScheduleStatus,
 } from "../queueSchedule";
+import type { SnackbarAction } from "../snackbar";
 
 const stateNames: Record<string, string> = {
   queued: "等待中",
@@ -33,6 +34,7 @@ function JobCard({
   pendingCount,
   paused,
   move,
+  notify,
   compareSample,
 }: {
   job: Job;
@@ -42,6 +44,7 @@ function JobCard({
   pendingCount: number;
   paused: boolean;
   move?: (id: string, direction: number) => Promise<unknown> | void;
+  notify?: (message: string, options?: { action?: SnackbarAction }) => void;
   compareSample?: (id: string) => void;
 }) {
   const [actionError, setActionError] = useState("");
@@ -52,6 +55,18 @@ function JobCard({
     setActionError("");
     try {
       await move?.(job.id, direction);
+      if (move && notify)
+        notify(
+          t(direction < 0 ? "已将 {{0}} 上移一位。" : "已将 {{0}} 下移一位。", [
+            name,
+          ]),
+          {
+            action: {
+              label: t("撤销"),
+              run: () => move(job.id, -direction),
+            },
+          },
+        );
     } catch (cause) {
       setActionError(errorMessage(cause));
     } finally {
@@ -391,6 +406,7 @@ export function Queue({
   queueStatus,
   onPauseQueue,
   onMoveQueued,
+  notify,
   compareSample,
 }: {
   jobs: Job[];
@@ -401,6 +417,7 @@ export function Queue({
   queueStatus?: QueueScheduleStatus | null;
   onPauseQueue?: (paused: boolean) => Promise<unknown> | void;
   onMoveQueued?: (id: string, direction: number) => Promise<unknown> | void;
+  notify?: (message: string, options?: { action?: SnackbarAction }) => void;
   compareSample?: (id: string) => void;
 }) {
   const [filter, setFilter] = useState<
@@ -433,10 +450,21 @@ export function Queue({
       .map((job) => job.id);
   const paused = queueStatus?.paused ?? false;
   async function pauseQueue() {
+    const nextPaused = !paused;
     setScheduling(true);
     setScheduleError("");
     try {
-      await onPauseQueue?.(!paused);
+      await onPauseQueue?.(nextPaused);
+      if (onPauseQueue && notify)
+        notify(
+          t(nextPaused ? "已暂停后续任务。" : "已继续按顺序处理后续任务。"),
+          {
+            action: {
+              label: t("撤销"),
+              run: () => onPauseQueue(paused),
+            },
+          },
+        );
     } catch (cause) {
       setScheduleError(errorMessage(cause));
     } finally {
@@ -554,6 +582,7 @@ export function Queue({
               pendingCount={pendingIDs.length}
               paused={paused}
               move={onMoveQueued}
+              notify={notify}
               compareSample={compareSample}
             />
           ))}

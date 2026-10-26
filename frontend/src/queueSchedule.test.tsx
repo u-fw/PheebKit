@@ -84,6 +84,7 @@ describe("queue scheduling", () => {
         queueStatus={{ paused: true, pendingIDs: [job.id], revision: 1 }}
         onPauseQueue={async () => {}}
         onMoveQueued={async () => {}}
+        notify={() => {}}
       />,
     );
     expect(html).toContain("继续队列");

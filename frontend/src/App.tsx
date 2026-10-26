@@ -26,6 +26,8 @@ import { CommandPalette } from "./components/CommandPalette";
 import type { CommandAction } from "./commandPalette";
 import { useAutosaveDraft } from "./hooks/useAutosaveDraft";
 import { useMaterialRipple } from "./hooks/useMaterialRipple";
+import { useSnackbar } from "./hooks/useSnackbar";
+import { Snackbar } from "./components/Snackbar";
 import type { ProjectLibrary as Library, LoadedProject } from "./bridge";
 
 const SettingsPage = lazy(() =>
@@ -93,6 +95,7 @@ export default function App() {
     else void action().catch((cause: unknown) => setGuardError(String(cause)));
   }, []);
   const studio = useStudio(protect);
+  const snackbar = useSnackbar();
   const { connected, setError } = studio;
   const systemAccentSupported = connected && studio.platform === "windows";
   const refreshSystemAccent = useCallback(async () => {
@@ -695,6 +698,7 @@ export default function App() {
                 queueStatus={studio.queueStatus}
                 onPauseQueue={studio.pauseQueue}
                 onMoveQueued={studio.moveQueued}
+                notify={snackbar.show}
                 compareSample={(id) => {
                   comparisonTrigger.current =
                     document.activeElement instanceof HTMLButtonElement
@@ -805,6 +809,13 @@ export default function App() {
       </nav>
       {commandOpen && (
         <CommandPalette commands={commandActions} close={closeCommandPalette} />
+      )}
+      {snackbar.notice && (
+        <Snackbar
+          key={snackbar.notice.id}
+          notice={snackbar.notice}
+          dismiss={snackbar.dismiss}
+        />
       )}
       {closeRequest && (
         <ExitDialog

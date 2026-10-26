@@ -1364,5 +1364,12 @@
   "当前 Windows 强调色 {{0}}。切换系统主题后，可重新读取并立即更新整套 Material 配色。": "Current Windows accent: {{0}}. After changing the system theme, reload it to update the complete Material palette immediately.",
   "Windows 强调色仅在原生桌面应用中可用；当前继续使用自定义色。": "The Windows accent color is available in the native desktop app only. Custom colors remain active here.",
   "正在读取…": "Reading…",
-  "重新读取系统色": "Reload system color"
+  "重新读取系统色": "Reload system color",
+  "操作未完成，请稍后重试。": "The action could not be completed. Try again.",
+  "正在撤销…": "Undoing…",
+  "撤销": "Undo",
+  "已将 {{0}} 上移一位。": "Moved {{0}} up one place.",
+  "已将 {{0}} 下移一位。": "Moved {{0}} down one place.",
+  "已暂停后续任务。": "Waiting jobs are paused.",
+  "已继续按顺序处理后续任务。": "Waiting jobs will continue in queue order."
 }

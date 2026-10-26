@@ -26,6 +26,9 @@
   --accent: #c4dbb3;
   --error: #a93232;
   --error-container: #fff0ee;
+  --inverse-surface: #27332c;
+  --inverse-on-surface: #f4fbf5;
+  --inverse-primary: #9ed5ba;
   --outline: #c9d4ca;
   --outline-variant: #e4eae3;
   --glass: rgb(248 252 249 / 70%);
@@ -101,6 +104,9 @@
   --accent: #7a9b68;
   --error: #ffb7af;
   --error-container: #472924;
+  --inverse-surface: #e0eae0;
+  --inverse-on-surface: #1e2a23;
+  --inverse-primary: #236956;
   --outline: #52685a;
   --outline-variant: #34453a;
   --glass: rgb(23 35 29 / 68%);
