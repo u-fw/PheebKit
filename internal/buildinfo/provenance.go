@@ -5,14 +5,17 @@ import (
 	"io"
 	"regexp"
 	"runtime/debug"
+
+	"pheebkit/internal/bundledffmpeg"
 )
 
 type Description struct {
-	SchemaVersion  int    `json:"schemaVersion"`
-	Version        string `json:"version"`
-	SourceRevision string `json:"sourceRevision"`
-	Modified       bool   `json:"modified"`
-	Framework      string `json:"framework"`
+	SchemaVersion  int                             `json:"schemaVersion"`
+	Version        string                          `json:"version"`
+	SourceRevision string                          `json:"sourceRevision"`
+	Modified       bool                            `json:"modified"`
+	Framework      string                          `json:"framework"`
+	BundledFFmpeg  *bundledffmpeg.BuildDescription `json:"bundledFFmpeg,omitempty"`
 }
 
 // WriteDescription supports artifact verification without creating a window,
@@ -20,6 +23,10 @@ type Description struct {
 func WriteDescription(writer io.Writer) error {
 	revision, modified := Provenance()
 	value := Description{SchemaVersion: 1, Version: Version, SourceRevision: revision, Modified: modified, Framework: "unknown"}
+	bundle := bundledffmpeg.DescribeBuild()
+	if bundle.Kind != "external" {
+		value.BundledFFmpeg = &bundle
+	}
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, dependency := range info.Deps {
 			if dependency.Path == "github.com/wailsapp/wails/v2" {

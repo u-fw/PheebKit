@@ -4,13 +4,17 @@ Windows x64 is the active release target. Android is deferred and no APK is pack
 
 ## Artifacts
 
-Each version produces exactly three local files under `release/<version>/`:
+Each version produces exactly five local files under `release/<version>/`:
 
-- `PheebKit-<version>-windows-x64-setup.exe`
-- `PheebKit-<version>-windows-x64-standalone.zip`
-- `SHA256SUMS.txt`
+- `PheebKit-<version>-windows-x64.exe`: lightweight direct-run application; FFmpeg remains external.
+- `PheebKit-<version>-windows-x64-ffmpeg.exe`: direct-run application containing the verified FFmpeg payload.
+- `PheebKit-<version>-windows-x64-portable-ffmpeg.zip`: lightweight application plus adjacent `runtime/ffmpeg`.
+- `PheebKit-<version>-windows-x64-setup-ffmpeg.exe`: optional per-user installer containing the bundled direct-run application.
+- `SHA256SUMS.txt`: exact SHA-256 for every artifact above.
 
-The installer and ZIP contain identical `PheebKit.exe`, project license, generated third-party notices, usage instructions and version-matched `RELEASE_NOTES.md`. There is no separate bare-EXE release. The ZIP is named standalone because settings/cache/downloaded FFmpeg remain in AppData rather than following the executable directory. FFmpeg and WebView2 are external, not bundled.
+The two bundled forms share one staged runtime and its provenance. The direct EXE atomically materializes it into `%LOCALAPPDATA%/PheebKit/runtime/ffmpeg` on first use; the portable ZIP uses its adjacent directory without extraction into a shared cache. The installer contains the same bundled EXE and creates no second runtime copy during installation. Settings remain in AppData. WebView2 remains a Windows runtime requirement in every edition, so product text says “FFmpeg included” rather than “fully offline.”
+
+The bundled runtime is the publisher-pinned Gyan 9.0.2 full build. It contains `ffmpeg.exe`, `ffprobe.exe`, preset metadata, FFmpeg's GPL v3 license, Gyan README, exact source commit, archive URL/digest and executable hashes. The app validates the embedded ZIP digest, metadata and both executable hashes before selecting the runtime.
 
 ## Version source and upgrade identity
 
@@ -22,7 +26,7 @@ The installer AppId is permanently `{9D8FAD06-8029-4A58-9497-96C7DA878C63}` acro
 
 ## Build and package locally
 
-Requires native Windows x64, PowerShell 7, stable Go 1.27.2 or newer, Node 24+, the pinned Wails CLI and Inno Setup 7.1.0. The release script runs pinned source govulncheck and npm audit before building, then audits the actual production EXE before archiving; network/advisory failures stop packaging. The module requires Go 1.26 language compatibility with an automatic Go 1.27.2 toolchain hint.
+Requires native Windows x64, PowerShell 7, stable Go 1.27.3 or newer, Node 24+, the pinned Wails CLI, Inno Setup 7.1.0 and a verified `PHEEBKIT_FFMPEG` / `PHEEBKIT_FFPROBE` pair from the pinned archive. The release script runs pinned source govulncheck and npm audit before building, audits both actual production EXEs, then checks provenance, payload metadata and extraction before archiving; network/advisory failures stop packaging.
 
 ```powershell
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
@@ -36,9 +40,9 @@ node scripts/sync-version.mjs
 
 Compiler provisioning downloads the versioned [official Inno release](https://github.com/jrsoftware/issrc/releases/tag/is-7_1_0), verifies its pinned asset SHA-256 and valid Authenticode publisher (Pyrsys B.V.), then uses the upstream `/PORTABLE=1` mode under `.tools`. No compiler file association or system installation is required. Alternatively pass `-InnoCompiler <absolute-path>` or `PHEEBKIT_ISCC`.
 
-Packaging requires clean committed sources, builds real frontend assets before Go package loading, runs Go tests/vet, frontend tests/typecheck/lint/format and version tests, then performs one production Wails build. It checks the EXE/notes version, generates notices for actual Go/production frontend dependencies, packages both deliverables and computes SHA-256. Existing version output directories are never overwritten. Generated packages and tools are ignored by Git. No credentials, repository URL or publishing identity is invented.
+Packaging requires clean committed sources, builds real frontend assets before Go package loading, runs Go tests/vet, frontend tests/typecheck/lint/format and version tests, then performs lightweight and bundled Wails builds with the same reviewed source revision. It checks each EXE's build metadata, rejects a payload digest/version mismatch, generates notices for both distribution modes, packages all four application forms and computes SHA-256. Existing version output directories are never overwritten. Generated payload archives, packages and tools are ignored by Git.
 
-The installer installs per user to `%LOCALAPPDATA%/Programs/PheebKit`, supports Simplified Chinese and English, creates Start Menu entries and offers an optional desktop shortcut. It detects Microsoft's documented WebView2 registry values. If missing, the finish page explains the requirement and offers the official download page; it does not silently install a runtime. Silent installation never launches the app or a browser. FFmpeg remains an explicit in-app setup operation and system PATH is unchanged.
+The installer installs per user to `%LOCALAPPDATA%/Programs/PheebKit`, supports Simplified Chinese and English, creates Start Menu entries and offers an optional desktop shortcut. It detects Microsoft's documented WebView2 registry values. If missing, the finish page explains the requirement and offers the official download page; it does not silently install a runtime. Silent installation never launches the app or a browser. FFmpeg is already embedded, and system PATH is unchanged.
 
 ## CI and publication
 
@@ -46,7 +50,7 @@ The installer installs per user to `%LOCALAPPDATA%/Programs/PheebKit`, supports 
 
 CI downloads the publisher-pinned test FFmpeg via `scripts/setup-test-ffmpeg.ps1` and runs real media tests. For cross-version checks, manual dispatch accepts `upgrade_from_tag`; `scripts/prepare-upgrade-baseline.ps1` builds that reviewed local tag in an isolated worktree, then `verify-windows-release.ps1 -PreviousReleaseDirectory <candidate-directory>` installs it before the new candidate. Default lifecycle checks do not by themselves establish cross-version upgrade compatibility. See [release acceptance](release-acceptance.md) for commands and gates.
 
-For publication, create the matching tag, draft a GitHub Release and attach these three files. Mark beta/rc builds as prereleases and include changed behavior, runtime requirements and known limitations. Once published, do not replace that version's assets: changes get a new version. Repository/tag/release publication still requires explicit owner authorization.
+For publication, create the matching tag, draft a GitHub Release and attach these five files. Mark beta/rc builds as prereleases and include changed behavior, runtime requirements and known limitations. Once published, do not replace that version's assets: changes get a new version. Repository/tag/release publication still requires explicit owner authorization.
 
 ## Local verification and remaining acceptance
 

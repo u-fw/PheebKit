@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"pheebkit/internal/bundledffmpeg"
 	"pheebkit/internal/compat"
 	"pheebkit/internal/core"
 )
@@ -31,6 +32,7 @@ type Environment struct {
 	FFprobe      BinaryStatus `json:"ffprobe"`
 	Message      string       `json:"message"`
 	Configurable bool         `json:"configurable"`
+	bundleError  string
 }
 
 type binaryConfig struct {
@@ -112,6 +114,10 @@ func writeBinaryConfig(config binaryConfig) error {
 }
 
 func selectBinary(name, saved string, getenv func(string) string) BinaryStatus {
+	return selectBinaryWithBundle(name, saved, getenv, "")
+}
+
+func selectBinaryWithBundle(name, saved string, getenv func(string) string, bundledDirectory string) BinaryStatus {
 	for _, variable := range compat.BinaryVariables(name) {
 		if value := strings.TrimSpace(getenv(variable)); value != "" {
 			return BinaryStatus{Path: binaryPath(value, name), Source: variable}
@@ -119,6 +125,9 @@ func selectBinary(name, saved string, getenv func(string) string) BinaryStatus {
 	}
 	if strings.TrimSpace(saved) != "" {
 		return BinaryStatus{Path: binaryPath(saved, name), Source: "config"}
+	}
+	if strings.TrimSpace(bundledDirectory) != "" {
+		return BinaryStatus{Path: filepath.Join(bundledDirectory, name+".exe"), Source: "bundled"}
 	}
 	return BinaryStatus{Path: binaryPath(name, name), Source: "PATH"}
 }
@@ -139,9 +148,68 @@ func binaryPath(value, name string) string {
 }
 
 func discoverEnvironment(config binaryConfig) Environment {
-	return Environment{Platform: runtime.GOOS, Configurable: runtime.GOOS == "windows",
-		FFmpeg:  selectBinary("ffmpeg", config.FFmpeg, os.Getenv),
-		FFprobe: selectBinary("ffprobe", config.FFprobe, os.Getenv)}
+	needsBundled := false
+	for _, item := range []struct {
+		name, saved string
+	}{
+		{"ffmpeg", config.FFmpeg},
+		{"ffprobe", config.FFprobe},
+	} {
+		if strings.TrimSpace(item.saved) != "" {
+			continue
+		}
+		explicit := false
+		for _, variable := range compat.BinaryVariables(item.name) {
+			if strings.TrimSpace(os.Getenv(variable)) != "" {
+				explicit = true
+				break
+			}
+		}
+		needsBundled = needsBundled || !explicit
+	}
+	bundledDirectory := ""
+	bundleError := ""
+	if needsBundled {
+		bundledDirectory, bundleError = bundledBinaryDirectory()
+	}
+	return Environment{
+		Platform:     runtime.GOOS,
+		Configurable: runtime.GOOS == "windows",
+		FFmpeg:       selectBinaryWithBundle("ffmpeg", config.FFmpeg, os.Getenv, bundledDirectory),
+		FFprobe:      selectBinaryWithBundle("ffprobe", config.FFprobe, os.Getenv, bundledDirectory),
+		bundleError:  bundleError,
+	}
+}
+
+func bundledBinaryDirectory() (string, string) {
+	if executable, err := os.Executable(); err == nil {
+		directory := filepath.Join(filepath.Dir(executable), "runtime", "ffmpeg", "bin")
+		if executablePairAvailable(directory) {
+			return directory, ""
+		}
+	}
+	resolved, err := bundledffmpeg.Resolve()
+	if errors.Is(err, bundledffmpeg.ErrUnavailable) {
+		return "", ""
+	}
+	if err != nil {
+		return "", "内置 FFmpeg 无法准备：" + err.Error()
+	}
+	directory := filepath.Join(resolved.Directory, "bin")
+	if !executablePairAvailable(directory) {
+		return "", "内置 FFmpeg 缺少 ffmpeg.exe 或 ffprobe.exe。"
+	}
+	return directory, ""
+}
+
+func executablePairAvailable(directory string) bool {
+	for _, name := range []string{"ffmpeg.exe", "ffprobe.exe"} {
+		info, err := os.Stat(filepath.Join(directory, name))
+		if err != nil || !info.Mode().IsRegular() {
+			return false
+		}
+	}
+	return true
 }
 
 func checkBinary(ctx context.Context, binary BinaryStatus, name string) (BinaryStatus, error) {
@@ -189,12 +257,26 @@ func validateEnvironment(ctx context.Context, environment Environment) Environme
 	if !environment.Ready {
 		environment.Message = strings.Join(failures, "\n") + "\n请在设置中一键下载补全，或选择 FFmpeg 所在目录 / ffmpeg.exe，菲比工具箱会同时验证 ffprobe。"
 		for _, binary := range []BinaryStatus{environment.FFmpeg, environment.FFprobe} {
-			if !binary.Available && binary.Source != "PATH" && binary.Source != "config" {
+			if !binary.Available && binary.Source != "PATH" && binary.Source != "config" && binary.Source != "bundled" {
 				environment.Message += "\n环境变量 " + binary.Source + " 优先于应用设置；请修正该变量后重新启动菲比工具箱。"
 			}
 		}
 	}
+	if environment.bundleError != "" {
+		environment.Message = appendEnvironmentMessage(environment.Message, environment.bundleError)
+	}
 	return environment
+}
+
+// InspectEnvironment performs the same bounded discovery and executable checks
+// as the desktop service without opening a window or starting media jobs.
+func InspectEnvironment(ctx context.Context) Environment {
+	config, err := readBinaryConfig()
+	environment := discoverEnvironment(config)
+	if err != nil {
+		environment.Message = appendEnvironmentMessage(environment.Message, "无法读取共享 FFmpeg 配置："+err.Error())
+	}
+	return validateEnvironment(ctx, environment)
 }
 
 func (s *Service) GetEnvironment() Environment {

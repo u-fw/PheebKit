@@ -93,7 +93,7 @@ func diagnosticBinaryView(binary BinaryStatus) diagnosticBinary {
 	if match := ffmpegRelease.FindStringSubmatch(binary.Version); len(match) == 2 {
 		release = match[1]
 	}
-	return diagnosticBinary{Available: binary.Available, Release: release, Source: diagnosticChoice(binary.Source, "PATH", "config", "PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH")}
+	return diagnosticBinary{Available: binary.Available, Release: release, Source: diagnosticChoice(binary.Source, "PATH", "config", "bundled", "PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH")}
 }
 func diagnosticFailure(raw string) string {
 	if raw == "" {

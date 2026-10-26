@@ -12,6 +12,12 @@
 #ifndef ReleaseDir
   #error ReleaseDir must be supplied by the release script
 #endif
+#ifndef ApplicationExe
+  #define ApplicationExe "PheebKit.exe"
+#endif
+#ifndef OutputBaseFilename
+  #define OutputBaseFilename "PheebKit-" + AppVersion + "-windows-x64-setup"
+#endif
 
 [Setup]
 AppId={{9D8FAD06-8029-4A58-9497-96C7DA878C63}
@@ -28,7 +34,7 @@ ArchitecturesAllowed=x64os
 ArchitecturesInstallIn64BitMode=x64os
 MinVersion=10.0
 OutputDir={#ReleaseDir}
-OutputBaseFilename=PheebKit-{#AppVersion}-windows-x64-setup
+OutputBaseFilename={#OutputBaseFilename}
 SetupIconFile=icon.ico
 UninstallDisplayIcon={app}\PheebKit.exe
 LicenseFile={#PayloadDir}\LICENSE.txt
@@ -49,12 +55,17 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
 
 [Files]
-Source: "{#PayloadDir}\PheebKit.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#PayloadDir}\{#ApplicationExe}"; DestDir: "{app}"; DestName: "PheebKit.exe"; Flags: ignoreversion
 Source: "{#PayloadDir}\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\RELEASE_NOTES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\BUILD_INFO.json"; DestDir: "{app}"; Flags: ignoreversion
+
+[InstallDelete]
+; Sidecar runtimes from portable experiments or future lightweight editions are
+; application-owned files and are replaced deterministically by the bundled EXE.
+Type: filesandordirs; Name: "{app}\runtime\ffmpeg"
 
 [Icons]
 Name: "{group}\菲比工具箱 (PheebKit)"; Filename: "{app}\PheebKit.exe"

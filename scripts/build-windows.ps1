@@ -1,4 +1,8 @@
-param([string]$OutputPath)
+param(
+    [string]$OutputPath,
+    [string]$BundleArchive,
+    [string]$BundleVersion
+)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows) { throw 'Native Windows build requires PowerShell 7 on Windows.' }
@@ -22,8 +26,28 @@ $taskDirty = git status --porcelain --untracked-files=normal
 if ($LASTEXITCODE -ne 0) { throw 'Cannot determine build source status' }
 $taskModified = if ($taskDirty) { 'true' } else { 'false' }
 $taskLinkerFlags = "-X pheebkit/internal/buildinfo.Revision=$taskRevision -X pheebkit/internal/buildinfo.Modified=$taskModified"
-wails build -trimpath -webview2 error -nosyncgomod -nocolour -ldflags $taskLinkerFlags
-if ($LASTEXITCODE -ne 0) { throw 'Wails production build failed' }
+$embeddedPayload = Join-Path $workspace 'internal/bundledffmpeg/runtime.zip'
+$buildArguments = @('build', '-trimpath', '-webview2', 'error', '-nosyncgomod', '-nocolour', '-ldflags', $taskLinkerFlags)
+if ($BundleArchive) {
+    if (-not $BundleVersion) { throw 'Bundled builds require -BundleVersion.' }
+    $taskBundleArchive = (Resolve-Path -LiteralPath $BundleArchive).Path
+    if (-not $taskBundleArchive.StartsWith($workspace + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Bundled FFmpeg archive must remain inside this workspace.' }
+    $taskBundleSHA256 = (Get-FileHash -LiteralPath $taskBundleArchive -Algorithm SHA256).Hash.ToLowerInvariant()
+    $taskLinkerFlags += " -X pheebkit/internal/bundledffmpeg.PayloadSHA256=$taskBundleSHA256 -X pheebkit/internal/bundledffmpeg.DistributionVersion=$BundleVersion"
+    $buildArguments[$buildArguments.Count - 1] = $taskLinkerFlags
+    $buildArguments += @('-tags', 'pheebkit_bundled_ffmpeg')
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $embeddedPayload) | Out-Null
+    if (Test-Path -LiteralPath $embeddedPayload) { throw 'Generated bundled FFmpeg payload is already present.' }
+    Copy-Item -LiteralPath $taskBundleArchive -Destination $embeddedPayload
+}
+try {
+    wails @buildArguments
+    if ($LASTEXITCODE -ne 0) { throw 'Wails production build failed' }
+} finally {
+    if (Test-Path -LiteralPath $embeddedPayload) {
+        Remove-Item -LiteralPath $embeddedPayload -Force
+    }
+}
 New-Item -ItemType Directory -Force -Path (Join-Path $workspace 'bin') | Out-Null
 if (-not $OutputPath) { $OutputPath = Join-Path $workspace 'bin/PheebKit.exe' }
 $taskOutput = [IO.Path]::GetFullPath($OutputPath)

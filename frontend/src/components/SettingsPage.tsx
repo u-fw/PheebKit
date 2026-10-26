@@ -41,9 +41,11 @@ function BinaryDetails({
               ? t("菲比工具箱 本机配置")
               : binary?.source === "PATH"
                 ? t("PATH 环境变量")
-                : binary?.source
-                  ? t("环境变量 {{0}}", [binary.source])
-                  : t("未发现")}
+                : binary?.source === "bundled"
+                  ? t("内置 FFmpeg 运行时")
+                  : binary?.source
+                    ? t("环境变量 {{0}}", [binary.source])
+                    : t("未发现")}
           </dd>
         </div>
       </dl>
@@ -280,7 +282,7 @@ export function SettingsPage({
         </details>
         <p className="field-hint discovery-hint">
           {t(
-            "查找顺序：PHEEBKIT_FFMPEG / PHEEBKIT_FFPROBE → FFMPEG_PATH / FFPROBE_PATH → 本机配置 → PATH。",
+            "查找顺序：PHEEBKIT_FFMPEG / PHEEBKIT_FFPROBE → FFMPEG_PATH / FFPROBE_PATH → 本机配置 → 内置运行时 → PATH。",
           )}
         </p>
         {actionError && (

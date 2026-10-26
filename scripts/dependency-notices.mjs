@@ -3,8 +3,11 @@ import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const destination = process.argv[2];
+const bundledFFmpeg = process.argv.includes("--bundled-ffmpeg");
 if (!destination)
-  throw new Error("Usage: node scripts/dependency-notices.mjs <output-file>");
+  throw new Error(
+    "Usage: node scripts/dependency-notices.mjs <output-file> [--bundled-ffmpeg]",
+  );
 const lines = execFileSync(
   "go",
   [
@@ -31,7 +34,10 @@ for (const name of ["react", "react-dom", "scheduler", "@material/material-color
   modules.set(`npm:${name}`, { version: metadata.version, directory });
 }
 let result =
-  "PheebKit third-party distribution notices\n\nFFmpeg and WebView2 are external; their distribution terms remain separate.\n";
+  "PheebKit third-party distribution notices\n\n" +
+  (bundledFFmpeg
+    ? "This distribution includes a separately licensed GPL v3 FFmpeg build in its application runtime. The authoritative FFmpeg license, README, exact build version, source-code location and executable hashes are included in runtime/ffmpeg or in the embedded runtime materialized on first launch.\n"
+    : "This lightweight distribution uses an external FFmpeg installation. FFmpeg and WebView2 distribution terms remain separate.\n");
 function append(name, version, directory) {
   const files = readdirSync(directory).filter((file) =>
     /^(LICENSE|COPYING|NOTICE)(\.|$)/i.test(file),

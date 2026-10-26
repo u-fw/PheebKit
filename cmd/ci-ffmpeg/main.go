@@ -1,4 +1,5 @@
-// ci-ffmpeg prepares publisher-pinned Windows test tools, never release payloads.
+// ci-ffmpeg prepares publisher-pinned Windows development and release tools.
+// Release packaging independently rechecks the exact binary hashes before use.
 package main
 
 import (

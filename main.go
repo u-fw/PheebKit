@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"log"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -20,12 +22,27 @@ import (
 var assets embed.FS
 
 func main() {
-	if len(os.Args) == 2 && os.Args[1] == "--build-info" {
-		if err := buildinfo.WriteDescription(os.Stdout); err != nil {
-			log.Print(err)
-			os.Exit(1)
+	if len(os.Args) == 2 {
+		switch os.Args[1] {
+		case "--build-info":
+			if err := buildinfo.WriteDescription(os.Stdout); err != nil {
+				log.Print(err)
+				os.Exit(1)
+			}
+			return
+		case "--environment-info":
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			environment := app.InspectEnvironment(ctx)
+			if err := json.NewEncoder(os.Stdout).Encode(environment); err != nil {
+				log.Print(err)
+				os.Exit(1)
+			}
+			if !environment.Ready {
+				os.Exit(2)
+			}
+			return
 		}
-		return
 	}
 	releaseGuard, err := holdInstallerGuard()
 	if err != nil {

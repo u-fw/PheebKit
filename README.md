@@ -7,7 +7,7 @@
 
 本地优先的 Windows 媒体工具。用 FFmpeg 完成压缩、剪辑、转封装与轨道处理，提供可修改的参数、真实执行预览和独立任务队列。媒体无需上传。
 
-技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前 `0.2.0-rc.4` 是 Material 工作台验收候选，尚未发布正式版安装包；已验证范围和缺口见[稳定化记录](docs/stability.md)。
+技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前 `0.2.0-rc.5` 是 Material 工作台与 FFmpeg 内置分发验收候选；已验证范围和缺口见[稳定化记录](docs/stability.md)。
 
 ## 实际运行截图
 
@@ -48,11 +48,18 @@ Material 3 / Material You 工作台支持跟随 Windows 强调色、预设或自
 
 ## 使用与安装
 
-候选包包含 Setup、免安装 ZIP 和 SHA-256 清单；免安装包需完整解压后运行，并仍将设置保存在 AppData。正式下载发布后以 [GitHub Releases](https://github.com/u-fw/PheebKit/releases) 为准；Actions 构建产物是验收候选。
+发布包提供四种使用方式，并附 SHA-256 清单：
 
-需要 Microsoft WebView2 Runtime 与可用的 FFmpeg/ffprobe。FFmpeg 不内置在应用安装包中。缺失时在设置中下载或选择本机文件；已找到可用工具时禁止重复下载。默认来源为 FFmpeg 官网推荐的 Gyan 稳定构建，先尝试 gyan.dev，再尝试同版 GitHub 线路；国内旧版备用源需手动选择，不静默降级。自定义包必须明确确认来源并提供发布者 SHA-256。[下载与安全策略](docs/ffmpeg-downloads.md)
+- `PheebKit-<版本>-windows-x64.exe`：轻量直跑版，使用外部 FFmpeg。
+- `PheebKit-<版本>-windows-x64-ffmpeg.exe`：内置 FFmpeg 9.0.2 的单文件直跑版。
+- `PheebKit-<版本>-windows-x64-portable-ffmpeg.zip`：内置 `runtime/ffmpeg` 的完整便携包。
+- `PheebKit-<版本>-windows-x64-setup-ffmpeg.exe`：内置 FFmpeg 的可选安装版。
 
-FFmpeg 查找顺序为 `PHEEBKIT_FFMPEG` / `PHEEBKIT_FFPROBE` → `FFMPEG_PATH` / `FFPROBE_PATH` → 应用设置 → PATH。环境变量可指向程序或所在目录；显式覆盖需在环境中修正并重启应用。系统 PATH 不会被修改。
+单文件内置版在首次启动时原子解压经过 SHA-256 校验的运行时到 `%LOCALAPPDATA%/PheebKit/runtime/ffmpeg`，后续复用。ZIP 可直接使用同名目录中的 FFmpeg 和 ffprobe。所有版本都需要 Microsoft WebView2 Runtime；内置 FFmpeg 不等于完全离线。正式下载以 [GitHub Releases](https://github.com/u-fw/PheebKit/releases) 为准；Actions 构建产物是验收候选。
+
+轻量版缺失 FFmpeg 时可在设置中下载或选择本机文件；已找到可用工具时禁止重复下载。默认来源为 FFmpeg 官网推荐的 Gyan 稳定构建，先尝试 gyan.dev，再尝试同版 GitHub 线路；国内旧版备用源需手动选择，不静默降级。自定义包必须明确确认来源并提供发布者 SHA-256。[下载与安全策略](docs/ffmpeg-downloads.md)
+
+FFmpeg 查找顺序为 `PHEEBKIT_FFMPEG` / `PHEEBKIT_FFPROBE` → `FFMPEG_PATH` / `FFPROBE_PATH` → 应用设置 → 内置运行时 → PATH。环境变量可指向程序或所在目录；显式覆盖需在环境中修正并重启应用。系统 PATH 不会被修改。
 
 公开环境变量使用 `PHEEBKIT_*`，新安装的设置位于 `%APPDATA%/PheebKit`，私有下载位于 `%LOCALAPPDATA%/PheebKit/tools`。早期安装由隔离兼容层读取既有数据与旧变量，不删除旧文件。详见[命名迁移与兼容](docs/compatibility.md)。第三方工具的版本、版权和文件名保持原样。
 
@@ -75,12 +82,12 @@ npm --prefix frontend run format:check
 ./scripts/build-windows.ps1
 ```
 
-真实 FFmpeg 回归需要经校验的测试工具和 `PHEEBKIT_INTEGRATION=1`。发布脚本执行源码与最终 EXE 漏洞扫描、前端检查和干净源码校验；安装验收检查安装/重装/卸载、运行保护、校验和及用户数据保留。GitHub 托管 Windows Server 检查不等于 Windows 10/11 客户端界面验收。[验证步骤](docs/release-acceptance.md) · [Windows 打包](docs/windows-distribution.md)
+真实 FFmpeg 回归需要经校验的测试工具和 `PHEEBKIT_INTEGRATION=1`。发布脚本执行源码与两个最终 EXE 的漏洞扫描、前端检查和干净源码校验；验收会检查轻量 EXE、内置 EXE、便携 ZIP、安装器、来源元数据、首次解压复用、安装/重装/卸载及用户数据保留。GitHub 托管 Windows Server 检查不等于 Windows 10/11 客户端界面验收。[验证步骤](docs/release-acceptance.md) · [Windows 打包](docs/windows-distribution.md)
 
 核心目录：`internal/core` 定义媒体/项目/执行计划，`internal/compiler` 生成经过验证的参数，`internal/runner/windows` 管理真实进程，`internal/app` 提供原生服务边界，`frontend` 提供界面。[架构](docs/architecture.md) · [项目格式](docs/project-format.md) · [界面设计](docs/ui-design.md)
 
 ## 参与与许可证
 
-代码采用 **GNU GPL v3 only (`GPL-3.0-only`)**，详见 [LICENSE](LICENSE)。第三方依赖和素材保留各自许可证；FFmpeg 的下载或分发仍需遵守其自身许可证与源码/声明义务。
+代码采用 **GNU GPL v3 only (`GPL-3.0-only`)**，详见 [LICENSE](LICENSE)。内置 FFmpeg 采用发布者固定、实际校验的 Gyan 9.0.2 GPL v3 完整构建，同时携带 FFmpeg 许可证、README、哈希和对应源码地址；第三方依赖与素材保留各自许可证。
 
 [贡献指南](CONTRIBUTING.md) · [私密安全反馈](SECURITY.md) · [更新记录](RELEASE_NOTES.md) · [问题反馈](https://github.com/u-fw/PheebKit/issues)

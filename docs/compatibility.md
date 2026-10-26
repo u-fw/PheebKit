@@ -4,7 +4,7 @@ Current branding is **菲比工具箱 / PheebKit**. Since 0.2.0-rc.3, the Go mod
 
 | Current identity | Existing installation behavior |
 | --- | --- |
-| `PHEEBKIT_FFMPEG`, `PHEEBKIT_FFPROBE` | Old `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE` remain runtime aliases. Priority: current variable → legacy alias → generic `FFMPEG_PATH` / `FFPROBE_PATH` → saved configuration → PATH. Explicit overrides still block redundant downloading. |
+| `PHEEBKIT_FFMPEG`, `PHEEBKIT_FFPROBE` | Old `KOMPEG_FFMPEG` / `KOMPEG_FFPROBE` remain runtime aliases. Priority: current variable → legacy alias → generic `FFMPEG_PATH` / `FFPROBE_PATH` → saved configuration → bundled runtime → PATH. Explicit overrides still block redundant downloading. |
 | `%APPDATA%/PheebKit` | Used for new installations. If absent and `%APPDATA%/kompeg` exists, the original directory is reused in place. No data is moved, copied or deleted. If both exist, the current directory wins. |
 | `%LOCALAPPDATA%/PheebKit/tools` | New private downloads. Previously configured valid tools remain usable at their existing paths. |
 | `pheebkit-theme`, `pheebkit-language` | New preferences use these keys. Theme reads the old `kompeg-theme` fallback; subsequent writes use the current key. |

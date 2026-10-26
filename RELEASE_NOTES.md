@@ -1,4 +1,11 @@
-# PheebKit 0.2.0-rc.4
+# PheebKit 0.2.0-rc.5
+
+- 新增轻量直跑 EXE、FFmpeg 内置单文件 EXE、内置 FFmpeg 便携 ZIP 和可选安装器四种发布形态；统一附带 SHA-256 清单。
+- 内置运行时固定为 Gyan FFmpeg 9.0.2 full build，打包时验证来源归档、`ffmpeg.exe`、`ffprobe.exe` 和实际版本。单文件版首次启动时原子解压到用户缓存并校验；ZIP 直接使用相邻 `runtime/ffmpeg`。
+- 环境发现顺序为显式/hosted 兼容环境变量 → 本机保存路径 → 内置运行时 → PATH；设置页区分内置运行时。可执行文件提供无窗口 `--environment-info` 验收入口。
+- 内置 FFmpeg 不等于完全离线：所有版本仍需 Microsoft WebView2 Runtime。内置包不触发重复下载，提供 FFmpeg GPL v3 许可证、Gyan README、对应源码提交和哈希。
+
+## Previous candidate: 0.2.0-rc.4
 
 - 安全构建工具链更新为 Go 1.27.3，修复下载链路可达的标准库证书验证风险 GO-2026-6809；本地发布门槛与 CI 同步要求修复版。
 - 前端锁文件将 ESLint Hooks 插件的间接 `zod` 依赖固定到 4.6.7，修复 GHSA-mrhx-c7xc-m3w5；Node 24 `npm audit` 当前为零已知问题。该依赖仅处于开发/校验链，不进入桌面运行时。
@@ -12,6 +19,13 @@
 - 当前为新的验收候选；打包、托管 CI 和干净 Windows 客户端门槛按各自证据记录。Android 继续暂缓，不将交互同步声称为逐解码帧锁定，也不将单个样片视为全片质量评估。
 
 ## English
+
+- Adds four release forms: lightweight direct EXE, embedded single-file EXE, portable ZIP with adjacent FFmpeg, and an optional installer, all with SHA-256 sums.
+- Pins the bundled runtime to the Gyan FFmpeg 9.0.2 full build and verifies its source archive, executables and reported version during packaging. Embedded editions atomically materialize a checked cache on first launch; the ZIP uses `runtime/ffmpeg`.
+- Discovery order is explicit/compatibility environment variables → saved local paths → bundled runtime → PATH. Settings identifies the bundled source, and `--environment-info` provides a windowless acceptance probe.
+- Bundled FFmpeg is not a claim of complete offline operation because WebView2 remains required. Bundled artifacts include FFmpeg's GPL v3 license, Gyan README, source commit and hashes.
+
+### Previous candidate: 0.2.0-rc.4
 
 - Pin Go 1.27.3 and require it for release builds/CI to address the reachable standard-library certificate-validation advisory GO-2026-6809.
 - Refresh the transitive `zod` development dependency used by the ESLint Hooks plugin to 4.6.7, addressing GHSA-mrhx-c7xc-m3w5. `npm audit` is clean under Node 24; the package is not part of the desktop runtime.
@@ -59,4 +73,4 @@
 
 当前采用固定稳定 Wails v2.17.0；候选包未签名。本机已实际验证原生导入与 GPU 压缩；干净 Windows 10/11、CPU-only、托管 CI 及完整稳定版验收仍需独立证据。两遍响度归一化、混音／路由、图片／GIF、多源时间线、HDR、自由滤镜图、网络采集与 Android 不属于本次稳定化范围。
 
-FFmpeg 不随应用打包。配置位于 AppData，卸载保留配置及媒体。源码仓库为 https://github.com/u-fw/PheebKit；稳定版二进制尚未发布。
+轻量版不打包 FFmpeg；内置版携带固定来源并通过校验的运行时。配置位于 AppData，卸载保留配置及媒体。源码仓库为 https://github.com/u-fw/PheebKit。

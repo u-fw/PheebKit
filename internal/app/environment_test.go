@@ -18,18 +18,22 @@ import (
 func TestBinarySelectionPrecedence(t *testing.T) {
 	values := map[string]string{"PHEEBKIT_FFMPEG": "explicit-ffmpeg", "FFMPEG_PATH": "alias-ffmpeg"}
 	getenv := func(key string) string { return values[key] }
-	if selected := selectBinary("ffmpeg", "saved-ffmpeg", getenv); selected.Source != "PHEEBKIT_FFMPEG" || selected.Path != "explicit-ffmpeg" {
+	bundled := filepath.Join(t.TempDir(), "bundled")
+	if selected := selectBinaryWithBundle("ffmpeg", "saved-ffmpeg", getenv, bundled); selected.Source != "PHEEBKIT_FFMPEG" || selected.Path != "explicit-ffmpeg" {
 		t.Fatalf("explicit env lost precedence: %+v", selected)
 	}
 	delete(values, "PHEEBKIT_FFMPEG")
-	if selected := selectBinary("ffmpeg", "saved-ffmpeg", getenv); selected.Source != "FFMPEG_PATH" {
+	if selected := selectBinaryWithBundle("ffmpeg", "saved-ffmpeg", getenv, bundled); selected.Source != "FFMPEG_PATH" {
 		t.Fatalf("alias env lost precedence: %+v", selected)
 	}
 	delete(values, "FFMPEG_PATH")
-	if selected := selectBinary("ffmpeg", "saved-ffmpeg", getenv); selected.Source != "config" {
+	if selected := selectBinaryWithBundle("ffmpeg", "saved-ffmpeg", getenv, bundled); selected.Source != "config" {
 		t.Fatalf("saved path lost precedence: %+v", selected)
 	}
-	if selected := selectBinary("ffmpeg", "", getenv); selected.Source != "PATH" {
+	if selected := selectBinaryWithBundle("ffmpeg", "", getenv, bundled); selected.Source != "bundled" || selected.Path != filepath.Join(bundled, "ffmpeg.exe") {
+		t.Fatalf("bundled runtime did not precede PATH: %+v", selected)
+	}
+	if selected := selectBinaryWithBundle("ffmpeg", "", getenv, ""); selected.Source != "PATH" {
 		t.Fatalf("PATH fallback missing: %+v", selected)
 	}
 }

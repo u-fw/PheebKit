@@ -4,6 +4,8 @@ Security hardening in 0.2.0-beta.4 bounds 7z LZMA/LZMA2 dictionaries to 256 MiB 
 
 The application downloads only on an explicit click in Settings. It never installs a package manager, clones Git repositories, requires elevation, changes system PATH, or upgrades an existing FFmpeg automatically. Automatic download is supported only on Windows amd64. Existing local selection remains available offline.
 
+Bundled release editions do not use this download path when their verified 9.0.2 runtime is present. They still honor explicit environment variables and saved custom paths before the package runtime, and Settings labels the selected source as the bundled runtime. The lightweight direct EXE keeps the complete download behavior below.
+
 ## Catalog
 
 | Selection | Package | Transport sources |
@@ -26,7 +28,7 @@ Upstream references: [Gyan builds](https://www.gyan.dev/ffmpeg/builds/), [Gyan 9
 - Files are staged under the application's private cache directory. Cancellation and failure remove staging. A successful installation gets a unique directory; existing installs are never overwritten or automatically removed.
 - Configuration is switched only after Windows AMD64 PE-header checks, actual `-version` validation of both binaries and the existing idle-job guard. Higher-priority explicit environment overrides must be corrected before automatic setup. Cancellation stops before the configuration commit; the final validation/save step is not cancellable.
 - Progress is queried from the Go service, so navigating away from Settings does not lose the download. Closing the application cancels the transfer. On success, the UI reloads the environment and runs actual CPU/GPU qualification.
-- The app downloads directly from upstream/mirror endpoints. Any future project-hosted domestic replica or offline installer still needs its own complete third-party distribution/source-notice review.
+- The app downloads directly from upstream/mirror endpoints. Project-hosted bundled releases use only the separately pinned Gyan full archive, verify its source archive and executable digests during packaging, and carry the FFmpeg GPL v3 license, build README, exact source commit and hashes. A future project-hosted domestic replica still needs its own complete third-party distribution/source-notice review.
 
 ## Custom archive download links
 

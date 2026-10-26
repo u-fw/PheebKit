@@ -18,4 +18,4 @@ if ($env:GITHUB_ENV) {
     "PHEEBKIT_FFMPEG=$($manifest.ffmpeg)" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
     "PHEEBKIT_FFPROBE=$($manifest.ffprobe)" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
 }
-Write-Host "Test tools verified: $($manifest.version). Not included in application packages."
+Write-Host "Publisher-pinned tools verified: $($manifest.version). Release packaging rechecks their exact hashes before embedding."

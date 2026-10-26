@@ -21,6 +21,9 @@ func TestBuildDescriptionUsesActualProvenance(t *testing.T) {
 	if value.SchemaVersion != 1 || value.Version != Version || value.SourceRevision != revision || value.Modified != modified {
 		t.Fatalf("incorrect build description: %+v", value)
 	}
+	if value.BundledFFmpeg != nil && value.BundledFFmpeg.Kind == "external" {
+		t.Fatalf("standard test build reported an embedded runtime: %+v", value.BundledFFmpeg)
+	}
 }
 
 func TestProvenanceNeverCallsUnknownBuildClean(t *testing.T) {
