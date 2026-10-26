@@ -40,7 +40,7 @@ if ($BundleArchive) {
     if (Test-Path -LiteralPath $embeddedPayload) { throw 'Generated bundled FFmpeg payload is already present.' }
     Copy-Item -LiteralPath $taskBundleArchive -Destination $embeddedPayload
 }
-$buildArguments = @('build', '-trimpath', '-webview2', 'error', '-skipbindings', '-nosyncgomod', '-nocolour', '-ldflags', $taskLinkerFlags)
+$buildArguments = @('build', '-trimpath', '-webview2', 'error', '-skipbindings', '-m', '-nosyncgomod', '-nocolour', '-ldflags', $taskLinkerFlags)
 if ($SkipFrontend) { $buildArguments += '-s' }
 if ($buildTags) { $buildArguments += @('-tags', $buildTags) }
 try {
