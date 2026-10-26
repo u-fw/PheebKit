@@ -6,6 +6,8 @@ import "pheebkit/internal/core"
 type NativeHost interface {
 	Emit(string, ...interface{})
 	Quit()
+	SetTaskbarProgress(TaskbarProgress)
+	NotifyJob(JobNotification)
 	OpenFile(FileDialog) (string, error)
 	OpenFiles(FileDialog) ([]string, error)
 	OpenDirectory(FileDialog) (string, error)

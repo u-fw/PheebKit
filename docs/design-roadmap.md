@@ -16,17 +16,19 @@ This document separates the interface running today from ideas that remain futur
 - Shared Material controls cover segmented choices, listbox selectors, switches, dialogs, progress and keyboard focus. The command palette is available with `Ctrl+K`.
 - Pointer ripples and short spatial transitions provide state feedback. Reduced-motion and Windows forced-colours modes remove or replace those effects.
 - Reversible queue changes use an inverse-color Material snackbar with an Undo action. Hover or focus pauses expiry, Escape dismisses it, and failed Undo keeps the feedback visible with an accessible explanation.
-- Desktop navigation becomes a bottom navigation at narrow widths. Touch targets remain at least 44px, large text can reflow controls, and the bottom inset follows the measured navigation height rather than a hard-coded estimate.
+- Desktop navigation uses an expanded sidebar, a Material 3 navigation rail and a compact bottom bar. Touch targets remain at least 44px, large text can reflow controls, and the bottom inset follows the measured navigation height rather than a hard-coded estimate.
+- Home reports FFmpeg, verified GPU/CPU fallback and local-processing readiness before import. Missing FFmpeg changes the primary action to setup instead of letting a known-invalid probe start.
+- The app bar exposes active-job progress and opens the queue from one compact control. The native host mirrors queue progress to the Windows taskbar and batches completion or failure into one background notification; clicking it restores the window and focuses the relevant queue item.
 - The app remains offline and local-first: no remote fonts, analytics, telemetry or translation service is required.
 
 ## Next design work
 
 ### P0: close release-quality UX gaps
 
-1. **First-run guidance:** detect FFmpeg, GPU capabilities and language once, then show a short actionable checklist. A usable environment should lead directly to media import without setup noise.
-2. **Taskbar and notification feedback:** synchronize job progress with the Windows taskbar; send a dismissible completion or failure notification only when the app is minimized or unfocused.
-3. **Complete large-text and contrast matrix:** exercise 100–300% text, English/Chinese, portrait/landscape, light/dark, forced colours and both mouse and keyboard across Home, Editor, Batch, Queue and Settings.
-4. **Focused empty and failure states:** every panel should explain what is missing, why an action is disabled and the next safe action. Errors should preserve entered settings and offer a retry path that does not duplicate jobs.
+1. **Complete the text and contrast matrix:** exercise 100–300% text, English/Chinese, portrait/landscape, light/dark, forced colours and both mouse and keyboard across Home, Editor, Batch, Queue and Settings.
+2. **Focused empty and failure states:** every panel should explain what is missing, why an action is disabled and the next safe action. Errors should preserve entered settings and offer a retry path that does not duplicate jobs.
+
+The readiness summary and native job feedback are implemented in the current RC source. Their clean Windows 10/11 and minimized/unfocused notification click-through still belong to the separate release-acceptance matrix.
 
 ### P1: high-value media workflow design
 

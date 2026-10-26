@@ -48,11 +48,15 @@
     --font-display: 1.875rem;
     --topbar-height: 56px;
   }
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .sidebar {
     display: none;
   }
   .workspace-shell {
-    margin-left: 0;
+    grid-column: 1;
+    grid-row: 1;
     width: 100%;
     padding-bottom: calc(
       var(--bottom-nav-height-actual, var(--bottom-nav-height)) +
@@ -220,6 +224,15 @@
   }
   .environment-alert .button {
     width: 100%;
+  }
+  .media-collection > .section-title {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .media-collection > .section-title .action-row {
+    justify-content: flex-start;
+    margin-block: var(--space-2) 0;
   }
   .drop-zone {
     display: flex;
@@ -485,6 +498,76 @@
   }
   .topbar {
     padding-left: var(--space-3);
+  }
+}
+/* Material 3 medium-window navigation rail. The expanded drawer remains
+   available above this range, while compact windows use the bottom bar. */
+@media (min-width: 961px) and (max-width: 1160px) {
+  :root {
+    --sidebar-width: 88px;
+  }
+  .sidebar {
+    align-items: center;
+    padding-inline: var(--space-2);
+  }
+  .brand {
+    justify-content: center;
+    width: 100%;
+    margin-bottom: var(--space-6);
+    padding-inline: 0;
+  }
+  .brand > span:not(.brand-mark),
+  .sidebar-label,
+  .sidebar-bottom {
+    display: none;
+  }
+  .sidebar nav {
+    width: 100%;
+    gap: var(--space-1);
+  }
+  .nav-item {
+    position: relative;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 64px;
+    padding: var(--space-2) var(--space-1);
+    border-radius: var(--radius-md);
+    font-size: var(--font-xs);
+    line-height: 1.2;
+    text-align: center;
+  }
+  .nav-item:hover {
+    background: transparent;
+  }
+  .nav-item.active {
+    background: transparent;
+    box-shadow: none;
+  }
+  .nav-icon {
+    width: 56px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+  .nav-item.active .nav-icon {
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+  .nav-item .icon {
+    width: 20px;
+    height: 20px;
+  }
+  .settings-nav {
+    margin-top: var(--space-4);
+  }
+  .nav-count {
+    position: absolute;
+    top: 2px;
+    right: 10px;
+    margin-left: 0;
+    min-width: var(--space-4);
+    line-height: var(--space-4);
+    font-size: 0.625rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {

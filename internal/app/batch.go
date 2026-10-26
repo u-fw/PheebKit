@@ -23,6 +23,9 @@ func (s *Service) SetQueuePaused(paused bool) (QueueStatus, error) {
 	status, err := s.jobs.SetQueuePaused(paused)
 	if err == nil {
 		s.emitQueueStatus()
+		if s.app != nil {
+			s.app.SetTaskbarProgress(s.jobFeedback.setPaused(paused))
+		}
 	}
 	return QueueStatus(status), err
 }

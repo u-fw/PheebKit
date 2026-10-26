@@ -28,7 +28,7 @@ Beta.7 local acceptance passed on 2026-10-14: pinned FFmpeg real-media integrati
 
 - Windows production Wails window, native bridge, real media artwork and GPU/CPU compilation.
 - Real NVENC HEVC/AAC output inspected independently with ffprobe.
-- The current Material You and snackbar source passes the full Go integration/unit suite, vet and source vulnerability scan; 145 frontend tests in 30 files, 1,372 translation entries, strict typecheck, lint, formatting and the production build. Older baseline entries below are dated history.
+- The current Material You, readiness and native-feedback source passes the full Go integration/unit suite, vet and source vulnerability scan; 151 frontend tests in 32 files, 1,410 translation entries, strict typecheck, lint, formatting and the production build. Older baseline entries below are dated history.
 - Native light/dark, phone/landscape, enlarged text, reduced motion and axe checks; details in [verification](verification.md).
 - Lockfile preserved; npm registry audit returned zero known vulnerabilities. Basic tracked-file/key-pattern checks found no matches. Neither check guarantees complete supply-chain or security coverage.
 - Current build is `bin/PheebKit.exe`. Generated binaries, dependency folders, local verification media, test configs and archived prototypes are ignored by Git. Historical screenshots show earlier kompeg builds; they are not current branding evidence.

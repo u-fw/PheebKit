@@ -13,7 +13,7 @@ Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Tar
 
 The Material 3 / Material You workbench can follow the Windows accent, use preset or custom seeds, and switch light/dark modes, density, ripples and reduced motion. It also adds a `Ctrl+K` command palette, grouped parameters, a persistent output dock, looping, nominal frame steps, filmstrip thumbnails and bounded waveforms. The desktop app applies Compose and Material 3 design principles inside the existing React/Wails shell; a future Android client can use native Jetpack Compose. These unedited captures are from actual Wails **development builds on 2026-10-25/26**, using owned test media. They are not package or clean-client acceptance records. Simplified Chinese and English are supported. [Capture record](docs/images/README.md) · [Evidence and limits](docs/uiux-iteration.md) · [Design and feature roadmap](docs/design-roadmap.md)
 
-![Development build: Material You workbench following the Windows dynamic accent](docs/images/desktop-workspace-materialyou-light.png)
+![Development build: Material You workbench showing verified FFmpeg, GPU acceleration and local processing readiness](docs/images/desktop-readiness-materialyou-en.jpg)
 
 ![Development build: dark Material You settings with dynamic color](docs/images/desktop-settings-materialyou-dark.png)
 
@@ -36,9 +36,11 @@ Earlier rc.3 captures remain in the [historical capture record](docs/images/READ
 
 - **Compression and trimming:** H.264, HEVC and AV1; quality, bitrate or target-size modes; full duration, one trimmed range, or up to 16 ordered ranges from one source, joined or exported separately. Enter times directly or use selectors and sliders.
 - **GPU and CPU:** prefers GPU encoding after actual NVENC/QSV/AMF trials; falls back to CPU with a visible explanation when a combination is unavailable.
+- **Material You workspace:** follows the Windows accent or a custom HCT seed, with an expanded sidebar, navigation rail, compact bottom bar, first-run FFmpeg/GPU/CPU readiness, active-job control and `Ctrl+K` quick actions.
 - **Picture and audio:** resolution, crop, rotation and flip; track selection, gain, loudness normalization, denoise, EQ, fades, sample rate and channel conversion.
 - **Containers and subtitles:** compatible stream-copy remux; audio/text-subtitle extraction; embedded or external text subtitle burn-in with editable style and timing.
 - **Jobs and projects:** batch import, reusable recipes and per-file preflight, serial scheduling, cancellation, waiting-job reordering and scheduling pause; sample comparisons, projects/presets, Undo/Redo, checkpoints and explicit recovery.
+- **Windows background feedback:** mirrors active jobs in the taskbar and sends one completion/failure notification only while minimized or unfocused. Opening it restores the window and locates the corresponding queue item.
 - **Damaged media:** bounded decode-window scans, reviewed deletion of failed intervals by default, or black/silent replacement to preserve duration. Recovery output must pass a complete decode. Missing content cannot be reconstructed.
 - **FFmpeg setup:** reuse installed tools or explicitly download with progress, cancellation/retry and a custom HTTPS archive option requiring publisher SHA-256. Supports ZIP, 7z, RAR, tar and gzip/xz/bzip2 tar variants.
 

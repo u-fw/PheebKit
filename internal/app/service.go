@@ -62,6 +62,7 @@ type Service struct {
 	healthBusy         atomic.Bool
 	healthWG           sync.WaitGroup
 	language           atomic.Uint32
+	jobFeedback        *jobFeedbackTracker
 }
 
 func (s *Service) SetLocale(language string) error {
@@ -88,7 +89,7 @@ func NewService() *Service {
 	ctx, cancel := context.WithCancel(context.Background())
 	config, err := readBinaryConfig()
 	environment := discoverEnvironment(config)
-	s := &Service{ctx: ctx, cancel: cancel, runner: &runnerProxy{current: newPlatformRunner(environment)}, media: make(map[string]core.Media), environment: environment, configuration: config}
+	s := &Service{ctx: ctx, cancel: cancel, runner: &runnerProxy{current: newPlatformRunner(environment)}, media: make(map[string]core.Media), environment: environment, configuration: config, jobFeedback: newJobFeedbackTracker()}
 	if err != nil {
 		s.configurationError = "无法读取 FFmpeg 配置：" + err.Error()
 		log.Print(s.configurationError)
@@ -98,6 +99,7 @@ func NewService() *Service {
 			s.app.Emit("job:updated", job)
 			s.emitQueueStatus()
 		}
+		s.publishJobFeedback(job)
 	})
 	return s
 }
@@ -111,6 +113,12 @@ func (s *Service) Close() {
 	s.exiting = true
 	s.lifecycleMu.Unlock()
 	s.cancel()
+	if s.jobFeedback != nil {
+		s.jobFeedback.close()
+	}
+	if s.app != nil {
+		s.app.SetTaskbarProgress(TaskbarProgress{State: taskbarHidden})
+	}
 	s.jobs.Close()
 	s.healthWG.Wait()
 }

@@ -1,5 +1,11 @@
 # Desktop capture record — updated 2026-10-26
 
+## Processing-readiness workbench — 2026-10-26
+
+`desktop-readiness-materialyou-en.jpg` is an unedited 1272×864 capture of the current Wails v2.17.0 development window in English and the light Windows-accent Material You palette. It shows the readiness strip from the real environment: FFmpeg `9.0.2-full_build-www.gyan.dev`, a successful NVIDIA NVENC trial, and local-only processing. The same native session exercised a real owned-media import, draft recovery, minimized-task completion, window restore and queue navigation.
+
+This image replaces the earlier Home capture as the primary README image because it reflects the current Home hierarchy: project opening is in the page header, the duplicate empty collection card is gone, and setup/readiness appears before the import action. It remains development-build evidence; it is not an installer, clean Windows 10/11 or CPU-only acceptance record.
+
 ## Material You and command-palette captures — 2026-10-26
 
 These four 1100×860 captures show the actual Wails v2.17.0 development window on the current Windows 11 workstation. The source is the dirty `0.2.0-rc.4` Material You iteration; these are interaction/design evidence, not installed-package, clean-client or release evidence.

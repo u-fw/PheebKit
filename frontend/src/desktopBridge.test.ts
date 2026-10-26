@@ -59,8 +59,10 @@ describe("stable desktop runtime contract", () => {
     });
     const queue = vi.fn();
     const close = vi.fn();
+    const activated = vi.fn();
     const dispose = API.subscribeQueue(queue);
     API.onCloseRequested(close);
+    const disposeActivated = API.subscribeJobActivated(activated);
     listeners.get("queue:updated")?.({
       paused: true,
       pendingIDs: null,
@@ -71,6 +73,7 @@ describe("stable desktop runtime contract", () => {
       downloading: false,
       unsaved: true,
     });
+    listeners.get("job:activated")?.("job-42");
     expect(queue).toHaveBeenCalledWith({
       paused: true,
       pendingIDs: [],
@@ -81,8 +84,10 @@ describe("stable desktop runtime contract", () => {
       downloading: false,
       unsaved: true,
     });
+    expect(activated).toHaveBeenCalledWith("job-42");
     dispose();
-    expect(stop).toHaveBeenCalledOnce();
+    disposeActivated();
+    expect(stop).toHaveBeenCalledTimes(2);
   });
   it("registers native file drops for the whole workspace and detaches on unmount", () => {
     const attach = vi.fn();

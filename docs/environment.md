@@ -6,7 +6,7 @@ The 2026-10-13 security update pinned Go 1.27.2 with Node 24; the later GO-2026-
 
 The production desktop shell is stable Wails v2.17.0 with React 19 and strict TypeScript. The module selects Go 1.27.3 and release packaging rejects older toolchains because of [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809). Wails v3 Beta and its npm runtime are historical Technical Spike tooling only and are not active dependencies of the Windows application. Android remains deferred; a future Android client may use native Jetpack Compose while the Windows UI continues to express Material 3 / Material You through React.
 
-Current local verification uses Node 24, the lockfile-installed frontend dependencies, Windows WebView2 and the repository-verified FFmpeg/ffprobe 9.0.2 pair. The current source passes 145 frontend tests in 30 files, 1,372 translation entries, Go real-media integration, vet and source vulnerability checks. Clean Windows 10/11 and CPU-only machines remain release gates rather than assumptions.
+Current local verification uses Node 24, the lockfile-installed frontend dependencies, Windows WebView2 and the repository-verified FFmpeg/ffprobe 9.0.2 pair. The current source passes 151 frontend tests in 32 files, 1,410 translation entries, Go real-media integration, vet and source vulnerability checks. Clean Windows 10/11 and CPU-only machines remain release gates rather than assumptions.
 
 Native Windows 11 Pro 25H2 (build 26200), PowerShell 7.6.5, amd64. Repository started empty with an unborn `main` branch; implementation lives on `codex/technical-spike`.
 

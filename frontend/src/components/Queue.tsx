@@ -36,6 +36,7 @@ function JobCard({
   move,
   notify,
   compareSample,
+  notificationTarget,
 }: {
   job: Job;
   cancel: (id: string) => void;
@@ -46,6 +47,7 @@ function JobCard({
   move?: (id: string, direction: number) => Promise<unknown> | void;
   notify?: (message: string, options?: { action?: SnackbarAction }) => void;
   compareSample?: (id: string) => void;
+  notificationTarget?: boolean;
 }) {
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -101,7 +103,11 @@ function JobCard({
           ? "提取字幕"
           : "压缩";
   return (
-    <article className="surface job-card">
+    <article
+      id={`job-${job.id}`}
+      className={`surface job-card ${notificationTarget ? "notification-target" : ""}`}
+      tabIndex={-1}
+    >
       <div className="job-heading">
         <div
           className={`job-file-icon ${state === "completed" ? "completed" : ""}`}
@@ -408,6 +414,8 @@ export function Queue({
   onMoveQueued,
   notify,
   compareSample,
+  focusJobID,
+  onFocusHandled,
 }: {
   jobs: Job[];
   cancel: (id: string) => void;
@@ -419,6 +427,8 @@ export function Queue({
   onMoveQueued?: (id: string, direction: number) => Promise<unknown> | void;
   notify?: (message: string, options?: { action?: SnackbarAction }) => void;
   compareSample?: (id: string) => void;
+  focusJobID?: string | null;
+  onFocusHandled?: () => void;
 }) {
   const [filter, setFilter] = useState<
     "all" | "active" | "completed" | "failed"
@@ -487,6 +497,19 @@ export function Queue({
       alive = false;
     };
   }, [terminalCount, jobs.length]);
+  useEffect(() => {
+    if (!focusJobID) return;
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById(`job-${focusJobID}`);
+      target?.scrollIntoView({ block: "center", behavior: "smooth" });
+      target?.focus({ preventScroll: true });
+    });
+    const timer = window.setTimeout(() => onFocusHandled?.(), 2600);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [focusJobID, onFocusHandled]);
   return (
     <div className="page queue-page">
       <header className="page-heading">
@@ -584,6 +607,7 @@ export function Queue({
               move={onMoveQueued}
               notify={notify}
               compareSample={compareSample}
+              notificationTarget={focusJobID === job.id}
             />
           ))}
         </div>

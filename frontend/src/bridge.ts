@@ -465,6 +465,8 @@ export const API = {
     localizedDialog(() => Service.ChooseOutput(suggested)),
   subscribeJobs: (callback: (job: Job) => void): (() => void) =>
     EventsOn("job:updated", (job: Core.Job) => callback(jobView(job))),
+  subscribeJobActivated: (callback: (id: string) => void): (() => void) =>
+    EventsOn("job:activated", (id: string) => callback(id)),
   subscribeMedia: (callback: (media: Media) => void): (() => void) =>
     EventsOn("media:probed", (media: Core.Media) => callback(mediaView(media))),
   onDrop: (callback: (paths: string[]) => void): (() => void) => {

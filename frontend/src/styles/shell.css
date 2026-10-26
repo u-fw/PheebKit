@@ -1,6 +1,8 @@
 .app-shell {
   min-height: 100vh;
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  align-items: start;
   isolation: isolate;
 }
 .app-shell::before {
@@ -17,11 +19,14 @@
 }
 .sidebar {
   --glass: var(--glass-navigation);
+  grid-column: 1;
+  grid-row: 1;
   width: var(--sidebar-width);
+  height: 100vh;
   flex-shrink: 0;
   padding: var(--space-4) var(--space-4) var(--space-5);
-  position: fixed;
-  inset: 0 auto 0 0;
+  position: sticky;
+  inset: 0 auto auto 0;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--glass-edge);
@@ -103,6 +108,17 @@
     background var(--motion-fast),
     color var(--motion-fast);
 }
+.nav-icon {
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  flex: 0 0 var(--space-6);
+  border-radius: var(--radius-full);
+  transition:
+    background var(--motion-standard) var(--easing),
+    color var(--motion-standard) var(--easing);
+}
 .nav-item:hover {
   background: var(--surface-container);
   color: var(--color);
@@ -162,11 +178,13 @@
   font-size: var(--font-xs);
 }
 .workspace-shell {
-  margin-left: var(--sidebar-width);
-  width: calc(100% - var(--sidebar-width));
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
 }
 .topbar {
   --glass: var(--glass-chrome);

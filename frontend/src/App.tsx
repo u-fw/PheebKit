@@ -28,6 +28,8 @@ import { useAutosaveDraft } from "./hooks/useAutosaveDraft";
 import { useMaterialRipple } from "./hooks/useMaterialRipple";
 import { useSnackbar } from "./hooks/useSnackbar";
 import { Snackbar } from "./components/Snackbar";
+import { JobActivityIndicator } from "./components/JobActivityIndicator";
+import { summarizeJobActivity } from "./jobActivity";
 import type { ProjectLibrary as Library, LoadedProject } from "./bridge";
 
 const SettingsPage = lazy(() =>
@@ -187,6 +189,7 @@ export default function App() {
     return true;
   }
   const [comparisonID, setComparisonID] = useState<string | null>(null);
+  const [queueFocusID, setQueueFocusID] = useState<string | null>(null);
   const comparisonTrigger = useRef<HTMLButtonElement | null>(null);
   const [closeRequest, setCloseRequest] = useState<{
     jobs: number;
@@ -197,11 +200,20 @@ export default function App() {
     if (!studio.connected) return;
     return API.onCloseRequested(setCloseRequest);
   }, [studio.connected]);
-  const activeCount = studio.jobs.filter((job) =>
-    ["queued", "preparing", "running", "cancelling"].includes(
-      job.state.toLowerCase(),
-    ),
-  ).length;
+  useEffect(() => {
+    if (!studio.connected) return;
+    return API.subscribeJobActivated((id) => {
+      setQueueFocusID(id);
+      setPage("queue");
+      document.documentElement.scrollTop = 0;
+    });
+  }, [studio.connected]);
+  const jobActivity = summarizeJobActivity(
+    studio.jobs,
+    studio.queueStatus?.paused ?? false,
+  );
+  const activeCount = jobActivity.activeCount;
+  const clearQueueFocus = useCallback(() => setQueueFocusID(null), []);
   const currentNav = navigation.find((item) => item.id === page);
 
   useEffect(() => {
@@ -238,6 +250,7 @@ export default function App() {
     appearance.setAppearance({ mode: theme === "light" ? "dark" : "light" });
   function navigate(nextPage: Page) {
     setPage(nextPage);
+    if (nextPage !== "queue") setQueueFocusID(null);
     if (nextPage === "compress") setCompressVisited(true);
     document.documentElement.scrollTop = 0;
   }
@@ -376,7 +389,7 @@ export default function App() {
           </span>
           <span>
             <strong>{t(BRAND_NAME)}</strong>
-            <small>{t(BRAND_ENGLISH)}</small>
+            {language === "zh-CN" && <small>{t(BRAND_ENGLISH)}</small>}
           </span>
         </a>
         <div className="sidebar-label">{t("工作空间")}</div>
@@ -386,10 +399,13 @@ export default function App() {
               key={item.id}
               className={`nav-item ${page === item.id ? "active" : ""} ${item.id === "settings" ? "settings-nav" : ""}`}
               aria-current={page === item.id ? "page" : undefined}
+              title={t(item.label)}
               onClick={() => navigate(item.id)}
             >
-              <Icon name={item.icon} />
-              <span>{t(item.label)}</span>
+              <span className="nav-icon" aria-hidden="true">
+                <Icon name={item.icon} />
+              </span>
+              <span className="nav-label">{t(item.label)}</span>
               {item.id === "queue" && activeCount > 0 && (
                 <span
                   className="nav-count"
@@ -418,6 +434,10 @@ export default function App() {
             <strong>{t(currentNav?.label)}</strong>
           </div>
           <div className="topbar-actions">
+            <JobActivityIndicator
+              summary={jobActivity}
+              onOpen={() => navigate("queue")}
+            />
             <span
               className={`platform-badge ${studio.connected ? "connected" : ""}`}
             >
@@ -512,7 +532,7 @@ export default function App() {
               </button>
             </div>
           )}
-          {(page === "home" || page === "compress") && (
+          {(page === "compress" || studio.mediaList.length > 0) && (
             <section
               className={`surface media-collection ${page === "compress" ? "workbench-media-library" : ""}`}
               aria-label={t("已导入媒体与项目")}
@@ -582,7 +602,12 @@ export default function App() {
               media={studio.media}
               busy={studio.busy}
               connected={studio.connected}
+              environment={studio.environment}
+              capabilities={studio.capabilities}
+              capabilityError={studio.capabilityError}
               chooseMedia={() => protect(() => studio.chooseMedia())}
+              configureEnvironment={() => navigate("settings")}
+              openProject={loadProject}
               compress={() => navigate("compress")}
             />
           )}
@@ -699,6 +724,8 @@ export default function App() {
                 onPauseQueue={studio.pauseQueue}
                 onMoveQueued={studio.moveQueued}
                 notify={snackbar.show}
+                focusJobID={queueFocusID}
+                onFocusHandled={clearQueueFocus}
                 compareSample={(id) => {
                   comparisonTrigger.current =
                     document.activeElement instanceof HTMLButtonElement
@@ -796,6 +823,11 @@ export default function App() {
             className={page === item.id ? "active" : ""}
             aria-current={page === item.id ? "page" : undefined}
             onClick={() => navigate(item.id)}
+            aria-label={
+              item.id === "queue" && activeCount > 0
+                ? t("任务队列，{{0}} 个任务进行中", [activeCount])
+                : undefined
+            }
           >
             <span className="bottom-nav-icon">
               <Icon name={item.icon} />

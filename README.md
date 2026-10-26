@@ -13,7 +13,7 @@
 
 Material 3 / Material You 工作台支持跟随 Windows 强调色、预设或自定义主题色、明暗与界面密度、波纹和减少动效、`Ctrl+K` 快速操作、分组参数、固定输出检查栏、循环预览、近似按帧微调、缩略图与有界波形。桌面端在现有 React/Wails 外壳中实现 Compose 与 Material 3 的设计原则；未来 Android 端再使用原生 Jetpack Compose。下图来自 2026-10-25/26 本机 Wails **开发构建**的原始截图，使用自建测试视频，不代表安装包或干净客户端验收。界面支持简体中文与 English。[截图记录](docs/images/README.md) · [实测与边界](docs/uiux-iteration.md) · [设计与功能路线](docs/design-roadmap.md)
 
-![开发构建：跟随 Windows 动态色的 Material You 工作台](docs/images/desktop-workspace-materialyou-light.png)
+![开发构建：显示 FFmpeg、已验证 GPU 与本地处理状态的 Material You 工作台](docs/images/desktop-readiness-materialyou-en.jpg)
 
 ![开发构建：Material You 深色设置与动态主题色](docs/images/desktop-settings-materialyou-dark.png)
 
@@ -36,9 +36,11 @@ Material 3 / Material You 工作台支持跟随 Windows 强调色、预设或自
 
 - **压缩与剪辑**：H.264、HEVC、AV1；质量、目标码率、目标体积；完整视频、单区间剪辑、最多 16 个同源片段拼接或分段输出。时间可直接输入或使用选择器、滑块微调。
 - **GPU 与 CPU**：默认优先 GPU，经实际试编码确认 NVENC/QSV/AMF 可用性；不可用时回退 CPU，并显示原因。
+- **Material You 工作台**：跟随 Windows 强调色或使用自定义 HCT 种子，提供展开侧栏、导航轨、窄窗底栏、首次运行 FFmpeg/GPU/CPU 状态、任务活动胶囊和 `Ctrl+K` 快速操作。
 - **画面与声音**：分辨率、裁剪、旋转、翻转；音轨选择、音量、归一化、降噪、均衡、淡入淡出、采样率与声道设置。
 - **封装与字幕**：兼容流无重编码转封装，音频与文字字幕提取；内嵌或外部文字字幕烧录，支持样式和时间偏移。
 - **任务与项目**：批量导入、通用配方与逐文件预检、串行队列、取消、调整等待顺序、暂停后续调度；样片对比、项目/预设、撤销/重做、自动草稿与显式恢复。
+- **Windows 后台反馈**：任务运行时同步任务栏进度；仅当窗口最小化或不在前台时发送批量完成/失败通知，点击通知可恢复窗口并定位对应任务。
 - **损坏媒体恢复**：逐窗口解码检查，默认删除确认的失败区间，也可用黑画面/静音保留时长；恢复输出必须完整解码通过。无法重建已丢失的内容。
 - **环境补全**：复用已有 FFmpeg；缺失时可显式下载、查看进度、取消重试，或填写带 SHA-256 的自定义 HTTPS 压缩包链接。支持 ZIP、7z、RAR、tar、gzip/xz/bzip2 的 tar 变体。
 

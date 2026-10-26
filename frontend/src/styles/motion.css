@@ -49,7 +49,12 @@ a.ripple-active::after {
 @media (prefers-reduced-motion: reduce) {
   button.ripple-active::after,
   a.ripple-active::after,
-  .inspector-panel:not([hidden]) {
+  .inspector-panel:not([hidden]),
+  .job-card.notification-target {
     animation: none;
+  }
+  .job-activity-value,
+  .topbar-job-progress > span {
+    transition: none;
   }
 }

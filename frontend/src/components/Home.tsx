@@ -1,21 +1,45 @@
 import { t } from "../i18n";
-import type { Media } from "../bridge";
+import type { Capabilities, EnvironmentStatus, Media } from "../bridge";
+import { summarizeProcessingReadiness } from "../readiness";
 import { Icon } from "./Icon";
 import { MediaCard } from "./MediaCard";
+import { ProcessingReadiness } from "./ProcessingReadiness";
 
 export function Home({
   media,
   busy,
   connected,
+  environment,
+  capabilities,
+  capabilityError,
   chooseMedia,
+  configureEnvironment,
+  openProject,
   compress,
 }: {
   media: Media | null;
   busy: boolean;
   connected: boolean;
+  environment: EnvironmentStatus | null;
+  capabilities: Capabilities | null;
+  capabilityError: string;
   chooseMedia: () => void;
+  configureEnvironment: () => void;
+  openProject: () => void;
   compress: () => void;
 }) {
+  const readiness = summarizeProcessingReadiness({
+    connected,
+    environment,
+    capabilities,
+    capabilityError,
+  });
+  const checkingEnvironment = connected && environment === null;
+  const needsEnvironment =
+    connected && environment !== null && !environment.ready;
+  const chooseDisabled =
+    busy || !connected || (!needsEnvironment && !readiness.canChooseMedia);
+
   return (
     <div className="page home-page">
       <header className="page-heading">
@@ -29,16 +53,26 @@ export function Home({
             )}
           </p>
         </div>
-        {media && (
+        <div className="action-row page-heading-actions">
+          {media && (
+            <button
+              className="button outlined"
+              disabled={busy || !connected}
+              onClick={chooseMedia}
+            >
+              <Icon name="plus" />
+              {t("重新选择媒体")}
+            </button>
+          )}
           <button
             className="button outlined"
             disabled={busy || !connected}
-            onClick={chooseMedia}
+            onClick={openProject}
           >
-            <Icon name="plus" />
-            {t("重新选择媒体")}
+            <Icon name="folder" />
+            {t("打开项目")}
           </button>
-        )}
+        </div>
       </header>
       {media ? (
         <>
@@ -81,13 +115,32 @@ export function Home({
               <br />
               {t("媒体始终在本地处理。")}
             </p>
+            <ProcessingReadiness readiness={readiness} />
             <button
               className="button primary"
-              onClick={chooseMedia}
-              disabled={busy || !connected}
+              onClick={needsEnvironment ? configureEnvironment : chooseMedia}
+              disabled={chooseDisabled}
             >
-              <Icon name={busy ? "video" : "plus"} />
-              {t(busy ? "正在读取媒体信息" : "选择媒体文件")}
+              <Icon
+                name={
+                  busy
+                    ? "video"
+                    : needsEnvironment
+                      ? "settings"
+                      : checkingEnvironment
+                        ? "refresh"
+                        : "plus"
+                }
+              />
+              {t(
+                busy
+                  ? "正在读取媒体信息"
+                  : needsEnvironment
+                    ? "补全 FFmpeg"
+                    : checkingEnvironment
+                      ? "正在检查处理环境"
+                      : "选择媒体文件",
+              )}
             </button>
             <span className="drop-hint">
               {t("MP4 · MKV · MOV · WEBM · 音频文件")}
