@@ -16,5 +16,26 @@ export default defineConfig({
   },
   base: "./",
   server: { host: "127.0.0.1", port: 9245, strictPort: true },
-  build: { outDir: "dist", emptyOutDir: true },
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "react-vendor",
+              test: /node_modules[\\/](?:react|react-dom|scheduler)[\\/]/,
+              priority: 2,
+            },
+            {
+              name: "material-color",
+              test: /node_modules[\\/]@material[\\/]material-color-utilities[\\/]/,
+              priority: 2,
+            },
+          ],
+        },
+      },
+    },
+  },
 });

@@ -9,7 +9,7 @@ Owner objective: refactor UI/UX first, then complete the media workflows. The so
 - The import surface includes a live readiness strip for FFmpeg, acceleration and local-only processing. It distinguishes a verified GPU encoder, CPU fallback, hardware-probe failure, incomplete setup and browser preview. A missing environment changes the primary action to FFmpeg setup instead of starting a probe that is known to fail.
 - Active queue work is visible in a tonal app-bar control at wide sizes and a progress line in compact chrome. Native source adds Windows taskbar progress, a one-summary completion/failure notification only while minimized or unfocused, notification text sanitization and click-through to the matching queue item.
 - Current frontend verification passes **151 tests in 32 files**, the **1,413-entry** translation/source/placeholder namespace guard, Prettier, strict TypeScript, ESLint, production build, `npm audit`, real FFmpeg Go integration, `go vet` and source `govulncheck`.
-- The production build succeeds. The main minified chunk is about 514 kB (162 kB gzip), so Vite still reports its 500 kB advisory. The threshold is not raised to hide it; route-level splitting and moving more shared material utilities into lazy chunks remain a performance task.
+- The production build succeeds without a chunk-size advisory. Stable React and Material Color Utilities dependencies are emitted as cacheable vendor chunks; the main application chunk is about 208 kB (73 kB gzip), the React vendor chunk is about 219 kB (68 kB gzip), and the Material color chunk is about 87 kB (20 kB gzip). The existing Settings, Compress, Queue, comparison and batch views remain route/feature chunks.
 
 ## Preserved contracts
 
