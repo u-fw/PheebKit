@@ -145,6 +145,7 @@ export default function App() {
     return true;
   }
   const [comparisonID, setComparisonID] = useState<string | null>(null);
+  const comparisonTrigger = useRef<HTMLButtonElement | null>(null);
   const [closeRequest, setCloseRequest] = useState<{
     jobs: number;
     downloading: boolean;
@@ -524,12 +525,18 @@ export default function App() {
                 onPauseQueue={studio.pauseQueue}
                 onMoveQueued={studio.moveQueued}
                 compareSample={(id) => {
+                  comparisonTrigger.current =
+                    document.activeElement instanceof HTMLButtonElement
+                      ? document.activeElement
+                      : null;
                   setComparisonID(id);
-                  requestAnimationFrame(() =>
-                    document
-                      .getElementById("sample-comparison")
-                      ?.scrollIntoView({ block: "start" }),
-                  );
+                  if (id === comparisonID) {
+                    const heading = document.querySelector<HTMLElement>(
+                      "#sample-comparison h2",
+                    );
+                    heading?.focus({ preventScroll: true });
+                    heading?.scrollIntoView({ block: "start" });
+                  }
                 }}
                 reuse={async (id) =>
                   protect(async () => {
@@ -540,11 +547,19 @@ export default function App() {
               />
               {comparisonID && (
                 <div id="sample-comparison" className="page">
-                  <SampleComparison
-                    key={comparisonID}
-                    id={comparisonID}
-                    close={() => setComparisonID(null)}
-                  />
+                  <Suspense
+                    fallback={<p role="status">{t("正在加载样片比较…")}</p>}
+                  >
+                    <SampleComparison
+                      key={comparisonID}
+                      id={comparisonID}
+                      close={() => {
+                        setComparisonID(null);
+                        if (comparisonTrigger.current?.isConnected)
+                          comparisonTrigger.current.focus();
+                      }}
+                    />
+                  </Suspense>
                 </div>
               )}
             </Suspense>

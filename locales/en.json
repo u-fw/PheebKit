@@ -1,4 +1,5 @@
 {
+  "正在加载样片比较…": "Loading sample comparison…",
   "正在加载批量工具…": "Loading batch tools…",
   "样片可比较时长无效，请重新生成样片。": "The sample has no valid comparison duration. Generate a new sample.",
   "波形范围必须位于源媒体内，且每次不超过 120 秒。": "The waveform window must stay within the source and be no longer than 120 seconds.",

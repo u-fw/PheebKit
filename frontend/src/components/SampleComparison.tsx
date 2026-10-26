@@ -28,12 +28,20 @@ export function SampleComparison({
   const [error, setError] = useState("");
   const [playbackError, setPlaybackError] = useState("");
   const pending = useRef<Promise<void> | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const sliderID = useId();
   const revealID = useId();
   const unavailable = useCallback((message: string) => {
     setPlaybackError(message);
     setMode("frames");
   }, []);
+  useEffect(() => {
+    // The lazy chunk may mount after the click's animation frame has passed.
+    // Align again when metadata expands the initial loading section, so the
+    // document's earlier maximum scroll position cannot leave it below view.
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView({ block: "start" });
+  }, [data]);
   useEffect(() => {
     let alive = true;
     void API.getSampleComparison(id).then(
@@ -121,7 +129,9 @@ export function SampleComparison({
       aria-label={t("样片画面比较")}
     >
       <div className="section-title">
-        <h2>{t("样片画面比较")}</h2>
+        <h2 ref={heading} tabIndex={-1}>
+          {t("样片画面比较")}
+        </h2>
         <button className="button text" onClick={close}>
           {t("关闭比较")}
         </button>

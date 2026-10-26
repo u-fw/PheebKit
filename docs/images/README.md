@@ -2,6 +2,10 @@
 
 ## Material iteration captures — 2026-10-25
 
+`desktop-batch-material-dev.jpg` is an unedited 2026-10-26 capture of the actual native development window. It shows two owned sources passing real per-file GPU preflight, independent names/track policies, the sticky parameter inspector and reachable queue action. Both jobs were explicitly admitted afterward; independent probes/full decodes confirmed two eight-second HEVC/AAC outputs. This image is not an installer or clean-client acceptance record. The original screenshot API returned JPEG, which is retained without conversion.
+
+`desktop-comparison-material-dev.jpg` is an unedited capture from the same date, after fixing comparison navigation across lazy loading and metadata expansion. The actual native player shows the owned original at its two-second offset and the real three-second H.264/AAC sample. Native playback, stop-at-end, static frames and split reveal were exercised; closing restores the initiating card and keyboard order. Like the batch image, this is development workflow evidence rather than packaged/clean-client evidence.
+
 `desktop-appearance-material-dev.png` and `desktop-workbench-material-dev.png` are unedited captures of the actual Wails v2 development EXE at `.tools/uiux-native/PheebKit.exe`, on this Windows workstation. They show English with the Iris purple seed in dark mode. The workbench uses the same owned eight-second test video described below. No personal media was used. The executable reports modified source and is not the released rc.3 payload, even though the version has not yet been advanced during this iteration.
 
 Native testing confirmed repeated full-range loop playback, paused 30 FPS stepping from about 0.194 to 0.227 seconds, eight real extracted thumbnails, and a real audio waveform window from about 0.227 to 8 seconds. Switching to Settings, changing the seed/theme/language and returning retained the source, preview position, eight thumbnails and waveform. New output-message layout/focus padding is a later source edit and requires fresh interaction verification. Full release/client acceptance is separate.
