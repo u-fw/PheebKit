@@ -74,6 +74,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm --prefix frontend run build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run Go race detector
+        shell: pwsh
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          $packages = @(& ./scripts/project-go-packages.ps1)
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test -race @packages -count=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Prepare publisher-pinned FFmpeg test tools
         shell: pwsh
         run: ./scripts/setup-test-ffmpeg.ps1

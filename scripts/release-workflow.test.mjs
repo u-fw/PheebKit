@@ -184,6 +184,10 @@ test("workflow executes the tested plan and all verification paths use the same 
     workflow,
     /Verify and package Windows x64\n\s+if: steps\.plan\.outputs\.package == 'true'/,
   );
+  assert.match(
+    workflow,
+    /name: Run Go race detector[\s\S]*CGO_ENABLED: "1"[\s\S]*go test -race @packages -count=1/,
+  );
 });
 
 test("publication binds the tested revision and digest and refuses asset replacement", () => {
