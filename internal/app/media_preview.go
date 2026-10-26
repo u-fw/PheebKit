@@ -64,6 +64,7 @@ func (s *Service) GetMediaPreviewURL(uri string) (string, error) {
 //wails:ignore
 func (s *Service) AssetHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		applyAssetSecurityHeaders(w.Header())
 		if !strings.HasPrefix(r.URL.Path, "/__media/") {
 			next.ServeHTTP(w, r)
 			return
@@ -122,6 +123,17 @@ func (s *Service) AssetHandler(next http.Handler) http.Handler {
 		}
 		http.ServeContent(w, r, filepath.Base(media.Source.URI), info.ModTime(), file)
 	})
+}
+
+const assetContentSecurityPolicy = "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; frame-src 'none'; worker-src 'self' blob:"
+
+func applyAssetSecurityHeaders(header http.Header) {
+	header.Set("Content-Security-Policy", assetContentSecurityPolicy)
+	header.Set("Cross-Origin-Resource-Policy", "same-origin")
+	header.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=()")
+	header.Set("Referrer-Policy", "no-referrer")
+	header.Set("X-Content-Type-Options", "nosniff")
+	header.Set("X-Frame-Options", "DENY")
 }
 
 const previewChunkBytes int64 = 2 * 1024 * 1024

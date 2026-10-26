@@ -47,6 +47,7 @@ func TestMediaPreviewRangeAndAccessBoundary(t *testing.T) {
 	if response.Code != 206 || response.Body.String() != "2345" {
 		t.Fatalf("range failed: %d %s", response.Code, response.Body.String())
 	}
+	assertAssetSecurityHeaders(t, response.Header())
 	for _, route := range []string{"/__media/../../secret", "/__media/unknown"} {
 		response = httptest.NewRecorder()
 		handler.ServeHTTP(response, httptest.NewRequest("GET", route, nil))
@@ -70,6 +71,47 @@ func TestMediaPreviewRangeAndAccessBoundary(t *testing.T) {
 	for _, id := range []string{"unsafe", "missing"} {
 		if err := service.OpenJobOutput(id, false); err == nil {
 			t.Fatal("unsafe/missing output accepted")
+		}
+	}
+}
+
+func TestAssetHandlerAppliesSecurityHeadersToStaticAndMediaResponses(t *testing.T) {
+	service := NewService()
+	defer service.Close()
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte("<!doctype html><html></html>"))
+	})
+	handler := service.AssetHandler(next)
+
+	for _, test := range []struct {
+		path string
+		code int
+	}{
+		{path: "/", code: http.StatusOK},
+		{path: "/__media/unknown", code: http.StatusNotFound},
+	} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, test.path, nil))
+		if response.Code != test.code {
+			t.Fatalf("%s returned %d, want %d", test.path, response.Code, test.code)
+		}
+		assertAssetSecurityHeaders(t, response.Header())
+	}
+}
+
+func assertAssetSecurityHeaders(t *testing.T, header http.Header) {
+	t.Helper()
+	for name, want := range map[string]string{
+		"Content-Security-Policy":      assetContentSecurityPolicy,
+		"Cross-Origin-Resource-Policy": "same-origin",
+		"Permissions-Policy":           "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=()",
+		"Referrer-Policy":              "no-referrer",
+		"X-Content-Type-Options":       "nosniff",
+		"X-Frame-Options":              "DENY",
+	} {
+		if got := header.Get(name); got != want {
+			t.Fatalf("%s = %q, want %q", name, got, want)
 		}
 	}
 }
