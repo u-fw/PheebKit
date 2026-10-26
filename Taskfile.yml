@@ -36,9 +36,9 @@ tasks:
       - wails dev
   test:
     cmds:
-      - node --test scripts/version.test.mjs
-      - go test ./...
-      - go vet ./...
+      - task: build:frontend
+      - node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs scripts/release-workflow.test.mjs
+      - pwsh -NoProfile -File scripts/test-go.ps1
       - npm --prefix frontend run test
       - npm --prefix frontend run lint
       - npm --prefix frontend run typecheck

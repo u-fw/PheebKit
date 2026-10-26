@@ -1,10 +1,11 @@
 package main
 
 import (
-	"pheebkit/internal/app"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"pheebkit/internal/app"
 )
 
 func TestNativeDialogMissingRememberedDirectory(t *testing.T) {
