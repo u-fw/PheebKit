@@ -11,6 +11,10 @@ if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne 'X64
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 Set-Location -LiteralPath $workspace
 
+$taskNodeVersion = node --version
+if ($LASTEXITCODE -ne 0 -or $taskNodeVersion -notmatch '^v(\d+)\.' -or [int]$Matches[1] -lt 24) {
+    throw 'Release packaging requires Node.js 24 or newer on PATH.'
+}
 $taskGoVersion = go env GOVERSION
 if ($LASTEXITCODE -ne 0 -or $taskGoVersion -notmatch '^go(\d+\.\d+\.\d+)$' -or [Version]$Matches[1] -lt [Version]'1.27.3') { throw 'Security release builds require stable Go 1.27.3 or newer; enable automatic toolchain selection.' }
 
