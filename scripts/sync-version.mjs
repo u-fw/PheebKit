@@ -13,6 +13,19 @@ function update(path, indent, mutate) {
   const after = JSON.stringify(value, null, indent) + "\n";
   if (before.replaceAll("\r\n", "\n") !== after) writeFileSync(url, after);
 }
+function updateManifestIdentity() {
+  const url = new URL("../build/windows/wails.exe.manifest", import.meta.url);
+  const before = readFileSync(url, "utf8");
+  const identity =
+    /(<assemblyIdentity type="win32" name=")[^"]+(" version=")[^"]+(" processorArchitecture="\*"\/>)/g;
+  if ((before.match(identity) ?? []).length !== 1)
+    throw new Error("Windows manifest must contain exactly one application assemblyIdentity");
+  const after = before.replace(
+    identity,
+    `$1PheebKit.Desktop$2${windowsVersion}$3`,
+  );
+  if (before !== after) writeFileSync(url, after);
+}
 update("frontend/package.json", 2, (value) => {
   value.version = version;
 });
@@ -29,4 +42,5 @@ update("build/windows/info.json", "\t", (value) => {
     info.Comments = prerelease ? "Windows release candidate; Android deferred" : "Windows release; Android deferred";
   }
 });
+updateManifestIdentity();
 console.log(`PheebKit ${version} (Windows ${windowsVersion})`);

@@ -73,8 +73,7 @@ npm --prefix frontend ci
 wails generate module
 node scripts/normalize-bindings.mjs
 npm --prefix frontend run build
-go test ./...
-go vet ./...
+./scripts/test-go.ps1
 npm --prefix frontend run test
 npm --prefix frontend run typecheck
 npm --prefix frontend run lint

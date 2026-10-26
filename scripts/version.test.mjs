@@ -10,6 +10,12 @@ test("frontend, Windows metadata and diagnostics match VERSION", () => {
   assert.equal(JSON.parse(read("frontend/package-lock.json")).version, value.version);
   assert.equal(JSON.parse(read("build/windows/info.json")).fixed.file_version, value.windowsVersion);
   assert.ok(read("internal/buildinfo/version.go").includes(`const Version = ${JSON.stringify(value.version)}`));
+  assert.match(
+    read("build/windows/wails.exe.manifest"),
+    new RegExp(
+      `<assemblyIdentity type="win32" name="PheebKit\\.Desktop" version="${value.windowsVersion.replaceAll(".", "\\.")}" processorArchitecture="\\*"/>`,
+    ),
+  );
   assert.equal(read("RELEASE_NOTES.md").split(/\r?\n/)[0], `# PheebKit ${value.version}`);
 });
 

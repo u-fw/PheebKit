@@ -28,20 +28,27 @@ on:
         default: ''
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ inputs.release_tag || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   windows:
     runs-on: windows-2025
     timeout-minutes: 45
+    permissions:
+      contents: read
+    outputs:
+      source_revision: ${{ steps.plan.outputs.source_revision }}
+      release_tag: ${{ steps.plan.outputs.release_tag }}
+      publish: ${{ steps.plan.outputs.publish }}
+      checksums_sha256: ${{ steps.assets.outputs.checksums_sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ inputs.release_tag || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -52,6 +59,12 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - name: Plan verification and publication
+        id: plan
+        shell: pwsh
+        run: |
+          node scripts/ci-plan.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Install pinned build dependencies
         shell: pwsh
         run: |
@@ -61,17 +74,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm --prefix frontend run build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          ./scripts/setup-inno.ps1
-      - name: Check tagged version
-        if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
-        shell: pwsh
-        env:
-          RELEASE_TAG: ${{ inputs.release_tag }}
-        run: |
-          $tag = if ($env:RELEASE_TAG) { $env:RELEASE_TAG } else { $env:GITHUB_REF_NAME }
-          if ($tag -notmatch '^v') { throw 'Release tag must start with v' }
-          $version = (Get-Content VERSION -Raw).Trim()
-          if ($tag -ne "v$version") { throw 'Git tag and VERSION disagree' }
       - name: Prepare publisher-pinned FFmpeg test tools
         shell: pwsh
         run: ./scripts/setup-test-ffmpeg.ps1
@@ -79,10 +81,39 @@ jobs:
         shell: pwsh
         run: |
           $env:PHEEBKIT_INTEGRATION = '1'
-          go test ./... -count=1
+          $packages = @(& ./scripts/project-go-packages.ps1)
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test @packages -count=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify source and frontend
+        shell: pwsh
+        run: |
+          $packages = @(& ./scripts/project-go-packages.ps1)
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go vet @packages
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 @packages
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm --prefix frontend audit --audit-level=low
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($check in @('test', 'typecheck', 'lint', 'format:check')) {
+            npm --prefix frontend run $check
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs scripts/release-workflow.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify production binary without publishing
+        if: steps.plan.outputs.package != 'true'
+        shell: pwsh
+        run: |
+          ./scripts/build-windows.ps1 -SkipFrontend
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 -mode=binary bin/PheebKit.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --exit-code
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build optional previous-version upgrade candidate
-        if: github.event_name == 'workflow_dispatch' && inputs.upgrade_from_tag != '' && !inputs.checks_only
+        if: steps.plan.outputs.package == 'true' && github.event_name == 'workflow_dispatch' && inputs.upgrade_from_tag != ''
         shell: pwsh
         env:
           PHEEBKIT_UPGRADE_FROM_TAG: ${{ inputs.upgrade_from_tag }}
@@ -91,8 +122,12 @@ jobs:
           go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./scripts/prepare-upgrade-baseline.ps1 -Ref $env:PHEEBKIT_UPGRADE_FROM_TAG
+      - name: Install verified packaging compiler
+        if: steps.plan.outputs.package == 'true'
+        shell: pwsh
+        run: ./scripts/setup-inno.ps1
       - name: Verify and package Windows x64
-        if: ${{ !inputs.checks_only }}
+        if: steps.plan.outputs.package == 'true'
         shell: pwsh
         env:
           PHEEBKIT_STABLE_EVIDENCE: ${{ inputs.stable_evidence }}
@@ -107,7 +142,7 @@ jobs:
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify installer lifecycle in an isolated directory
-        if: ${{ !inputs.checks_only }}
+        if: steps.plan.outputs.package == 'true'
         shell: pwsh
         run: |
           if (Test-Path -LiteralPath '.tools/upgrade-baseline-path.txt') {
@@ -115,57 +150,77 @@ jobs:
           } else {
             ./scripts/verify-windows-release.ps1
           }
+      - name: Record verified package identity
+        id: assets
+        if: steps.plan.outputs.package == 'true'
+        shell: pwsh
+        env:
+          PHEEBKIT_BUILD_REVISION: ${{ steps.plan.outputs.source_revision }}
+        run: |
+          . ./scripts/release-upload.ps1
+          $version = (Get-Content VERSION -Raw).Trim()
+          $directory = Join-Path 'release' $version
+          $checksums = (Get-FileHash -LiteralPath (Join-Path $directory 'SHA256SUMS.txt') -Algorithm SHA256).Hash.ToLowerInvariant()
+          $assets = @(Get-VerifiedReleaseAssets -Directory $directory -Version $version -Revision $env:PHEEBKIT_BUILD_REVISION -ChecksumsSHA256 $checksums)
+          "checksums_sha256=$checksums" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
       - name: Upload candidate artifacts
-        if: ${{ !inputs.checks_only }}
+        if: steps.plan.outputs.package == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: PheebKit-windows-x64
-          path: release/*/*
+          path: release/
           if-no-files-found: error
           retention-days: 14
-      - name: Publish GitHub release
-        if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
+
+  publish:
+    needs: windows
+    if: ${{ needs.windows.outputs.publish == 'true' && !inputs.checks_only && (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' && inputs.release_tag != '') }}
+    runs-on: windows-2025
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.windows.outputs.source_revision }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: PheebKit-windows-x64
+          path: release-upload
+      - name: Publish verified assets without replacement
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_TAG: ${{ needs.windows.outputs.release_tag }}
+          PHEEBKIT_BUILD_REVISION: ${{ needs.windows.outputs.source_revision }}
+          PHEEBKIT_CHECKSUMS_SHA256: ${{ needs.windows.outputs.checksums_sha256 }}
         run: |
-          $tag = if ($env:RELEASE_TAG) { $env:RELEASE_TAG } else { $env:GITHUB_REF_NAME }
+          . ./scripts/release-upload.ps1
+          $tag = $env:RELEASE_TAG
           $version = (Get-Content VERSION -Raw).Trim()
-          $title = "PheebKit $version — Windows x64"
+          Assert-ReleaseTag -Tag $tag -Version $version -Revision $env:PHEEBKIT_BUILD_REVISION
+          $assetDirectory = Join-Path 'release-upload' $version
+          $assetPaths = @(Get-VerifiedReleaseAssets -Directory $assetDirectory -Version $version -Revision $env:PHEEBKIT_BUILD_REVISION -ChecksumsSHA256 $env:PHEEBKIT_CHECKSUMS_SHA256)
+
           gh release view $tag --json tagName 2>$null | Out-Null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --draft --title $title --notes-file RELEASE_NOTES.md
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $tag already exists; published assets are immutable"
           }
-          gh release upload $tag release/$version/* --clobber
+
+          $title = "PheebKit $version — Windows x64"
+          gh release create $tag --verify-tag --draft --title $title --notes-file RELEASE_NOTES.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $uploadArguments = @('release', 'upload', $tag) + $assetPaths
+          gh @uploadArguments
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          Assert-ReleaseTag -Tag $tag -Version $version -Revision $env:PHEEBKIT_BUILD_REVISION
           if ($version.Contains('-')) {
             gh release edit $tag --draft=false --prerelease
           } else {
             gh release edit $tag --draft=false --prerelease=false
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Finish checks-only verification
-        if: inputs.checks_only
-        shell: pwsh
-        run: |
-          go vet ./...
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          npm --prefix frontend audit --audit-level=low
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          foreach ($check in @('test', 'typecheck', 'lint', 'format:check')) {
-            npm --prefix frontend run $check
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
-          node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          ./scripts/build-windows.ps1
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 -mode=binary bin/PheebKit.exe
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-# Produces reviewable candidates only. GitHub Releases publication remains a
-# separate explicit owner action; Android is intentionally absent.

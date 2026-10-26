@@ -1,6 +1,6 @@
 # Naming migration and compatibility
 
-Current branding is **菲比工具箱 / PheebKit**. Since 0.2.0-rc.3, the Go module is `pheebkit`, the frontend version constant is `__PHEEBKIT_VERSION__`, public environment variables use `PHEEBKIT_*`, and the Windows manifest identity is `studio.pheebkit.app`. The integration flag is `PHEEBKIT_INTEGRATION=1`; its former spelling is no longer used.
+Current branding is **菲比工具箱 / PheebKit**. Since 0.2.0-rc.3, the Go module is `pheebkit`, the frontend version constant is `__PHEEBKIT_VERSION__`, and public environment variables use `PHEEBKIT_*`. The current candidate replaces the old `studio.pheebkit.app` Windows manifest identity with `PheebKit.Desktop`. The integration flag is `PHEEBKIT_INTEGRATION=1`; its former spelling is no longer used.
 
 | Current identity | Existing installation behavior |
 | --- | --- |

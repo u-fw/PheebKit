@@ -29,6 +29,14 @@ function Invoke-Checked([string]$Program, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "$Program failed with exit code $LASTEXITCODE" }
 }
 
+function Get-ProjectGoPackages {
+    $packages = @(& (Join-Path $PSScriptRoot 'project-go-packages.ps1'))
+    if ($LASTEXITCODE -ne 0 -or $packages.Count -eq 0) {
+        throw 'Unable to enumerate first-party Go packages.'
+    }
+    return ,$packages
+}
+
 function File-SHA256([string]$Path) {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
@@ -177,12 +185,13 @@ try {
     Invoke-Checked node @('scripts/sync-version.mjs')
     $dirty = git status --porcelain --untracked-files=normal
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Release packaging requires committed sources and synchronized version metadata; commit changes before packaging.' }
-    Invoke-Checked node @('--test', 'scripts/version.test.mjs', 'scripts/stable-evidence.test.mjs')
+    Invoke-Checked node @('--test', 'scripts/version.test.mjs', 'scripts/stable-evidence.test.mjs', 'scripts/release-workflow.test.mjs')
     Invoke-Checked npm @('--prefix', 'frontend', 'ci')
     Invoke-Checked npm @('--prefix', 'frontend', 'run', 'build')
-    Invoke-Checked go @('test', './...')
-    Invoke-Checked go @('vet', './...')
-    Invoke-Checked go @('run', 'golang.org/x/vuln/cmd/govulncheck@v1.9.0', './...')
+    $goPackages = Get-ProjectGoPackages
+    Invoke-Checked go (@('test') + $goPackages)
+    Invoke-Checked go (@('vet') + $goPackages)
+    Invoke-Checked go (@('run', 'golang.org/x/vuln/cmd/govulncheck@v1.9.0') + $goPackages)
     Invoke-Checked npm @('--prefix', 'frontend', 'audit', '--audit-level=low')
     foreach ($check in @('test', 'typecheck', 'lint', 'format:check')) { Invoke-Checked npm @('--prefix', 'frontend', 'run', $check) }
 

@@ -46,11 +46,24 @@ The installer installs per user to `%LOCALAPPDATA%/Programs/PheebKit`, supports 
 
 ## CI and publication
 
-`.github/workflows/windows.yml` runs Windows verification/packaging for PRs, main, version tags and manual dispatch. Official actions are pinned to verified release commit SHAs. Tagged builds must match `VERSION`. Candidate files are uploaded as workflow artifacts; repository permissions are read-only and no GitHub Release is created/published. Hosted rc.2 main/tag verification passed in the public repository; each later candidate requires its own matching-revision run.
+`.github/workflows/windows.yml` always verifies source, real FFmpeg processing, frontend quality and a production binary. Ordinary PR/main verification does not require stable-release evidence, even when `VERSION` is final. The tested event planner selects packaging separately:
+
+| Event | Verification | Packaging and installer lifecycle | Publication |
+| --- | --- | --- | --- |
+| PR or main push, any version | Always | No | No |
+| Matching prerelease tag push | Always | Yes | Prerelease |
+| Matching final tag push | Always | No; dispatch with reviewed evidence | No |
+| Manual `checks_only=true` | Always | No | No |
+| Manual candidate, no `release_tag` | Always | Yes; final versions require `stable_evidence` | No |
+| Manual matching `release_tag` | Always | Yes; final versions require `stable_evidence` | Prerelease or final |
+
+Official actions remain pinned to verified release commit SHAs. The verification job has `contents: read`; only a dependent publish job receives `contents: write`. Initial checkout uses the event SHA or selected existing tag, and publication checks out the exact verified commit. Before upload and again before publishing the draft, the remote lightweight/annotated tag must still resolve to that commit. The upload validator compares the checksum manifest with the digest emitted by the verification job, checks all four asset digests and exact filenames, and reads the portable ZIP's bounded `BUILD_INFO.json` and application hash without executing an artifact in the write-permission job. Publication refuses an existing release, creates a draft with `--verify-tag` and uploads without overwrite. GitHub's immutable-release setting and tag-protection rules are still separate repository-owner controls.
+
+Packaged candidates remain available as workflow artifacts. Source revision `94665cb` passed [packaging run 40275376229](https://github.com/u-fw/PheebKit/actions/runs/40275376229) and [checks-only run 40275353795](https://github.com/u-fw/PheebKit/actions/runs/40275353795); rc.5 is published as a prerelease. Those runs predate the event-planning and isolated-upload audit changes; new source requires its own hosted result.
 
 CI downloads the publisher-pinned test FFmpeg via `scripts/setup-test-ffmpeg.ps1` and runs real media tests. For cross-version checks, manual dispatch accepts `upgrade_from_tag`; `scripts/prepare-upgrade-baseline.ps1` builds that reviewed local tag in an isolated worktree, then `verify-windows-release.ps1 -PreviousReleaseDirectory <candidate-directory>` installs it before the new candidate. Default lifecycle checks do not by themselves establish cross-version upgrade compatibility. See [release acceptance](release-acceptance.md) for commands and gates.
 
-For publication, create the matching tag, draft a GitHub Release and attach these five files. Mark beta/rc builds as prereleases and include changed behavior, runtime requirements and known limitations. Once published, do not replace that version's assets: changes get a new version. Repository/tag/release publication still requires explicit owner authorization.
+Publication is fail-closed: a prerelease tag can publish automatically; for a final version, dispatch the existing matching tag through `release_tag`, leave `checks_only` false and supply reviewed exact-revision `stable_evidence`. The workflow publishes the five tested files without replacing an existing release. Beta/rc builds are marked as prereleases and include changed behavior, runtime requirements and known limitations. Changes after publication get a new version. Repository/tag/release publication still requires explicit owner authorization.
 
 ## Local verification and remaining acceptance
 
