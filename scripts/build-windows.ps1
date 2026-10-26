@@ -52,4 +52,5 @@ New-Item -ItemType Directory -Force -Path (Join-Path $workspace 'bin') | Out-Nul
 if (-not $OutputPath) { $OutputPath = Join-Path $workspace 'bin/PheebKit.exe' }
 $taskOutput = [IO.Path]::GetFullPath($OutputPath)
 if (-not $taskOutput.StartsWith($workspace + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Build output must remain inside this workspace' }
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $taskOutput) | Out-Null
 Copy-Item -LiteralPath (Join-Path $workspace 'build/bin/PheebKit.exe') -Destination $taskOutput
