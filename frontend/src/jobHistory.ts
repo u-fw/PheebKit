@@ -31,6 +31,14 @@ function compareTimestamp(left = "", right = ""): number {
 
 function newestJob(current: Job | undefined, incoming: Job): Job {
   if (!current) return incoming;
+  if (current.eventSequence || incoming.eventSequence) {
+    if (
+      current.eventSequence &&
+      incoming.eventSequence &&
+      incoming.eventSequence < current.eventSequence
+    )
+      return current;
+  }
   if ((stateOrder[incoming.state] ?? 0) < (stateOrder[current.state] ?? 0))
     return current;
   if (terminalStates.has(current.state)) {
@@ -57,24 +65,41 @@ interface Entry {
 export class JobHistory {
   private entries = new Map<string, Entry>();
   private currentRevision = 0;
+  private readEventSequence = 0;
 
   get revision(): number {
     return this.currentRevision;
   }
 
   update(jobs: Job[]): Job[] {
+    return this.updateWithSequence(jobs).jobs;
+  }
+
+  updateWithSequence(jobs: Job[]): { jobs: Job[]; sequenceGap: boolean } {
     const revision = ++this.currentRevision;
+    let sequenceGap = false;
     for (const job of jobs) {
+      if (
+        job.eventSequence &&
+        job.eventSequence > this.readEventSequence &&
+        job.eventSequence !== this.readEventSequence + 1
+      ) {
+        sequenceGap = true;
+      }
+      if (job.eventSequence && job.eventSequence > this.readEventSequence)
+        this.readEventSequence = job.eventSequence;
       const current = this.entries.get(job.id)?.job;
       this.entries.set(job.id, { job: newestJob(current, job), revision });
     }
-    return this.trim();
+    return { jobs: this.trim(), sequenceGap };
   }
 
   reconcile(jobs: Job[], requestedAt: number): Job[] {
     const revision = ++this.currentRevision;
     const next = new Map<string, Entry>();
     for (const job of jobs) {
+      if (job.eventSequence && job.eventSequence > this.readEventSequence)
+        this.readEventSequence = job.eventSequence;
       const current = this.entries.get(job.id);
       next.set(
         job.id,

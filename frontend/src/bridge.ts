@@ -99,6 +99,7 @@ export interface Job {
   project?: Project | null;
   trim?: Core.TimeRange | null;
   id: string;
+  eventSequence?: number;
   projectID: string;
   state: string;
   input: Source;
@@ -186,6 +187,7 @@ function jobView(job: Core.Job): Job {
       : null,
     trim: job.trim,
     id: job.id,
+    eventSequence: job.eventSequence,
     projectID: job.projectID,
     state: job.state,
     input: job.input,
@@ -401,6 +403,9 @@ export const API = {
     preferencesView(await Service.SaveSettings(settings, name)),
   getMediaPreviewURL: async (uri: string): Promise<string> =>
     Service.GetMediaPreviewURL(uri),
+  releaseMediaPreviewURL: async (url: string): Promise<void> => {
+    await Service.ReleaseMediaPreviewURL(url);
+  },
   getAudioWaveform: async (
     uri: string,
     start: number,
@@ -428,6 +433,9 @@ export const API = {
   ): Promise<FFmpegSetupStatus> =>
     Service.StartCustomFFmpegSetup(link, sha256, trustBuild),
   cancelFFmpegSetup: async (): Promise<void> => Service.CancelFFmpegSetup(),
+  subscribeFFmpegSetup: (
+    callback: (status: FFmpegSetupStatus) => void,
+  ): (() => void) => EventsOn("ffmpeg:setup", callback),
   getPlatform: async (): Promise<string> => Service.GetPlatform(),
   getSystemAccent: async (): Promise<string> => Service.GetSystemAccent(),
   getEnvironment: async (): Promise<EnvironmentStatus> =>

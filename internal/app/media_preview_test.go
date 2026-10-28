@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,57 @@ import (
 	"pheebkit/internal/core"
 	"pheebkit/internal/sourcefile"
 )
+
+func TestMediaPreviewTokensUseLruAndExplicitRelease(t *testing.T) {
+	service := NewService()
+	defer service.Close()
+	directory := t.TempDir()
+	handler := service.AssetHandler(http.NotFoundHandler())
+	urls := make([]string, previewTokenLimit+1)
+	paths := make([]string, len(urls))
+	for index := range urls {
+		path := filepath.Join(directory, fmt.Sprintf("preview-%02d.mp4", index))
+		if err := os.WriteFile(path, []byte("0123456789"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		fingerprint, err := sourcefile.Fingerprint(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		service.media[path] = core.Media{Source: source(path), SourceFingerprint: fingerprint}
+		url, err := service.GetMediaPreviewURL(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		urls[index] = url
+		paths[index] = path
+	}
+	if len(service.previewTokens) != previewTokenLimit {
+		t.Fatalf("preview token cache has %d entries", len(service.previewTokens))
+	}
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, urls[0], nil))
+	if response.Code != http.StatusNotFound {
+		t.Fatal("least recently used preview token was not evicted")
+	}
+
+	leased, err := service.GetMediaPreviewURL(paths[len(paths)-1])
+	if err != nil || leased != urls[len(urls)-1] {
+		t.Fatalf("same source did not acquire another reference: %s %v", leased, err)
+	}
+	service.ReleaseMediaPreviewURL(leased)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodHead, leased, nil))
+	if response.Code != http.StatusOK {
+		t.Fatal("releasing one shared reference revoked an active preview")
+	}
+	service.ReleaseMediaPreviewURL(leased)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, leased, nil))
+	if response.Code != http.StatusNotFound {
+		t.Fatal("released preview token remained valid")
+	}
+}
 
 func TestMediaPreviewRangeAndAccessBoundary(t *testing.T) {
 	service := NewService()

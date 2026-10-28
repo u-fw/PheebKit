@@ -16,6 +16,7 @@ import (
 	"pheebkit/internal/bundledffmpeg"
 	"pheebkit/internal/compat"
 	"pheebkit/internal/core"
+	"pheebkit/internal/processguard"
 )
 
 type BinaryStatus struct {
@@ -215,12 +216,10 @@ func executablePairAvailable(directory string) bool {
 func checkBinary(ctx context.Context, binary BinaryStatus, name string) (BinaryStatus, error) {
 	binary.Available, binary.Version = false, ""
 	cmd := exec.CommandContext(ctx, binary.Path, "-version")
-	hidePlatformProcess(cmd)
 	var stdout, stderr limitedBuffer
 	stdout.limit, stderr.limit = 64*1024, 16*1024
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
-	cmd.WaitDelay = time.Second
-	if err := cmd.Run(); err != nil {
+	if err := processguard.Run(cmd); err != nil {
 		if ctx.Err() != nil {
 			err = ctx.Err()
 		}
@@ -284,20 +283,39 @@ func (s *Service) GetEnvironment() Environment {
 		return Environment{Platform: runtime.GOOS, Message: "当前平台尚未集成原生 FFmpeg。"}
 	}
 	s.configMu.RLock()
-	defer s.configMu.RUnlock()
+	selected := s.environment
+	configured := s.configuration
+	s.configMu.RUnlock()
 	ctx, cancel := context.WithTimeout(s.ctx, environmentCheckTimeout)
 	defer cancel()
 	// Report the binaries owned by this instance, not settings another window
 	// may have written while this instance was processing jobs.
-	environment := validateEnvironment(ctx, s.environment)
+	validated := validateEnvironment(ctx, selected)
 	config, err := readBinaryConfig()
+	external := Environment{}
+	if err == nil {
+		external = discoverEnvironment(config)
+	}
+	s.configMu.Lock()
+	if configured == s.configuration && sameSelectedEnvironment(selected, s.environment) {
+		s.environment = validated
+	}
+	environment := s.environment
+	configuration := s.configuration
+	configurationError := s.configurationError
+	s.configMu.Unlock()
 	if err != nil {
 		environment.Message = appendEnvironmentMessage(environment.Message, "无法读取共享 FFmpeg 配置："+err.Error()+"。本窗口继续使用上方路径。")
-	} else if config != s.configuration || !sameSelectedEnvironment(discoverEnvironment(config), s.environment) {
+	} else if config != configuration || !sameSelectedEnvironment(external, environment) {
 		environment.Message = appendEnvironmentMessage(environment.Message, "检测到 FFmpeg 配置已在其他窗口或应用外更改。本窗口继续使用上方路径；请等待任务结束，再点击重新检测以同步配置。")
-	} else if s.configurationError != "" {
-		environment.Message = appendEnvironmentMessage(environment.Message, s.configurationError)
+	} else if configurationError != "" {
+		environment.Message = appendEnvironmentMessage(environment.Message, configurationError)
 	}
+	s.configMu.Lock()
+	if configured == s.configuration && sameSelectedEnvironment(selected, s.environment) {
+		s.environment.Message = environment.Message
+	}
+	s.configMu.Unlock()
 	return environment
 }
 

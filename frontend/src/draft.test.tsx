@@ -1,10 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
+// @vitest-environment happy-dom
+
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { draftFingerprint, inOutputDirectory } from "./draft";
 import { makeProject, defaultSettings } from "./project";
 import { UnsavedDialog } from "./components/UnsavedDialog";
 import { ExitDialog } from "./components/ExitDialog";
+import { ProjectLibrary } from "./components/ProjectLibrary";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { setLanguage } from "./i18n";
 vi.mock("./bridge", () => ({ API: {} }));
+beforeEach(() => setLanguage("zh-CN"));
+afterEach(cleanup);
 describe("editable project protection", () => {
   it("tracks media/output/settings but ignores regenerated task identities", () => {
     const media = {
@@ -68,5 +75,38 @@ describe("editable project protection", () => {
     expect(exit).toContain("保存项目并退出");
     expect(exit).toContain("放弃修改并退出");
     expect(exit).not.toContain("退出会取消这些操作");
+  });
+  it("restores an inactive recovery draft through the visible action", () => {
+    const restore = vi.fn();
+    render(
+      <ProjectLibrary
+        library={{
+          preferences: {
+            autosave: true,
+            intervalSeconds: 15,
+            draftLimit: 5,
+            retentionDays: 7,
+            recentLimit: 10,
+            undoLimit: 50,
+          },
+          drafts: [
+            {
+              id: "draft-1",
+              source: "C:/media/example.mp4",
+              updatedAt: "2026-10-28T08:00:00Z",
+              active: false,
+            },
+          ],
+          recent: [],
+          error: "",
+        }}
+        connected
+        refresh={async () => {}}
+        openRecent={() => {}}
+        restore={restore}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "恢复草稿" }));
+    expect(restore).toHaveBeenCalledWith("draft-1");
   });
 });

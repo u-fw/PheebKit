@@ -87,6 +87,8 @@ export function QueueStatus():Promise<app.QueueStatus>;
 
 export function RefreshCapabilities():Promise<core.Capabilities>;
 
+export function ReleaseMediaPreviewURL(arg1:string):Promise<void>;
+
 export function RememberOutputDirectory(arg1:string):Promise<void>;
 
 export function RemoveRecoveryDraft(arg1:string):Promise<void>;

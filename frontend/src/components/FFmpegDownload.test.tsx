@@ -15,6 +15,7 @@ const status: FFmpegSetupStatus = {
   active: true,
   error: "",
   version: "",
+  sequence: 1,
 };
 const missingEnvironment: EnvironmentStatus = {
   platform: "windows",

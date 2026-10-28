@@ -12,10 +12,10 @@ func TestDesktopExposesReviewedIPCOnly(t *testing.T) {
 			t.Fatalf("internal method exposed: %s", name)
 		}
 	}
-	if typ.NumMethod() != 61 {
+	if typ.NumMethod() != 62 {
 		t.Fatalf("review changes to the desktop API: got %d methods", typ.NumMethod())
 	}
-	for _, name := range []string{"Start", "Probe", "ChooseMediaPaths", "SaveProject", "ConfirmQuit", "GetDiagnosticPreview", "SetLocale", "GetAudioWaveform", "GetSystemAccent"} {
+	for _, name := range []string{"Start", "Probe", "ChooseMediaPaths", "SaveProject", "ConfirmQuit", "GetDiagnosticPreview", "GetMediaPreviewURL", "ReleaseMediaPreviewURL", "SetLocale", "GetAudioWaveform", "GetSystemAccent"} {
 		if _, ok := typ.MethodByName(name); !ok {
 			t.Fatalf("missing application API: %s", name)
 		}

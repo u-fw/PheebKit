@@ -14,8 +14,16 @@ type QueueStatus jobs.QueueStatus
 func (s *Service) QueueStatus() QueueStatus { return QueueStatus(s.jobs.QueueStatus()) }
 
 func (s *Service) emitQueueStatus() {
+	s.queueEmitMu.Lock()
+	defer s.queueEmitMu.Unlock()
+	status := s.QueueStatus()
+	if s.queueEmitted && status.Revision == s.queueEmittedRev {
+		return
+	}
+	s.queueEmittedRev = status.Revision
+	s.queueEmitted = true
 	if s.app != nil {
-		s.app.Emit("queue:updated", s.QueueStatus())
+		s.app.Emit("queue:updated", status)
 	}
 }
 

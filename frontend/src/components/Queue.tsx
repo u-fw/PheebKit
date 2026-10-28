@@ -1,5 +1,13 @@
 import { t } from "../i18n";
-import { useEffect, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { Job } from "../bridge";
 import { formatBytes, formatDuration, savedPercent } from "../format";
 import { Icon } from "./Icon";
@@ -25,8 +33,9 @@ const stateNames: Record<string, string> = {
   interrupted: "已中断",
 };
 const activeStates = new Set(["queued", "preparing", "running", "cancelling"]);
+const jobPageSize = 20;
 
-function JobCard({
+const JobCard = memo(function JobCard({
   job,
   cancel,
   reuse,
@@ -401,7 +410,7 @@ function JobCard({
       </details>
     </article>
   );
-}
+});
 
 export function Queue({
   jobs,
@@ -433,32 +442,83 @@ export function Queue({
   const [filter, setFilter] = useState<
     "all" | "active" | "completed" | "failed"
   >("all");
-  const active = jobs.filter((job) =>
-    activeStates.has(job.state.toLowerCase()),
-  );
-  const completed = jobs.filter(
-    (job) => job.state.toLowerCase() === "completed",
-  );
-  const failed = jobs.filter((job) =>
-    ["failed", "interrupted"].includes(job.state.toLowerCase()),
-  );
-  const visible =
-    filter === "active"
-      ? active
-      : filter === "completed"
-        ? completed
-        : filter === "failed"
-          ? failed
-          : jobs;
+  const { active, completed, failed, visible } = useMemo(() => {
+    const nextActive = jobs.filter((job) =>
+      activeStates.has(job.state.toLowerCase()),
+    );
+    const nextCompleted = jobs.filter(
+      (job) => job.state.toLowerCase() === "completed",
+    );
+    const nextFailed = jobs.filter((job) =>
+      ["failed", "interrupted"].includes(job.state.toLowerCase()),
+    );
+    return {
+      active: nextActive,
+      completed: nextCompleted,
+      failed: nextFailed,
+      visible:
+        filter === "active"
+          ? nextActive
+          : filter === "completed"
+            ? nextCompleted
+            : filter === "failed"
+              ? nextFailed
+              : jobs,
+    };
+  }, [filter, jobs]);
   const [storageError, setStorageError] = useState("");
   const [scheduleError, setScheduleError] = useState("");
   const [scheduling, setScheduling] = useState(false);
-  const pendingIDs =
-    queueStatus?.pendingIDs ??
-    jobs
-      .filter((job) => job.state.toLowerCase() === "queued")
-      .map((job) => job.id);
+  const [renderLimit, setRenderLimit] = useState(jobPageSize);
+  const pendingIDs = useMemo(
+    () =>
+      queueStatus?.pendingIDs ??
+      jobs
+        .filter((job) => job.state.toLowerCase() === "queued")
+        .map((job) => job.id),
+    [jobs, queueStatus?.pendingIDs],
+  );
+  const orderedVisible = useMemo(
+    () => orderQueueJobs(visible, pendingIDs),
+    [pendingIDs, visible],
+  );
+  const pendingRanks = useMemo(
+    () => new Map(pendingIDs.map((id, index) => [id, index])),
+    [pendingIDs],
+  );
   const paused = queueStatus?.paused ?? false;
+  const callbacks = useRef({
+    cancel,
+    reuse,
+    onMoveQueued,
+    notify,
+    compareSample,
+  });
+  useLayoutEffect(() => {
+    callbacks.current = { cancel, reuse, onMoveQueued, notify, compareSample };
+  }, [cancel, compareSample, notify, onMoveQueued, reuse]);
+  const stableCancel = useCallback(
+    (id: string) => callbacks.current.cancel(id),
+    [],
+  );
+  const stableReuse = useCallback(
+    (id: string) => callbacks.current.reuse(id),
+    [],
+  );
+  const stableMove = useCallback(
+    (id: string, direction: number) =>
+      callbacks.current.onMoveQueued?.(id, direction),
+    [],
+  );
+  const stableNotify = useCallback(
+    (message: string, options?: { action?: SnackbarAction }) =>
+      callbacks.current.notify?.(message, options),
+    [],
+  );
+  const stableCompare = useCallback(
+    (id: string) => callbacks.current.compareSample?.(id),
+    [],
+  );
   async function pauseQueue() {
     const nextPaused = !paused;
     setScheduling(true);
@@ -497,6 +557,13 @@ export function Queue({
       alive = false;
     };
   }, [terminalCount, jobs.length]);
+  const focusIndex = focusJobID
+    ? orderedVisible.findIndex((job) => job.id === focusJobID)
+    : -1;
+  const activeRenderLimit = Math.max(
+    renderLimit,
+    focusIndex >= 0 ? focusIndex + 1 : 0,
+  );
   useEffect(() => {
     if (!focusJobID) return;
     const frame = requestAnimationFrame(() => {
@@ -509,7 +576,7 @@ export function Queue({
       cancelAnimationFrame(frame);
       window.clearTimeout(timer);
     };
-  }, [focusJobID, onFocusHandled]);
+  }, [focusJobID, onFocusHandled, activeRenderLimit]);
   return (
     <div className="page queue-page">
       <header className="page-heading">
@@ -559,28 +626,40 @@ export function Queue({
           <button
             className={filter === "all" ? "selected" : ""}
             aria-pressed={filter === "all"}
-            onClick={() => setFilter("all")}
+            onClick={() => {
+              setFilter("all");
+              setRenderLimit(jobPageSize);
+            }}
           >
             {t("全部")} {jobs.length}
           </button>
           <button
             className={filter === "active" ? "selected" : ""}
             aria-pressed={filter === "active"}
-            onClick={() => setFilter("active")}
+            onClick={() => {
+              setFilter("active");
+              setRenderLimit(jobPageSize);
+            }}
           >
             {t("进行中")} {active.length}
           </button>
           <button
             className={filter === "completed" ? "selected" : ""}
             aria-pressed={filter === "completed"}
-            onClick={() => setFilter("completed")}
+            onClick={() => {
+              setFilter("completed");
+              setRenderLimit(jobPageSize);
+            }}
           >
             {t("已完成")} {completed.length}
           </button>
           <button
             className={filter === "failed" ? "selected" : ""}
             aria-pressed={filter === "failed"}
-            onClick={() => setFilter("failed")}
+            onClick={() => {
+              setFilter("failed");
+              setRenderLimit(jobPageSize);
+            }}
           >
             {t("失败 / 中断")} {failed.length}
           </button>
@@ -595,21 +674,36 @@ export function Queue({
       </div>
       {visible.length ? (
         <div className="job-list">
-          {orderQueueJobs(visible, pendingIDs).map((job) => (
+          {orderedVisible.slice(0, activeRenderLimit).map((job) => (
             <JobCard
               key={job.id}
               job={job}
-              cancel={cancel}
-              reuse={reuse}
-              rank={pendingIDs.indexOf(job.id)}
+              cancel={stableCancel}
+              reuse={stableReuse}
+              rank={pendingRanks.get(job.id) ?? -1}
               pendingCount={pendingIDs.length}
               paused={paused}
-              move={onMoveQueued}
-              notify={notify}
-              compareSample={compareSample}
+              move={onMoveQueued ? stableMove : undefined}
+              notify={notify ? stableNotify : undefined}
+              compareSample={compareSample ? stableCompare : undefined}
               notificationTarget={focusJobID === job.id}
             />
           ))}
+          {orderedVisible.length > activeRenderLimit && (
+            <div className="action-row queue-load-more">
+              <button
+                className="button outlined"
+                onClick={() =>
+                  setRenderLimit((current) =>
+                    Math.min(orderedVisible.length, current + jobPageSize),
+                  )
+                }
+              >
+                {t("加载更多任务")} ·{" "}
+                {orderedVisible.length - activeRenderLimit}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <section className="empty-state surface">

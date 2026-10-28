@@ -1,0 +1,73 @@
+name: Security audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/dependabot.yml"
+      - ".github/workflows/**"
+      - "go.mod"
+      - "go.sum"
+      - "frontend/package-lock.json"
+      - "frontend/package.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/dependabot.yml"
+      - ".github/workflows/**"
+      - "go.mod"
+      - "go.sum"
+      - "frontend/package-lock.json"
+      - "frontend/package.json"
+  schedule:
+    - cron: "23 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27.3"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Lint GitHub workflows
+        shell: pwsh
+        run: |
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test scripts/security-workflow.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install locked frontend dependencies without lifecycle scripts
+        shell: pwsh
+        run: |
+          npm --prefix frontend ci --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Audit the npm dependency graph
+        shell: pwsh
+        run: |
+          npm --prefix frontend audit --audit-level=low
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Audit reachable Go vulnerabilities
+        shell: pwsh
+        run: |
+          $packages = @(& ./scripts/project-go-packages.ps1)
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 @packages
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

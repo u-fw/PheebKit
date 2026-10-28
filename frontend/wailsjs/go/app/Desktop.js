@@ -170,6 +170,10 @@ export function RefreshCapabilities() {
   return window['go']['app']['Desktop']['RefreshCapabilities']();
 }
 
+export function ReleaseMediaPreviewURL(arg1) {
+  return window['go']['app']['Desktop']['ReleaseMediaPreviewURL'](arg1);
+}
+
 export function RememberOutputDirectory(arg1) {
   return window['go']['app']['Desktop']['RememberOutputDirectory'](arg1);
 }

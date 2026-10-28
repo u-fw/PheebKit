@@ -113,7 +113,7 @@ jobs:
             npm --prefix frontend run $check
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs scripts/release-workflow.test.mjs
+          node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs scripts/release-workflow.test.mjs scripts/security-workflow.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify production binary without publishing
         if: steps.plan.outputs.package != 'true'

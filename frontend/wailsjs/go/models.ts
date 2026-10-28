@@ -53,6 +53,7 @@ export namespace app {
 	    active: boolean;
 	    error: string;
 	    version: string;
+	    sequence: number;
 	}
 	export interface JobReuse {
 	    project: core.Project;
@@ -191,6 +192,7 @@ export namespace core {
 	}
 	export interface Job {
 	    id: string;
+	    eventSequence?: number;
 	    projectID: string;
 	    input: Source;
 	    sourceFingerprint?: string;

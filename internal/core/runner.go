@@ -145,6 +145,7 @@ type Result struct {
 
 type Job struct {
 	ID                string     `json:"id"`
+	EventSequence     uint64     `json:"eventSequence,omitempty"`
 	ProjectID         string     `json:"projectID"`
 	Input             Source     `json:"input"`
 	SourceFingerprint string     `json:"sourceFingerprint,omitempty"`

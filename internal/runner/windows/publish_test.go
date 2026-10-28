@@ -1,9 +1,13 @@
 package windows
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"pheebkit/internal/core"
 )
 
 func TestPublicationNeverReplacesExistingOutput(t *testing.T) {
@@ -32,5 +36,24 @@ func TestScratchCleanupRejectsOutsideParent(t *testing.T) {
 	}
 	if _, err := os.Stat(other); err != nil {
 		t.Fatalf("cleanup affected unrelated directory: %v", err)
+	}
+}
+
+func TestScratchCleanupFailureAfterPublicationIsAWarning(t *testing.T) {
+	result := core.Result{Output: core.Source{URI: "C:/output.mp4"}}
+	var resultErr error
+	var messages []string
+	applyScratchCleanupOutcome(&result, &resultErr, func(message string) {
+		messages = append(messages, message)
+	}, errors.New("file is busy"))
+	if resultErr != nil {
+		t.Fatalf("successful publication became failed: %v", resultErr)
+	}
+	if result.Verification == nil || len(result.Verification.Warnings) != 1 ||
+		!strings.Contains(result.Verification.Warnings[0], "file is busy") {
+		t.Fatalf("cleanup warning was not retained: %+v", result.Verification)
+	}
+	if len(messages) != 1 || messages[0] != result.Verification.Warnings[0] {
+		t.Fatalf("visible cleanup warning missing: %#v", messages)
 	}
 }

@@ -18,10 +18,12 @@ import (
 )
 
 const (
-	queueLimit   = 32
-	historyLimit = 200
-	logByteLimit = 64 * 1024
-	logLineLimit = 120
+	queueLimit          = 32
+	historyLimit        = 200
+	logByteLimit        = 64 * 1024
+	logLineLimit        = 120
+	initialPersistRetry = 500 * time.Millisecond
+	maximumPersistRetry = 30 * time.Second
 )
 
 type record struct {
@@ -31,6 +33,7 @@ type record struct {
 	lastProgress time.Time
 	lastLog      time.Time
 	logBytes     int
+	lastEvent    uint64
 }
 
 type Manager struct {
@@ -52,6 +55,10 @@ type Manager struct {
 	persist          func([]core.Job) error
 	persistenceError string
 	savedStates      map[string]string
+	persistWake      chan struct{}
+	persistStop      chan struct{}
+	persistDone      chan struct{}
+	eventSequence    uint64
 }
 
 // Restore only restores display records. Persisted commands are never executed.
@@ -85,7 +92,10 @@ func New(runner core.Runner, emit func(core.Job)) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	m := &Manager{runner: runner, ctx: ctx, cancel: cancel, records: make(map[string]*record),
 		wake: make(chan struct{}, 1), events: make(chan core.Job, 64),
-		done: make(chan struct{}), eventDone: make(chan struct{})}
+		done: make(chan struct{}), eventDone: make(chan struct{}),
+		persistWake: make(chan struct{}, 1), persistStop: make(chan struct{}),
+		persistDone: make(chan struct{})}
+	go m.persistenceWorker()
 	go func() {
 		defer close(m.eventDone)
 		for job := range m.events {
@@ -212,9 +222,9 @@ func (m *Manager) EnqueueBatch(plans []core.ExecutionPlan, projects []core.Proje
 		queued[i] = snapshot(job)
 	}
 	m.queueRevision++
-	m.persistLocked()
-	for _, job := range queued {
-		m.emitLocked(job)
+	m.schedulePersistLocked()
+	for i, job := range queued {
+		queued[i] = m.emitLocked(job)
 	}
 	m.wakeLocked()
 	return queued, nil
@@ -273,7 +283,10 @@ func (m *Manager) List() []core.Job {
 	defer m.mu.Unlock()
 	jobs := make([]core.Job, 0, len(m.order))
 	for _, id := range m.order {
-		jobs = append(jobs, snapshot(m.records[id].job))
+		rec := m.records[id]
+		job := snapshot(rec.job)
+		job.EventSequence = rec.lastEvent
+		jobs = append(jobs, job)
 	}
 	return jobs
 }
@@ -285,7 +298,9 @@ func (m *Manager) Get(id string) (core.Job, bool) {
 	if !exists {
 		return core.Job{}, false
 	}
-	return snapshot(rec.job), true
+	job := snapshot(rec.job)
+	job.EventSequence = rec.lastEvent
+	return job, true
 }
 
 func (m *Manager) Close() {
@@ -306,6 +321,8 @@ func (m *Manager) Close() {
 		<-m.done
 		close(m.events)
 		<-m.eventDone
+		close(m.persistStop)
+		<-m.persistDone
 	})
 }
 
@@ -425,40 +442,116 @@ func (m *Manager) log(id, line string) {
 
 func (m *Manager) publishLocked(job core.Job) {
 	if m.persist != nil && m.savedStates[job.ID] != job.State {
-		m.persistLocked()
+		m.schedulePersistLocked()
 	}
 	m.emitLocked(job)
 }
 
-func (m *Manager) persistLocked() {
-	if m.persist != nil {
-		all := make([]core.Job, 0, len(m.order))
-		for _, id := range m.order {
-			all = append(all, snapshot(m.records[id].job))
+func (m *Manager) schedulePersistLocked() {
+	if m.persist == nil {
+		return
+	}
+	select {
+	case m.persistWake <- struct{}{}:
+	default:
+	}
+}
+
+func (m *Manager) persistenceWorker() {
+	defer close(m.persistDone)
+	var retryTimer *time.Timer
+	var retry <-chan time.Time
+	retryDelay := initialPersistRetry
+	stopTimer := func() {
+		if retryTimer != nil {
+			retryTimer.Stop()
+			retryTimer = nil
+			retry = nil
 		}
-		if err := m.persist(all); err != nil {
-			m.persistenceError = err.Error()
-		} else {
-			m.persistenceError = ""
-			for _, saved := range all {
-				m.savedStates[saved.ID] = saved.State
+	}
+	scheduleRetry := func() {
+		retryTimer = time.NewTimer(retryDelay)
+		retry = retryTimer.C
+		retryDelay = min(retryDelay*2, maximumPersistRetry)
+	}
+	for {
+		select {
+		case <-m.persistStop:
+			stopTimer()
+			_ = m.persistCurrent()
+			return
+		case <-m.persistWake:
+			if retry != nil {
+				continue
+			}
+			if err := m.persistCurrent(); err != nil {
+				scheduleRetry()
+			} else {
+				retryDelay = initialPersistRetry
+			}
+		case <-retry:
+			retryTimer = nil
+			retry = nil
+			if err := m.persistCurrent(); err != nil {
+				scheduleRetry()
+			} else {
+				retryDelay = initialPersistRetry
 			}
 		}
 	}
 }
 
-func (m *Manager) emitLocked(job core.Job) {
+func (m *Manager) persistCurrent() error {
+	m.mu.Lock()
+	save := m.persist
+	if save == nil {
+		m.mu.Unlock()
+		return nil
+	}
+	all := make([]core.Job, 0, len(m.order))
+	for _, id := range m.order {
+		job := snapshot(m.records[id].job)
+		job.EventSequence = 0
+		all = append(all, job)
+	}
+	m.mu.Unlock()
+
+	err := save(all)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err != nil {
+		m.persistenceError = err.Error()
+		return err
+	}
+	m.persistenceError = ""
+	for _, saved := range all {
+		rec := m.records[saved.ID]
+		if rec != nil && rec.job.State == saved.State {
+			m.savedStates[saved.ID] = saved.State
+		}
+	}
+	return nil
+}
+
+func (m *Manager) emitLocked(job core.Job) core.Job {
+	m.eventSequence++
+	job.EventSequence = m.eventSequence
+	if rec := m.records[job.ID]; rec != nil {
+		rec.lastEvent = job.EventSequence
+	}
+	event := snapshot(job)
 	// Event delivery cannot block execution. Drop an old snapshot if a UI is slow;
 	// List/Get always retain the authoritative state and bounded log history.
 	select {
-	case m.events <- snapshot(job):
+	case m.events <- event:
 	default:
 		select {
 		case <-m.events:
 		default:
 		}
-		m.events <- snapshot(job)
+		m.events <- event
 	}
+	return event
 }
 
 func (m *Manager) pruneHistory() {

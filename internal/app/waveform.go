@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/processguard"
 	"pheebkit/internal/sourcefile"
 )
 
@@ -60,14 +61,12 @@ func (s *Service) GetAudioWaveform(uri string, start, duration float64, streamIn
 	args = append(args, ffmpegpolicy.LocalInput(uri)...)
 	args = append(args, "-map", "0:"+strconv.Itoa(streamIndex), "-t", strconv.FormatFloat(duration, 'f', 6, 64), "-vn", "-sn", "-dn", "-ac", "1", "-ar", strconv.Itoa(waveformRate), "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1")
 	command := exec.CommandContext(ctx, previewBinary(s.runner.snapshot()), args...)
-	hidePlatformProcess(command)
 	var output, stderr limitedBuffer
 	output.limit = waveformMaxSeconds*waveformRate*2 + 32
 	stderr.limit = 32 * 1024
 	command.Stdout = &output
 	command.Stderr = &stderr
-	command.WaitDelay = time.Second
-	if err := command.Run(); err != nil {
+	if err := processguard.Run(command); err != nil {
 		return AudioWaveform{}, fmt.Errorf("音频波形读取失败：%w：%s", err, stderr.String())
 	}
 	if err := sourcefile.Verify(uri, media.SourceFingerprint); err != nil {

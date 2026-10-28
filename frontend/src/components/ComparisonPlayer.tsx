@@ -7,17 +7,31 @@ import { comparisonDuration, comparisonPosition } from "../previewTimeline";
 import { formatTimecode } from "../trim";
 import { MaterialSelect } from "./MaterialSelect";
 
-export function ComparisonPlayer({
-  data,
-  position,
-  onPosition,
-  unavailable,
-}: {
+type ComparisonPlayerProps = {
   data: SampleComparison;
   position: number;
   onPosition: (seconds: number) => void;
   unavailable: (message: string) => void;
-}) {
+};
+
+export function ComparisonPlayer(props: ComparisonPlayerProps) {
+  const identity = JSON.stringify([
+    props.data.original.source.uri,
+    props.data.original.sourceFingerprint ?? "",
+    props.data.output.source.uri,
+    props.data.output.sourceFingerprint ?? "",
+    props.data.startSeconds,
+    props.data.durationSeconds,
+  ]);
+  return <ComparisonPlayerSession key={identity} {...props} />;
+}
+
+function ComparisonPlayerSession({
+  data,
+  position,
+  onPosition,
+  unavailable,
+}: ComparisonPlayerProps) {
   const source = useRef<HTMLVideoElement>(null);
   const sample = useRef<HTMLVideoElement>(null);
   const lifetime = useRef({ active: true, attempt: 0 });
@@ -35,26 +49,39 @@ export function ComparisonPlayer({
     data.durationSeconds,
   );
   useEffect(() => {
-    const state = lifetime.current;
-    state.active = true;
+    let alive = true;
+    const currentLifetime = lifetime.current;
     const original = source.current;
     const output = sample.current;
-    void Promise.all([
+    let grants: string[] = [];
+    void Promise.allSettled([
       API.getMediaPreviewURL(data.original.source.uri),
       API.getMediaPreviewURL(data.output.source.uri),
-    ]).then(
-      (values) => {
-        if (state.active) setURLs(values);
-      },
-      (cause: unknown) => {
-        if (state.active) unavailable(errorMessage(cause));
-      },
-    );
+    ]).then((results) => {
+      grants = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      const failed = results.find((result) => result.status === "rejected");
+      if (!alive || failed?.status === "rejected") {
+        grants.forEach((url) => {
+          void API.releaseMediaPreviewURL(url).catch(() => undefined);
+        });
+        grants = [];
+        if (alive && failed?.status === "rejected")
+          unavailable(errorMessage(failed.reason));
+        return;
+      }
+      setURLs(grants);
+    });
     return () => {
-      state.active = false;
-      state.attempt++;
+      alive = false;
+      currentLifetime.attempt++;
       original?.pause();
       output?.pause();
+      grants.forEach((url) => {
+        void API.releaseMediaPreviewURL(url).catch(() => undefined);
+      });
+      grants = [];
     };
   }, [data.original.source.uri, data.output.source.uri, unavailable]);
   useEffect(() => {

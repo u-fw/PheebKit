@@ -15,7 +15,8 @@ flowchart TD
   Services --> Core[Go Core: versioned Project IR / media / validation / jobs]
   Core --> Compiler[FFmpeg Execution Plan: argv + source references]
   Compiler --> Runner[Core Runner interface]
-  Runner --> Windows[Windows: ffmpeg.exe / ffprobe.exe via os/exec]
+  Runner --> Guard[Process lifecycle guard]
+  Guard --> Windows[Windows: ffmpeg.exe / ffprobe.exe via os/exec]
   Runner --> Android[Android Adapter: native FFmpeg + SAF]
 ```
 
@@ -27,8 +28,9 @@ flowchart TD
 - `internal/core` owns the shared models and runner interface. It imports neither Wails nor platform process APIs.
 - `internal/probe` parses ffprobe JSON. `internal/capabilities` parses actual FFmpeg encoder capabilities.
 - `internal/compiler` validates Project IR and produces argv. Command preview is display-only and is never executed through a shell.
-- `internal/jobs` owns independent job records, atomic batch admission, output reservations, serial scheduling pause/reorder, cancellation, bounded logs and throttled progress events.
-- `internal/runner/windows` owns process execution, stdout progress, stderr logs and Windows process options.
+- `internal/jobs` owns independent job records, atomic batch admission, output reservations, serial scheduling pause/reorder, cancellation, bounded logs and throttled progress events. Persistence is coalesced and retried outside the queue mutex; monotonic event sequences let the renderer resynchronize from authoritative snapshots after a dropped update.
+- `internal/processguard` binds a command and all descendants to one cancellable lifecycle using Windows Job Objects or Unix process groups. Runner, probe, health, preview and environment inspections use the same boundary.
+- `internal/runner/windows` owns FFmpeg execution, stdout progress, stderr logs and output verification. It closes the process guard after the parent exits so surviving helpers cannot retain files or child processes.
 - `internal/runner/android` is an explicitly unsupported adapter during the first spike. No fabricated compression results are returned.
 - `internal/app` connects services and events to Wails; platform factories use Go build constraints.
 - `frontend` contains the shared Media Card, processing form, batch controls, samples and queue. The bridge converts generated bindings into the UI API.
@@ -50,6 +52,6 @@ Local media and execution plans carry an optional source fingerprint. It combine
 
 `internal/localstore` supplies bounded atomic JSON updates and cross-process OS file locks. The app merges history by job ID, retaining live jobs from other processes. On startup, active records from dead owners become interrupted display records; no persisted argv is executed. Job snapshots retain deep copies of editable Project and source fingerprints. Preferences retain general processing settings, omitting trim, selected indexes, crop and paths. Project/preset file operations validate editable intent, never start commands. Storage failures preserve original files and surface in the UI. See [media tools](media-tools.md) for operation/compatibility policies.
 
-Preview assets are served by an app handler using opaque session tokens issued only for imported media. Every GET/HEAD checks the source fingerprint and supports byte ranges; arbitrary path query parameters are not accepted. The same middleware applies a Wails-compatible content security policy, frame denial, MIME-sniffing prevention, referrer suppression and unused browser-permission denial to static and preview responses. FFmpeg frame extraction shares the bounded thumbnail worker gate. The native close hook and application quit hook consult backend work state; confirmed exit cancels the job engine.
+Preview assets are served by an app handler using opaque session tokens issued only for imported media. The token map is a 64-entry LRU with reference counts and explicit renderer release; stale async players release late grants instead of revoking a live preview. Every GET/HEAD checks the source fingerprint and supports byte ranges; arbitrary path query parameters are not accepted. The same middleware applies a Wails-compatible content security policy, frame denial, MIME-sniffing prevention, referrer suppression and unused browser-permission denial to static and preview responses. FFmpeg frame extraction shares the bounded thumbnail worker gate. The native close hook and application quit hook consult backend work state; confirmed exit cancels the job engine.
 
 Windows gets real process, probe, encode and cancel tests. Android execution and Go binding cannot be called verified without an APK build and device/emulator run. A responsive browser viewport alone verifies layout sharing, not an Android native runtime.

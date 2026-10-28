@@ -127,11 +127,20 @@ func preparePayload(payload []byte, expected, version, root string) (Runtime, er
 	if actual != expected {
 		return Runtime{}, fmt.Errorf("bundled FFmpeg payload digest mismatch: got %s, want %s", actual, expected)
 	}
+	trusted, err := trustedMetadata(payload)
+	if err != nil {
+		return Runtime{}, err
+	}
 	if err := os.MkdirAll(root, 0700); err != nil {
 		return Runtime{}, fmt.Errorf("create bundled FFmpeg cache: %w", err)
 	}
+	release, err := acquireRuntimeLock(root, ".ffmpeg-"+version+"-"+actual[:12]+".lock")
+	if err != nil {
+		return Runtime{}, fmt.Errorf("lock bundled FFmpeg cache: %w", err)
+	}
+	defer release()
 	final := filepath.Join(root, "ffmpeg-"+version+"-"+actual[:12])
-	if runtime, err := validateRuntime(final, actual); err == nil {
+	if runtime, err := validateRuntime(final, actual, trusted); err == nil {
 		return runtime, nil
 	} else if removeErr := removeInvalidRuntime(root, final); removeErr != nil {
 		return Runtime{}, fmt.Errorf("replace invalid bundled FFmpeg cache: %w", removeErr)
@@ -144,16 +153,16 @@ func preparePayload(payload []byte, expected, version, root string) (Runtime, er
 	if err := extractPayload(payload, stage); err != nil {
 		return Runtime{}, err
 	}
-	if _, err := validateRuntime(stage, actual); err != nil {
+	if _, err := validateRuntime(stage, actual, trusted); err != nil {
 		return Runtime{}, err
 	} else if err := os.Rename(stage, final); err != nil {
 		// Another app process may have completed the same extraction first.
-		if concurrent, validateErr := validateRuntime(final, actual); validateErr == nil {
+		if concurrent, validateErr := validateRuntime(final, actual, trusted); validateErr == nil {
 			return concurrent, nil
 		}
 		return Runtime{}, fmt.Errorf("publish bundled FFmpeg runtime: %w", err)
 	}
-	return validateRuntime(final, actual)
+	return validateRuntime(final, actual, trusted)
 }
 
 func removeInvalidRuntime(root, target string) error {
@@ -245,22 +254,61 @@ func extractPayload(payload []byte, destination string) error {
 	return nil
 }
 
-func validateRuntime(directory, payloadDigest string) (Runtime, error) {
+func trustedMetadata(payload []byte) (Metadata, error) {
+	reader, err := zip.NewReader(bytes.NewReader(payload), int64(len(payload)))
+	if err != nil {
+		return Metadata{}, errors.New("bundled FFmpeg payload is not a valid ZIP archive")
+	}
+	if len(reader.File) == 0 || len(reader.File) > maxFiles {
+		return Metadata{}, errors.New("bundled FFmpeg payload metadata is invalid")
+	}
+	var metadata Metadata
+	found := false
+	for _, entry := range reader.File {
+		if entry.Name != "BUNDLED_FFMPEG.json" {
+			continue
+		}
+		if found || entry.FileInfo().IsDir() || entry.UncompressedSize64 > 64*1024 {
+			return Metadata{}, errors.New("bundled FFmpeg payload has invalid metadata entries")
+		}
+		input, err := entry.Open()
+		if err != nil {
+			return Metadata{}, err
+		}
+		data, readErr := io.ReadAll(io.LimitReader(input, 64*1024+1))
+		closeErr := input.Close()
+		if readErr != nil {
+			return Metadata{}, readErr
+		}
+		if closeErr != nil {
+			return Metadata{}, closeErr
+		}
+		if len(data) > 64*1024 {
+			return Metadata{}, errors.New("bundled FFmpeg metadata exceeds the size limit")
+		}
+		metadata, err = parseMetadata(data)
+		if err != nil {
+			return Metadata{}, err
+		}
+		found = true
+	}
+	if !found {
+		return Metadata{}, errors.New("bundled FFmpeg payload is missing trusted metadata")
+	}
+	return metadata, nil
+}
+
+func validateRuntime(directory, payloadDigest string, trusted Metadata) (Runtime, error) {
 	data, err := os.ReadFile(filepath.Join(directory, "BUNDLED_FFMPEG.json"))
 	if err != nil {
 		return Runtime{}, fmt.Errorf("read bundled FFmpeg metadata: %w", err)
 	}
-	var metadata Metadata
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&metadata); err != nil {
-		return Runtime{}, fmt.Errorf("parse bundled FFmpeg metadata: %w", err)
+	metadata, err := parseMetadata(data)
+	if err != nil {
+		return Runtime{}, err
 	}
-	if err := decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
-		return Runtime{}, errors.New("bundled FFmpeg metadata contains trailing data")
-	}
-	if metadata.SchemaVersion != 1 || metadata.Version == "" || metadata.FFmpegSHA256 == "" || metadata.FFprobeSHA256 == "" {
-		return Runtime{}, errors.New("bundled FFmpeg metadata is incomplete")
+	if metadata != trusted {
+		return Runtime{}, errors.New("bundled FFmpeg cache metadata does not match the trusted payload")
 	}
 	for name, expected := range map[string]string{"ffmpeg": metadata.FFmpegSHA256, "ffprobe": metadata.FFprobeSHA256} {
 		path := filepath.Join(directory, "bin", name+".exe")
@@ -283,6 +331,24 @@ func validateRuntime(directory, payloadDigest string) (Runtime, error) {
 		PayloadSHA256: payloadDigest,
 		Metadata:      metadata,
 	}, nil
+}
+
+func parseMetadata(data []byte) (Metadata, error) {
+	var metadata Metadata
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&metadata); err != nil {
+		return Metadata{}, fmt.Errorf("parse bundled FFmpeg metadata: %w", err)
+	}
+	if err := decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
+		return Metadata{}, errors.New("bundled FFmpeg metadata contains trailing data")
+	}
+	if metadata.SchemaVersion != 1 || metadata.Version == "" ||
+		!safeDigest.MatchString(strings.ToLower(metadata.FFmpegSHA256)) ||
+		!safeDigest.MatchString(strings.ToLower(metadata.FFprobeSHA256)) {
+		return Metadata{}, errors.New("bundled FFmpeg metadata is incomplete")
+	}
+	return metadata, nil
 }
 
 func fileDigest(path string) (string, error) {

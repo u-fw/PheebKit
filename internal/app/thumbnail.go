@@ -17,6 +17,7 @@ import (
 
 	"pheebkit/internal/core"
 	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/processguard"
 	"pheebkit/internal/sourcefile"
 )
 
@@ -137,12 +138,10 @@ func ffmpegThumbnail(ctx context.Context, binary string, media core.Media) (Thum
 	args = append(args, ffmpegpolicy.LocalInput(media.Source.URI)...)
 	args = append(args, "-map", "0:"+strconv.Itoa(stream.Index), "-frames:v", "1", "-an", "-sn", "-vf", "scale=512:512:force_original_aspect_ratio=decrease", "-c:v", "mjpeg", "-q:v", "3", "-f", "image2pipe", "pipe:1")
 	command := exec.CommandContext(ctx, binary, args...)
-	hidePlatformProcess(command)
 	var output, stderr limitedBuffer
 	output.limit, stderr.limit = thumbnailLimit, 32*1024
 	command.Stdout, command.Stderr = &output, &stderr
-	command.WaitDelay = time.Second
-	if err := command.Run(); err != nil {
+	if err := processguard.Run(command); err != nil {
 		return Thumbnail{}, fmt.Errorf("读取视频缩略图失败：%w：%s", err, stderr.String())
 	}
 	return thumbnailData(output.Bytes(), origin)

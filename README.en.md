@@ -3,6 +3,7 @@
 [简体中文](README.md) · [English](README.en.md)
 
 [![Windows verification](https://github.com/u-fw/PheebKit/actions/workflows/windows.yml/badge.svg)](https://github.com/u-fw/PheebKit/actions/workflows/windows.yml)
+[![Security audit](https://github.com/u-fw/PheebKit/actions/workflows/security.yml/badge.svg)](https://github.com/u-fw/PheebKit/actions/workflows/security.yml)
 [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
 
 A local-first Windows media toolkit powered by FFmpeg. Compress, trim, remux and process tracks with editable parameters, actual command previews and independent queued jobs. Media stays on your computer.
@@ -89,9 +90,9 @@ npm --prefix frontend run format:check
 ./scripts/build-windows.ps1
 ```
 
-Real-media tests require verified FFmpeg tools and `PHEEBKIT_INTEGRATION=1`. Packaging checks source and both final-binary vulnerabilities, frontend quality and clean sources. Acceptance checks both direct EXEs, the portable ZIP, the installer, runtime provenance, first-extraction reuse, install/reinstall/uninstall and user-data preservation. Hosted Windows Server checks do not establish Windows 10/11 client UI acceptance. [Verification steps](docs/release-acceptance.md) · [Windows distribution](docs/windows-distribution.md)
+Real-media tests require verified FFmpeg tools and `PHEEBKIT_INTEGRATION=1`. Packaging checks source and both final-binary vulnerabilities, frontend quality and clean sources. `.github/workflows/security.yml` also audits lockfiles, npm and reachable Go vulnerabilities on dependency changes, a weekly schedule and manual dispatch. Acceptance checks both direct EXEs, the portable ZIP, the installer, runtime provenance, first-extraction reuse, install/reinstall/uninstall and user-data preservation. Hosted Windows Server checks do not establish Windows 10/11 client UI acceptance. [Verification steps](docs/release-acceptance.md) · [Windows distribution](docs/windows-distribution.md)
 
-Key directories: `internal/core` defines media/projects/plans; `internal/compiler` validates and compiles arguments; `internal/runner/windows` manages actual processes; `internal/app` provides the native service boundary; `frontend` supplies the interface. [Architecture](docs/architecture.md) · [Project format](docs/project-format.md) · [UI design](docs/ui-design.md)
+Key directories: `internal/core` defines media/projects/plans; `internal/compiler` validates and compiles arguments; `internal/runner/windows` manages actual processes; `internal/processguard` binds FFmpeg and descendant lifecycles; `internal/app` provides the native service boundary; `frontend` supplies the interface. [Architecture](docs/architecture.md) · [Project format](docs/project-format.md) · [UI design](docs/ui-design.md)
 
 ## Contributing and license
 

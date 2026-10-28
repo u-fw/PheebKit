@@ -143,6 +143,77 @@ func TestPreparePayloadReplacesCorruptCache(t *testing.T) {
 	}
 }
 
+func TestPreparePayloadRejectsSelfConsistentUntrustedCache(t *testing.T) {
+	payload := runtimeArchive(t, nil)
+	root := t.TempDir()
+	expected := digest(payload)
+	first, err := preparePayload(payload, expected, "1.0-test", root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replacement := []byte("replacement executable")
+	if err := os.WriteFile(first.FFmpeg, replacement, 0700); err != nil {
+		t.Fatal(err)
+	}
+	metadataPath := filepath.Join(first.Directory, "BUNDLED_FFMPEG.json")
+	data, err := os.ReadFile(metadataPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var metadata Metadata
+	if err := json.Unmarshal(data, &metadata); err != nil {
+		t.Fatal(err)
+	}
+	metadata.FFmpegSHA256 = digest(replacement)
+	data, err = json.Marshal(metadata)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(metadataPath, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	recovered, err := preparePayload(payload, expected, "1.0-test", root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, err := os.ReadFile(recovered.FFmpeg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(actual) != "ffmpeg.exe" {
+		t.Fatalf("self-consistent untrusted cache was reused: %q", actual)
+	}
+}
+
+func TestPreparePayloadSerializesConcurrentInitialization(t *testing.T) {
+	payload := runtimeArchive(t, nil)
+	root := t.TempDir()
+	expected := digest(payload)
+	const workers = 8
+	errs := make(chan error, workers)
+	runtimes := make(chan Runtime, workers)
+	for range workers {
+		go func() {
+			runtime, err := preparePayload(payload, expected, "1.0-test", root)
+			runtimes <- runtime
+			errs <- err
+		}()
+	}
+	var expectedDirectory string
+	for range workers {
+		if err := <-errs; err != nil {
+			t.Fatal(err)
+		}
+		runtime := <-runtimes
+		if expectedDirectory == "" {
+			expectedDirectory = runtime.Directory
+		} else if runtime.Directory != expectedDirectory {
+			t.Fatalf("concurrent initialization published multiple runtimes: %s and %s", expectedDirectory, runtime.Directory)
+		}
+	}
+}
+
 func TestPreparePayloadRefusesSymlinkReplacement(t *testing.T) {
 	payload := runtimeArchive(t, nil)
 	root := t.TempDir()

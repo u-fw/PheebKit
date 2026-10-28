@@ -40,6 +40,7 @@ type Service struct {
 	setupStatus        FFmpegSetupStatus
 	setupCancel        context.CancelFunc
 	setupBusy          atomic.Bool
+	setupSequence      uint64
 	workspaceOnce      sync.Once
 	workspaceMu        sync.Mutex
 	workspaceError     string
@@ -48,7 +49,8 @@ type Service struct {
 	unsavedEdits       bool
 	draftRevision      uint64
 	previewMu          sync.Mutex
-	previewTokens      map[string]core.Media
+	previewTokens      map[string]*previewGrant
+	previewSequence    uint64
 	editorMu           sync.Mutex
 	editorSession      string
 	recoveryRevision   uint64
@@ -63,6 +65,9 @@ type Service struct {
 	healthWG           sync.WaitGroup
 	language           atomic.Uint32
 	jobFeedback        *jobFeedbackTracker
+	queueEmitMu        sync.Mutex
+	queueEmittedRev    uint64
+	queueEmitted       bool
 }
 
 func (s *Service) SetLocale(language string) error {

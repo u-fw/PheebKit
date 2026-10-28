@@ -37,7 +37,7 @@ tasks:
   test:
     cmds:
       - task: build:frontend
-      - node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs scripts/release-workflow.test.mjs
+      - node --test scripts/version.test.mjs scripts/stable-evidence.test.mjs scripts/release-workflow.test.mjs scripts/security-workflow.test.mjs
       - pwsh -NoProfile -File scripts/test-go.ps1
       - npm --prefix frontend run test
       - npm --prefix frontend run lint

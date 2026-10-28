@@ -55,6 +55,29 @@ func TestVerificationHistorySnapshotsAreIsolated(t *testing.T) {
 	}
 }
 
+func TestJobEventsCarryMonotonicSequenceForRecovery(t *testing.T) {
+	events := make(chan core.Job, 4)
+	manager := New(&testRunner{}, func(job core.Job) { events <- job })
+	defer manager.Close()
+	manager.SetQueuePaused(true)
+	job, err := manager.Enqueue(core.ExecutionPlan{JobID: "sequenced"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := <-events
+	if err := manager.Cancel(job.ID); err != nil {
+		t.Fatal(err)
+	}
+	second := <-events
+	if first.EventSequence == 0 || second.EventSequence != first.EventSequence+1 {
+		t.Fatalf("non-contiguous event sequence: %d then %d", first.EventSequence, second.EventSequence)
+	}
+	stored, ok := manager.Get(job.ID)
+	if !ok || stored.EventSequence != second.EventSequence {
+		t.Fatalf("snapshot did not expose the latest event sequence: %+v", stored)
+	}
+}
+
 func (*testRunner) Probe(context.Context, core.Source) (core.Media, error) {
 	return core.Media{}, core.ErrUnsupported
 }

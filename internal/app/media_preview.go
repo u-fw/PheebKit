@@ -17,8 +17,17 @@ import (
 
 	"pheebkit/internal/core"
 	"pheebkit/internal/ffmpegpolicy"
+	"pheebkit/internal/processguard"
 	"pheebkit/internal/sourcefile"
 )
+
+const previewTokenLimit = 64
+
+type previewGrant struct {
+	media      core.Media
+	references uint64
+	lastUsed   uint64
+}
 
 func (s *Service) importedMedia(uri string) (core.Media, error) {
 	media, found := s.cachedMedia(uri)
@@ -36,29 +45,82 @@ func (s *Service) GetMediaPreviewURL(uri string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	token := make([]byte, 24)
-	if _, err := rand.Read(token); err != nil {
-		return "", err
-	}
 	s.previewMu.Lock()
 	defer s.previewMu.Unlock()
 	if s.previewTokens == nil {
-		s.previewTokens = make(map[string]core.Media)
+		s.previewTokens = make(map[string]*previewGrant)
 	}
 	// Reopening comparisons must not exhaust session capabilities and revoke an
 	// existing player's URL for the same unchanged imported source.
-	for key, cached := range s.previewTokens {
-		if cached.Source.URI == media.Source.URI && cached.SourceFingerprint == media.SourceFingerprint {
+	for key, grant := range s.previewTokens {
+		if grant != nil &&
+			grant.media.Source.URI == media.Source.URI &&
+			grant.media.SourceFingerprint == media.SourceFingerprint {
+			grant.references++
+			s.previewSequence++
+			grant.lastUsed = s.previewSequence
 			return "/__media/" + key, nil
 		}
 	}
 	// URLs are session capabilities; bound tokens and avoid exposing filesystem paths.
-	if len(s.previewTokens) >= 64 {
-		s.previewTokens = make(map[string]core.Media)
+	if len(s.previewTokens) >= previewTokenLimit {
+		var oldestKey string
+		oldestUse := ^uint64(0)
+		for key, grant := range s.previewTokens {
+			if grant != nil && grant.lastUsed < oldestUse {
+				oldestKey = key
+				oldestUse = grant.lastUsed
+			}
+		}
+		if oldestKey != "" {
+			delete(s.previewTokens, oldestKey)
+		}
+	}
+	token := make([]byte, 24)
+	if _, err := rand.Read(token); err != nil {
+		return "", err
 	}
 	key := hex.EncodeToString(token)
-	s.previewTokens[key] = media
+	s.previewSequence++
+	s.previewTokens[key] = &previewGrant{
+		media:      media,
+		references: 1,
+		lastUsed:   s.previewSequence,
+	}
 	return "/__media/" + key, nil
+}
+
+func (s *Service) ReleaseMediaPreviewURL(url string) {
+	key, ok := previewTokenFromURL(url)
+	if !ok {
+		return
+	}
+	s.previewMu.Lock()
+	defer s.previewMu.Unlock()
+	grant := s.previewTokens[key]
+	if grant == nil {
+		return
+	}
+	if grant.references > 1 {
+		grant.references--
+		return
+	}
+	delete(s.previewTokens, key)
+}
+
+func previewTokenFromURL(url string) (string, bool) {
+	const prefix = "/__media/"
+	if !strings.HasPrefix(url, prefix) {
+		return "", false
+	}
+	key := strings.TrimPrefix(url, prefix)
+	if len(key) != 48 {
+		return "", false
+	}
+	if _, err := hex.DecodeString(key); err != nil {
+		return "", false
+	}
+	return key, true
 }
 
 //wails:ignore
@@ -75,12 +137,17 @@ func (s *Service) AssetHandler(next http.Handler) http.Handler {
 		}
 		token := strings.TrimPrefix(r.URL.Path, "/__media/")
 		s.previewMu.Lock()
-		media, found := s.previewTokens[token]
+		grant := s.previewTokens[token]
+		if grant != nil {
+			s.previewSequence++
+			grant.lastUsed = s.previewSequence
+		}
 		s.previewMu.Unlock()
-		if !found {
+		if grant == nil {
 			http.NotFound(w, r)
 			return
 		}
+		media := grant.media
 		if err := sourcefile.Verify(media.Source.URI, media.SourceFingerprint); err != nil {
 			http.Error(w, "媒体已变化，请重新导入", http.StatusConflict)
 			return
@@ -214,14 +281,12 @@ func (s *Service) GetVideoFrame(uri string, seconds float64) (Thumbnail, error) 
 	args = append(args, ffmpegpolicy.LocalInput(uri)...)
 	args = append(args, "-map", "0:"+strconv.Itoa(video.Index), "-frames:v", "1", "-an", "-sn", "-vf", "scale=512:512:force_original_aspect_ratio=decrease", "-c:v", "mjpeg", "-q:v", "3", "-f", "image2pipe", "pipe:1")
 	command := exec.CommandContext(ctx, previewBinary(s.runner.snapshot()), args...)
-	hidePlatformProcess(command)
 	var output, stderr limitedBuffer
 	output.limit = thumbnailLimit
 	stderr.limit = 32 * 1024
 	command.Stdout = &output
 	command.Stderr = &stderr
-	command.WaitDelay = time.Second
-	if err := command.Run(); err != nil {
+	if err := processguard.Run(command); err != nil {
 		return Thumbnail{}, fmt.Errorf("位置画面读取失败：%w：%s", err, stderr.String())
 	}
 	if err := sourcefile.Verify(uri, media.SourceFingerprint); err != nil {

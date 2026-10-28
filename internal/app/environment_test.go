@@ -260,6 +260,44 @@ func TestFailedBinaryCheckClearsPreviousAvailability(t *testing.T) {
 	}
 }
 
+func TestGetEnvironmentSynchronizesValidationForDiagnostics(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("APPDATA", directory)
+	t.Setenv("XDG_CONFIG_HOME", directory)
+	for _, name := range []string{"PHEEBKIT_FFMPEG", "PHEEBKIT_FFPROBE", "FFMPEG_PATH", "FFPROBE_PATH"} {
+		t.Setenv(name, "")
+	}
+	service := NewService()
+	defer service.Close()
+	missing := filepath.Join(directory, "missing.exe")
+	service.environment = Environment{
+		Platform:     "windows",
+		Configurable: true,
+		FFmpeg:       BinaryStatus{Path: missing, Source: "config"},
+		FFprobe:      BinaryStatus{Path: missing, Source: "config"},
+	}
+	service.configuration = binaryConfig{FFmpeg: missing, FFprobe: missing}
+	environment := service.GetEnvironment()
+	if environment.Ready || environment.Message == "" {
+		t.Fatalf("invalid environment unexpectedly passed: %+v", environment)
+	}
+	if service.environment.Message != environment.Message ||
+		service.environment.FFmpeg.Available ||
+		service.environment.FFprobe.Available {
+		t.Fatal("validated environment was not synchronized to the diagnostic snapshot")
+	}
+	requireWorkspace := t.TempDir()
+	t.Setenv("APPDATA", requireWorkspace)
+	t.Setenv("XDG_CONFIG_HOME", requireWorkspace)
+	preview, err := service.GetDiagnosticPreview(DiagnosticOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(preview.JSON, `"environmentReady": false`) {
+		t.Fatal("diagnostic report did not use the validated environment")
+	}
+}
+
 func TestBinaryCheckPreservesCancellationCause(t *testing.T) {
 	path, err := os.Executable()
 	if err != nil {

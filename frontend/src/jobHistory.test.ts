@@ -48,6 +48,41 @@ const completed = job("job", {
 });
 
 describe("job snapshots and event ordering", () => {
+  it("detects dropped native events and accepts contiguous events", () => {
+    const history = new JobHistory();
+    history.reconcile([{ ...running, eventSequence: 4 }], 0);
+    expect(
+      history.updateWithSequence([{ ...running, eventSequence: 5 }])
+        .sequenceGap,
+    ).toBe(false);
+    const skipped = history.updateWithSequence([
+      { ...running, eventSequence: 7 },
+    ]);
+    expect(skipped.sequenceGap).toBe(true);
+    expect(skipped.jobs).toEqual([{ ...running, eventSequence: 7 }]);
+  });
+
+  it("never lets a lower sequence replace a newer progress snapshot", () => {
+    const history = new JobHistory();
+    const newest = {
+      ...running,
+      eventSequence: 12,
+      progress: 0.6,
+      currentTime: 6,
+    };
+    history.update([newest]);
+    expect(
+      history.update([
+        {
+          ...newest,
+          eventSequence: 11,
+          progress: 0.8,
+          currentTime: 8,
+        },
+      ]),
+    ).toEqual([newest]);
+  });
+
   it("keeps an early completion event while the initial queue request is pending", () => {
     const history = new JobHistory();
     const initialRequest = history.revision;

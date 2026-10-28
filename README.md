@@ -3,6 +3,7 @@
 [简体中文](README.md) · [English](README.en.md)
 
 [![Windows verification](https://github.com/u-fw/PheebKit/actions/workflows/windows.yml/badge.svg)](https://github.com/u-fw/PheebKit/actions/workflows/windows.yml)
+[![Security audit](https://github.com/u-fw/PheebKit/actions/workflows/security.yml/badge.svg)](https://github.com/u-fw/PheebKit/actions/workflows/security.yml)
 [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
 
 本地优先的 Windows 媒体工具。用 FFmpeg 完成压缩、剪辑、转封装与轨道处理，提供可修改的参数、真实执行预览和独立任务队列。媒体无需上传。
@@ -89,9 +90,9 @@ npm --prefix frontend run format:check
 ./scripts/build-windows.ps1
 ```
 
-真实 FFmpeg 回归需要经校验的测试工具和 `PHEEBKIT_INTEGRATION=1`。发布脚本执行源码与两个最终 EXE 的漏洞扫描、前端检查和干净源码校验；验收会检查轻量 EXE、内置 EXE、便携 ZIP、安装器、来源元数据、首次解压复用、安装/重装/卸载及用户数据保留。GitHub 托管 Windows Server 检查不等于 Windows 10/11 客户端界面验收。[验证步骤](docs/release-acceptance.md) · [Windows 打包](docs/windows-distribution.md)
+真实 FFmpeg 回归需要经校验的测试工具和 `PHEEBKIT_INTEGRATION=1`。发布脚本执行源码与两个最终 EXE 的漏洞扫描、前端检查和干净源码校验；`.github/workflows/security.yml` 还会在依赖变更、每周计划和手动触发时运行锁文件、npm 与 Go 可达漏洞审计。验收会检查轻量 EXE、内置 EXE、便携 ZIP、安装器、来源元数据、首次解压复用、安装/重装/卸载及用户数据保留。GitHub 托管 Windows Server 检查不等于 Windows 10/11 客户端界面验收。[验证步骤](docs/release-acceptance.md) · [Windows 打包](docs/windows-distribution.md)
 
-核心目录：`internal/core` 定义媒体/项目/执行计划，`internal/compiler` 生成经过验证的参数，`internal/runner/windows` 管理真实进程，`internal/app` 提供原生服务边界，`frontend` 提供界面。[架构](docs/architecture.md) · [项目格式](docs/project-format.md) · [界面设计](docs/ui-design.md)
+核心目录：`internal/core` 定义媒体/项目/执行计划，`internal/compiler` 生成经过验证的参数，`internal/runner/windows` 管理真实进程，`internal/processguard` 约束 FFmpeg 及其子进程生命周期，`internal/app` 提供原生服务边界，`frontend` 提供界面。[架构](docs/architecture.md) · [项目格式](docs/project-format.md) · [界面设计](docs/ui-design.md)
 
 ## 参与与许可证
 

@@ -1231,9 +1231,10 @@
   "GPU 编码测试超时；检查显卡驱动后重新检测。": "GPU encoding trial timed out. Check the GPU driver and detect again.",
   "本机 GPU 编码实测未通过（硬件或驱动不支持）：": "Actual GPU trial failed (unsupported hardware or driver):",
   "恢复扫描需要已知时长且不超过 6 小时的视频": "Recovery scanning requires a known video duration of no more than 6 hours",
-  "扫描超过 4320 个窗口，请增大窗口或先分段处理": "Scan exceeds 4320 windows. Increase the window size or process sections separately",
+  "扫描超过 {{0}} 个窗口，请增大窗口或先分段处理": "Scan exceeds {{0}} windows. Increase the window size or process sections separately",
   "请重新解析媒体后扫描": "Analyze the media again before scanning",
   "恢复扫描支持一条视频和最多四条音轨": "Recovery scanning supports one video track and up to four audio tracks",
+  "扫描超过 {{0}} 个解码检查，请增大窗口或先分段处理": "Scan exceeded {{0}} decode checks. Increase the window size or process sections separately",
   "失败区间超过 128 个，请先分段处理": "More than 128 failed intervals. Process sections separately",
   "解码扫描输出超过安全上限": "Decode scan output exceeds the safety limit",
   "解码检查未能完成（不会建议删除）：{{0}} {{1}}": "Decode check could not finish (no deletion is recommended): {{0}} {{1}}",
@@ -1412,5 +1413,10 @@
   "媒体与项目仅保存在本机。": "Media and projects stay on this device.",
   "媒体操作需要桌面应用。": "Media operations require the desktop app.",
   "补全 FFmpeg": "Set up FFmpeg",
-  "正在检查处理环境": "Checking processing environment"
+  "正在检查处理环境": "Checking processing environment",
+  "任务事件缺口同步失败：{{0}}": "Could not reconcile missed task events: {{0}}",
+  "输出已成功保存，但临时文件清理未完成：": "The output was saved successfully, but temporary file cleanup did not complete: ",
+  "下载完成后环境刷新失败：{{0}}": "Could not refresh the environment after setup: {{0}}",
+  "下载状态读取失败：{{0}}": "Could not read setup status: {{0}}",
+  "加载更多任务": "Load more tasks"
 }

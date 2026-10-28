@@ -15,9 +15,10 @@ import (
 
 type FFmpegSetupStatus struct {
 	ffmpegsetup.Progress
-	Active  bool   `json:"active"`
-	Error   string `json:"error"`
-	Version string `json:"version"`
+	Active   bool   `json:"active"`
+	Error    string `json:"error"`
+	Version  string `json:"version"`
+	Sequence uint64 `json:"sequence"`
 }
 
 func (s *Service) GetFFmpegSetupStatus() FFmpegSetupStatus {
@@ -89,6 +90,7 @@ func (s *Service) startFFmpegSetup(packages []ffmpegsetup.Package, custom bool) 
 	ctx, cancel := context.WithTimeout(s.ctx, 30*time.Minute)
 	s.setupCancel = cancel
 	s.setupStatus = FFmpegSetupStatus{Active: true, Progress: ffmpegsetup.Progress{Stage: "selecting"}}
+	s.publishFFmpegSetupLocked()
 	go s.runFFmpegSetup(ctx, cancel, filepath.Join(cache, "PheebKit", "tools"), packages, custom)
 	return s.setupStatus, nil
 }
@@ -103,6 +105,7 @@ func (s *Service) CancelFFmpegSetup() error {
 		return errors.New("正在验证并保存配置，请稍候。")
 	}
 	s.setupStatus.Stage = "cancelling"
+	s.publishFFmpegSetupLocked()
 	s.setupCancel()
 	return nil
 }
@@ -114,6 +117,7 @@ func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc,
 		defer s.setupMu.Unlock()
 		if s.setupStatus.Stage != "cancelling" {
 			s.setupStatus.Progress = progress
+			s.publishFFmpegSetupLocked()
 		}
 	}
 	installer := ffmpegsetup.New(report)
@@ -127,6 +131,7 @@ func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc,
 		if err == nil {
 			s.setupStatus.Progress = ffmpegsetup.Progress{Stage: "configuring", Package: result.Label}
 			s.setupStatus.Version = result.Version
+			s.publishFFmpegSetupLocked()
 		}
 		s.setupMu.Unlock()
 		if err == nil {
@@ -160,6 +165,15 @@ func (s *Service) runFFmpegSetup(ctx context.Context, cancel context.CancelFunc,
 	} else {
 		s.setupStatus.Stage = "completed"
 		s.setupStatus.Version = result.Version
+	}
+	s.publishFFmpegSetupLocked()
+}
+
+func (s *Service) publishFFmpegSetupLocked() {
+	s.setupSequence++
+	s.setupStatus.Sequence = s.setupSequence
+	if s.app != nil {
+		s.app.Emit("ffmpeg:setup", s.setupStatus)
 	}
 }
 

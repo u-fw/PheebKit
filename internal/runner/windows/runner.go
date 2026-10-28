@@ -16,6 +16,7 @@ import (
 	"pheebkit/internal/core"
 	"pheebkit/internal/ffmpegpolicy"
 	"pheebkit/internal/probe"
+	"pheebkit/internal/processguard"
 	"pheebkit/internal/sourcefile"
 )
 
@@ -129,7 +130,7 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	}
 	defer func() {
 		if err := cleanupScratch(scratchDir, outputParent); err != nil {
-			resultErr = errors.Join(resultErr, fmt.Errorf("clean output scratch directory: %w", err))
+			applyScratchCleanupOutcome(&result, &resultErr, callbacks.Log, err)
 		}
 	}()
 	scratchOutput := filepath.Join(scratchDir, "output"+filepath.Ext(plan.Output.URI))
@@ -161,7 +162,11 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 
 	cmd := exec.CommandContext(ctx, r.FFmpeg, args...)
 	cmd.Dir = scratchDir
-	hideProcess(cmd)
+	guard, err := processguard.Prepare(cmd)
+	if err != nil {
+		return core.Result{}, fmt.Errorf("prepare FFmpeg process lifecycle: %w", err)
+	}
+	defer guard.Close()
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return core.Result{}, err
@@ -174,6 +179,11 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	if err := cmd.Start(); err != nil {
 		return core.Result{}, fmt.Errorf("start FFmpeg: %w", err)
 	}
+	if err := guard.Attach(cmd.Process); err != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return core.Result{}, fmt.Errorf("attach FFmpeg process lifecycle: %w", err)
+	}
 	var readers sync.WaitGroup
 	readers.Add(2)
 	var progressErr, logErr error
@@ -185,6 +195,9 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 	go func() { defer readers.Done(); tail, logErr = readLogs(stderr, callbacks.Log) }()
 	readers.Wait()
 	err = cmd.Wait()
+	// The root process has exited. Closing the job now also terminates any
+	// surviving helper descendants before output verification begins.
+	guard.Close()
 	if ctx.Err() != nil {
 		return core.Result{}, ctx.Err()
 	}
@@ -242,6 +255,21 @@ func (r *Runner) Start(parent context.Context, plan core.ExecutionPlan, callback
 		result.AverageSpeed = plan.DurationSeconds / elapsed
 	}
 	return result, nil
+}
+
+func applyScratchCleanupOutcome(result *core.Result, resultErr *error, logf func(string), cleanupErr error) {
+	message := "输出已成功保存，但临时文件清理未完成：" + cleanupErr.Error()
+	if *resultErr != nil {
+		*resultErr = errors.Join(*resultErr, errors.New(message))
+		return
+	}
+	if result.Verification == nil {
+		result.Verification = &core.OutputVerification{Warnings: []string{}}
+	}
+	result.Verification.Warnings = append(result.Verification.Warnings, message)
+	if logf != nil {
+		logf(message)
+	}
 }
 
 func cleanupScratch(path, parent string) error {

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"pheebkit/internal/processguard"
 )
 
 type boundedBuffer struct {
@@ -27,7 +29,6 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 
 func capture(ctx context.Context, binary string, args []string, combined bool) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, binary, args...)
-	hideProcess(cmd)
 	stdout := &boundedBuffer{limit: 32 * 1024 * 1024}
 	stderr := &boundedBuffer{limit: 64 * 1024}
 	cmd.Stdout = stdout
@@ -36,7 +37,7 @@ func capture(ctx context.Context, binary string, args []string, combined bool) (
 	} else {
 		cmd.Stderr = stderr
 	}
-	if err := cmd.Run(); err != nil {
+	if err := processguard.Run(cmd); err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}

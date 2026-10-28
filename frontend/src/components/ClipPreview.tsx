@@ -71,21 +71,32 @@ function PositionFrame({
   );
 }
 
-export function ClipPreview({
-  media,
-  start,
-  end,
-  visible,
-  onBoundary,
-  showFrames = true,
-}: {
+type ClipPreviewProps = {
   media: Media;
   start: number;
   end: number;
   visible: boolean;
   onBoundary?: (boundary: "startSeconds" | "endSeconds", value: number) => void;
   showFrames?: boolean;
-}) {
+};
+
+export function ClipPreview(props: ClipPreviewProps) {
+  const identity = JSON.stringify([
+    props.media.source.uri,
+    props.media.sourceFingerprint ?? "",
+    props.media.durationSeconds,
+  ]);
+  return <ClipPreviewSession key={identity} {...props} />;
+}
+
+function ClipPreviewSession({
+  media,
+  start,
+  end,
+  visible,
+  onBoundary,
+  showFrames = true,
+}: ClipPreviewProps) {
   const positionID = useId();
   const video = useRef<HTMLVideoElement>(null);
   const lifetime = useRef({ active: false });
@@ -105,9 +116,15 @@ export function ClipPreview({
     )?.frameRate ?? 0;
   useEffect(() => {
     let alive = true;
+    let granted = "";
     void API.getMediaPreviewURL(media.source.uri).then(
       (url) => {
-        if (alive) setSource(url);
+        if (alive) {
+          granted = url;
+          setSource(url);
+        } else {
+          void API.releaseMediaPreviewURL(url).catch(() => undefined);
+        }
       },
       (cause) => {
         if (alive) setFailed(errorMessage(cause));
@@ -115,8 +132,10 @@ export function ClipPreview({
     );
     return () => {
       alive = false;
+      if (granted)
+        void API.releaseMediaPreviewURL(granted).catch(() => undefined);
     };
-  }, [media.source.uri]);
+  }, [media.source.uri, media.sourceFingerprint]);
   useEffect(() => {
     const state = lifetime.current;
     const player = video.current;

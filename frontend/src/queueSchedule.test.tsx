@@ -1,14 +1,29 @@
-import { describe, expect, it, vi } from "vitest";
+// @vitest-environment happy-dom
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { Job } from "./bridge";
 import { Queue } from "./components/Queue";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { setLanguage } from "./i18n";
 import {
   estimatedRemainingSeconds,
   latestQueueStatus,
   orderQueueJobs,
 } from "./queueSchedule";
 
-vi.mock("./bridge", () => ({ API: {} }));
+vi.mock("./bridge", () => ({
+  API: { getWorkspace: async () => ({ error: "" }) },
+}));
+
+beforeEach(() => setLanguage("zh-CN"));
+afterEach(cleanup);
 
 const job: Job = {
   id: "first",
@@ -124,5 +139,43 @@ describe("queue scheduling", () => {
       />,
     );
     expect(queued).not.toContain("比较样片");
+  });
+  it("renders a bounded history page and exposes the remaining count", () => {
+    const history = Array.from({ length: 25 }, (_, index) => ({
+      ...job,
+      id: `history-${index}`,
+      state: "completed",
+      queuedAt: new Date(Date.UTC(2026, 9, 10, 0, 0, index)).toISOString(),
+    }));
+    const html = renderToStaticMarkup(
+      <Queue
+        jobs={history}
+        cancel={() => {}}
+        refresh={() => {}}
+        compress={() => {}}
+        reuse={async () => {}}
+      />,
+    );
+    expect(html.match(/<article/g)).toHaveLength(20);
+    expect(html).toContain("加载更多任务");
+    expect(html).toContain("5");
+  });
+  it("cancels an active job through its visible action", async () => {
+    const cancel = vi.fn();
+    render(
+      <Queue
+        jobs={[job]}
+        cancel={cancel}
+        refresh={() => {}}
+        compress={() => {}}
+        reuse={async () => {}}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "取消任务",
+      }),
+    );
+    await waitFor(() => expect(cancel).toHaveBeenCalledWith(job.id));
   });
 });

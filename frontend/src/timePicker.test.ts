@@ -1,9 +1,16 @@
-import { describe, expect, it } from "vitest";
+// @vitest-environment happy-dom
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chooseTimePart, timeOptions, timeParts } from "./timePicker";
 import { numericOption } from "./components/selectNavigation";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import { TimePicker } from "./components/TimePicker";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { setLanguage } from "./i18n";
+
+beforeEach(() => setLanguage("zh-CN"));
+afterEach(cleanup);
 
 describe("duration selector", () => {
   it("accepts direct digits without a menu confirmation and preserves milliseconds", () => {
@@ -32,6 +39,26 @@ describe("duration selector", () => {
     expect(html).toContain('aria-label="开始时间 · 分"');
     expect(html).toContain('aria-label="开始时间 · 分候选列表"');
     expect(html).not.toContain('role="combobox"');
+  });
+  it("commits a valid direct numeric entry without opening a menu or checkbox", () => {
+    const onChange = vi.fn();
+    render(
+      createElement(TimePicker, {
+        label: "开始时间",
+        value: 24.378,
+        max: 120.378,
+        onChange,
+        invalid: false,
+        describedBy: "trim-help",
+      }),
+    );
+    const minutes = screen.getByRole("textbox", {
+      name: "开始时间 · 分",
+    });
+    fireEvent.change(minutes, { target: { value: "1" } });
+    expect(onChange).toHaveBeenCalledWith(84.378);
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(screen.queryByRole("listbox")).toBeNull();
   });
   it("retains fractional precision and supports long media", () => {
     expect(timeParts(11.779)).toEqual({

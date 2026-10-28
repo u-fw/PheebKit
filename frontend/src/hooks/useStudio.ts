@@ -12,6 +12,7 @@ import type {
 import { errorMessage } from "../format";
 import { JobHistory } from "../jobHistory";
 import { refreshEnvironmentSnapshot } from "../environmentRefresh";
+import { latestFFmpegSetup } from "../ffmpegSetup";
 import { latestQueueStatus } from "../queueSchedule";
 
 export function useStudio(protect?: (action: () => Promise<void>) => void) {
@@ -28,6 +29,7 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
   const [ffmpegSetup, setFFmpegSetup] = useState<FFmpegSetupStatus | null>(
     null,
   );
+  const ffmpegSetupRef = useRef<FFmpegSetupStatus | null>(null);
   const [media, setMedia] = useState<Media | null>(null);
   const [mediaList, setMediaList] = useState<Media[]>([]);
   const mediaListRef = useRef<Media[]>([]);
@@ -85,6 +87,27 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     }
   }, []);
 
+  const acceptFFmpegSetup = useCallback(
+    (next: FFmpegSetupStatus) => {
+      const current = ffmpegSetupRef.current;
+      const ordered = latestFFmpegSetup(current, next);
+      if (current === ordered) return;
+      const completed =
+        ordered.stage === "completed" && current?.stage !== "completed";
+      ffmpegSetupRef.current = ordered;
+      setFFmpegSetup(ordered);
+      if (!completed) return;
+      setEnvironmentBusy(true);
+      void API.getEnvironment()
+        .then(updateEnvironment)
+        .catch((cause: unknown) =>
+          setError(`下载完成后环境刷新失败：${errorMessage(cause)}`),
+        )
+        .finally(() => setEnvironmentBusy(false));
+    },
+    [updateEnvironment],
+  );
+
   const refreshEnvironment = useCallback(async () => {
     const generation = ++environmentGeneration.current;
     setEnvironmentBusy(true);
@@ -136,47 +159,32 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
   useEffect(() => {
     if (!connected || platform !== "windows") return;
     let alive = true;
-    let lastStage = "";
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    async function poll() {
-      try {
-        const next = await API.getFFmpegSetupStatus();
-        if (!alive) return;
-        setFFmpegSetup(next);
-        const completed =
-          next.stage === "completed" && lastStage !== "completed";
-        lastStage = next.stage;
-        if (completed) {
-          setEnvironmentBusy(true);
-          try {
-            const installedEnvironment = await API.getEnvironment();
-            if (alive) await updateEnvironment(installedEnvironment);
-          } finally {
-            if (alive) setEnvironmentBusy(false);
-          }
-        }
-      } catch (cause) {
-        if (alive) setError(`下载状态检测失败：${errorMessage(cause)}`);
-      }
-      if (alive) timer = setTimeout(() => void poll(), 750);
-    }
-    void poll();
+    const apply = (status: FFmpegSetupStatus) => {
+      if (alive) acceptFFmpegSetup(status);
+    };
+    const unsubscribe = API.subscribeFFmpegSetup(apply);
+    void API.getFFmpegSetupStatus().then(apply, (cause: unknown) => {
+      if (alive) setError(`下载状态读取失败：${errorMessage(cause)}`);
+    });
     return () => {
       alive = false;
-      if (timer) clearTimeout(timer);
+      unsubscribe();
     };
-  }, [connected, platform, updateEnvironment]);
+  }, [acceptFFmpegSetup, connected, platform]);
 
-  const startFFmpegSetup = useCallback(async (source: string) => {
-    setFFmpegSetup(await API.startFFmpegSetup(source));
-  }, []);
+  const startFFmpegSetup = useCallback(
+    async (source: string) => {
+      acceptFFmpegSetup(await API.startFFmpegSetup(source));
+    },
+    [acceptFFmpegSetup],
+  );
   const startCustomFFmpegSetup = useCallback(
     async (link: string, sha256: string, trustBuild: boolean) => {
-      setFFmpegSetup(
+      acceptFFmpegSetup(
         await API.startCustomFFmpegSetup(link, sha256, trustBuild),
       );
     },
-    [],
+    [acceptFFmpegSetup],
   );
   const cancelFFmpegSetup = useCallback(async () => {
     await API.cancelFFmpegSetup();
@@ -416,12 +424,32 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     });
 
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let sequenceReconcileTimer: ReturnType<typeof setTimeout> | undefined;
+    const reconcileSequenceGap = () => {
+      if (sequenceReconcileTimer) return;
+      sequenceReconcileTimer = setTimeout(async () => {
+        sequenceReconcileTimer = undefined;
+        const requestedAt = jobHistory.current.revision;
+        try {
+          const [snapshot, status] = await Promise.all([
+            API.jobs(),
+            API.queueStatus(),
+          ]);
+          if (!alive) return;
+          setJobs(jobHistory.current.reconcile(snapshot, requestedAt));
+          setQueueStatus((current) => latestQueueStatus(current, status));
+        } catch (cause) {
+          if (alive) setError(`任务事件缺口同步失败：${errorMessage(cause)}`);
+        }
+      }, 0);
+    };
     const unsubscribe: (() => void)[] = [];
     try {
       unsubscribe.push(
         API.subscribeJobs((job) => {
           if (!alive) return;
-          jobHistory.current.update([job]);
+          const update = jobHistory.current.updateWithSequence([job]);
+          if (update.sequenceGap) reconcileSequenceGap();
           if (timer) return;
           timer = setTimeout(() => {
             timer = undefined;
@@ -450,6 +478,7 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
       alive = false;
       generationRef.current++;
       if (timer) clearTimeout(timer);
+      if (sequenceReconcileTimer) clearTimeout(sequenceReconcileTimer);
       unsubscribe.forEach((off) => off());
     };
   }, [importPaths, protect]);
