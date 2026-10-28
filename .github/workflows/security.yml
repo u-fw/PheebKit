@@ -64,6 +64,11 @@ jobs:
         run: |
           npm --prefix frontend audit --audit-level=low
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build frontend for embedded Go package inspection
+        shell: pwsh
+        run: |
+          npm --prefix frontend run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Audit reachable Go vulnerabilities
         shell: pwsh
         run: |

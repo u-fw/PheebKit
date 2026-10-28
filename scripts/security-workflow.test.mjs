@@ -24,7 +24,10 @@ test("security audit has read-only repository permissions", () => {
     /^  audit:\n(?:.|\n)*?    permissions:\n      contents: read$/m,
   );
   assert.doesNotMatch(workflow, /^\s+contents:\s+write$/m);
-  assert.doesNotMatch(workflow, /^\s+(?:attestations|id-token|packages):\s+write$/m);
+  assert.doesNotMatch(
+    workflow,
+    /^\s+(?:attestations|id-token|packages):\s+write$/m,
+  );
 });
 
 test("security tools and actions are pinned and installation scripts are disabled", () => {
@@ -39,4 +42,20 @@ test("security tools and actions are pinned and installation scripts are disable
       `unreviewed action reference: ${action[1]}`,
     );
   }
+});
+
+test("security audit builds embed assets before inspecting Go packages", () => {
+  const npmInstall = workflow.indexOf(
+    "npm --prefix frontend ci --ignore-scripts",
+  );
+  const frontendBuild = workflow.indexOf("npm --prefix frontend run build");
+  const goInspection = workflow.indexOf("./scripts/project-go-packages.ps1");
+
+  assert.ok(npmInstall >= 0);
+  assert.ok(frontendBuild > npmInstall);
+  assert.ok(goInspection > frontendBuild);
+  assert.match(
+    workflow,
+    /Build frontend for embedded Go package inspection\n        shell: pwsh\n        run: \|\n          npm --prefix frontend run build/,
+  );
 });
