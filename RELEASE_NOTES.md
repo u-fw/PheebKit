@@ -7,6 +7,7 @@
 - 本候选包含 rc.5 发布之后的进程回收、内置 FFmpeg 缓存完整性、后台历史保存、事件顺序、预览能力释放、队列分页与损坏媒体粗细扫描优化，以及 x/net v0.62.0、x/crypto v0.58.0、x/text v0.43.0 安全修复。
 - 当前仍为 Windows x64 验收候选。普通 main CI 只验证源码和生产二进制；包体、安装器生命周期与制品来源证明由独立候选打包运行验收，不将它们混同。
 - 升级验收改为下载并校验已发布旧版的真实包体，覆盖 GitHub 制品摘要、清单、来源与标签提交；不再为此自动安装历史 Wails v3 Beta 工具，也不以重建旧源码的结果冒充用户正在使用的安装包。
+- 配置文件写入增加按文件的进程内排队，避免高并发和慢磁盘耗尽跨进程文件锁的等待预算；不同文件继续并行，空闲锁自动回收。
 
 ## English — rc.6
 
@@ -17,6 +18,7 @@
 - Includes the post-rc.5 process cleanup, trusted FFmpeg cache, background persistence, sequenced events, preview release, queue pagination and bounded recovery scanning changes, plus the x/net v0.62.0, x/crypto v0.58.0 and x/text v0.43.0 security fixes.
 - Remains a Windows x64 verification candidate. Main-branch checks do not establish package or installer acceptance; use the separate candidate packaging and attestation run.
 - CI upgrade acceptance now verifies the actual published baseline assets, GitHub digests, checksum manifest and exact tag provenance before execution, without bootstrapping historical Wails v3 Beta tooling.
+- Queue in-process configuration writers per file before starting the cross-process lock deadline. Slow local writes no longer consume that budget; unrelated files remain independent and idle locks are reclaimed.
 
 ## Previous candidate: 0.2.0-rc.5
 
