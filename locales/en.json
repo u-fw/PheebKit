@@ -1,4 +1,9 @@
 {
+  "任务历史尚未保存": "Job history has not been saved",
+  "任务已停止，但本次任务历史未能写入磁盘。请重试保存，或明确选择不保存历史后退出；已生成的输出文件不受影响。": "Jobs have stopped, but their history could not be written to disk. Retry saving or explicitly exit without saving history. Generated output files are unaffected.",
+  "重试保存并退出": "Retry saving and exit",
+  "不保存任务历史并退出": "Exit without saving job history",
+  "任务历史保存失败，请重试或明确选择不保存历史后退出：{{0}}": "Job history could not be saved. Retry or explicitly exit without saving history: {{0}}",
   "队列已暂停": "Queue paused",
   "正在处理": "Processing",
   "打开任务队列": "Open task queue",

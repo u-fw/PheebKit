@@ -195,6 +195,8 @@ export default function App() {
     jobs: number;
     downloading: boolean;
     unsaved?: boolean;
+    shutdownStarted?: boolean;
+    historySaveFailed?: boolean;
   } | null>(null);
   useEffect(() => {
     if (!studio.connected) return;
@@ -851,7 +853,11 @@ export default function App() {
       )}
       {closeRequest && (
         <ExitDialog
-          request={{ ...closeRequest, unsaved: closeRequest.unsaved || dirty }}
+          request={{
+            ...closeRequest,
+            unsaved:
+              !closeRequest.shutdownStarted && (closeRequest.unsaved || dirty),
+          }}
           dismiss={() => setCloseRequest(null)}
           save={saveDraft}
         />

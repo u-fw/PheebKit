@@ -8,7 +8,7 @@
 
 本地优先的 Windows 媒体工具。用 FFmpeg 完成压缩、剪辑、转封装与轨道处理，提供可修改的参数、真实执行预览和独立任务队列。媒体无需上传。
 
-技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前 `0.2.0-rc.5` 是 Material 工作台与 FFmpeg 内置分发验收候选；已验证范围和缺口见[稳定化记录](docs/stability.md)。
+技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前源码 `0.2.0-rc.6` 是进程回收、队列恢复与安全分发验收候选；下载页仍保留已发布的 `rc.5`，新包以独立 CI 候选运行结果为准。已验证范围和缺口见[稳定化记录](docs/stability.md)。
 
 ## 实际运行截图
 

@@ -1,6 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'release-upload.ps1')
+. (Join-Path $PSScriptRoot 'published-upgrade.ps1')
 
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $toolsRoot = [IO.Path]::GetFullPath((Join-Path $workspace '.tools')) + [IO.Path]::DirectorySeparatorChar
@@ -26,6 +27,49 @@ function Assert-Refused([scriptblock]$Body, [string]$Message) {
     try { & $Body | Out-Null } catch { $errorMessage = $_.Exception.Message }
     if (-not $errorMessage -or $errorMessage -notmatch $Message) {
         throw "Expected refusal matching '$Message'; got '$errorMessage'"
+    }
+}
+
+function New-PublishedReleaseFixture {
+    $names = @(
+        "PheebKit-$version-windows-x64.exe",
+        "PheebKit-$version-windows-x64-ffmpeg.exe",
+        "PheebKit-$version-windows-x64-portable-ffmpeg.zip",
+        "PheebKit-$version-windows-x64-setup-ffmpeg.exe",
+        'SHA256SUMS.txt'
+    )
+    return [pscustomobject]@{
+        tag_name = "v$version"
+        draft = $false
+        assets = @($names | ForEach-Object { [pscustomobject]@{
+            name = $_
+            state = 'uploaded'
+            digest = 'sha256:' + ('a' * 64)
+            size = 100
+            browser_download_url = "https://github.com/u-fw/PheebKit/releases/download/v$version/$_"
+        } })
+    }
+}
+
+Invoke-Case 'accept complete published baseline identities without executing files' {
+    $assets = Get-PublishedUpgradeAssets (New-PublishedReleaseFixture) $version
+    if ($assets.Count -ne 5 -or $assets['SHA256SUMS.txt'] -cne ('a' * 64)) { throw 'Published asset identity differs.' }
+}
+foreach ($change in @('tag', 'draft', 'duplicate', 'origin', 'digest', 'size', 'checksum-size', 'incomplete', 'state')) {
+    Invoke-Case "reject published baseline $change tampering" {
+        $fixture = New-PublishedReleaseFixture
+        switch ($change) {
+            tag { $fixture.tag_name = 'v9.0.0' }
+            draft { $fixture.draft = $true }
+            duplicate { $fixture.assets[1] = $fixture.assets[0] }
+            origin { $fixture.assets[0].browser_download_url = 'https://example.invalid/tool.exe' }
+            digest { $fixture.assets[0].digest = '' }
+            size { $fixture.assets[0].size = 801MB }
+            checksum-size { $fixture.assets[4].size = 4097 }
+            incomplete { $fixture.assets = @($fixture.assets | Select-Object -First 4) }
+            state { $fixture.assets[0].state = 'new' }
+        }
+        Assert-Refused { Get-PublishedUpgradeAssets $fixture $version } 'Invalid published|Published (?:baseline|upgrade)'
     }
 }
 

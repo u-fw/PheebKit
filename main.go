@@ -50,7 +50,11 @@ func main() {
 	}
 	defer releaseGuard()
 	service := app.NewService()
-	defer service.Close()
+	defer func() {
+		if err := service.Close(); err != nil {
+			log.Printf("final job history save: %v", err)
+		}
+	}()
 	var host *wailsHost
 	err = wails.Run(&options.App{
 		Title: "菲比工具箱 · PheebKit",

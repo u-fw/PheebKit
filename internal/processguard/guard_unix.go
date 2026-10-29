@@ -13,10 +13,11 @@ import (
 )
 
 type unixBackend struct {
-	mu       sync.Mutex
-	process  *os.Process
-	attached bool
-	closed   bool
+	mu        sync.Mutex
+	process   *os.Process
+	attached  bool
+	closed    bool
+	cancelled bool
 }
 
 func prepare(cmd *exec.Cmd) (backend, error) {
@@ -35,6 +36,9 @@ func (g *unixBackend) Attach(process *os.Process) error {
 	}
 	g.process = process
 	g.attached = true
+	if g.cancelled {
+		return unix.Kill(-process.Pid, unix.SIGKILL)
+	}
 	return nil
 }
 
@@ -44,6 +48,7 @@ func (g *unixBackend) Terminate() error {
 	if g.closed {
 		return os.ErrProcessDone
 	}
+	g.cancelled = true
 	if !g.attached || g.process == nil {
 		return nil
 	}

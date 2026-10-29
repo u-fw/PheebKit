@@ -1,4 +1,24 @@
-# PheebKit 0.2.0-rc.5
+# PheebKit 0.2.0-rc.6
+
+- Windows 媒体子进程先挂起创建，加入 Job Object 后才运行，封住启动与绑定之间的后代进程逃逸窗口；提前取消会被保留到绑定阶段。
+- 队列事件缺口同步现在合并并发请求，并在 IPC 临时失败后按 0.5–30 秒退避重试；恢复成功或组件卸载后停止重试。
+- 最终任务历史写入失败会阻止静默退出，支持重试保存或明确选择放弃本次历史后退出。退出磁盘写入不阻塞原生窗口线程；输出视频文件不受影响。
+- 定期安全审计同时扫描源码与真实 Wails 生产 EXE，覆盖仅在生产构建标签下链接的依赖。发布作业继续校验制品来源、SHA-256 和标签一致性。
+- 本候选包含 rc.5 发布之后的进程回收、内置 FFmpeg 缓存完整性、后台历史保存、事件顺序、预览能力释放、队列分页与损坏媒体粗细扫描优化，以及 x/net v0.62.0、x/crypto v0.58.0、x/text v0.43.0 安全修复。
+- 当前仍为 Windows x64 验收候选。普通 main CI 只验证源码和生产二进制；包体、安装器生命周期与制品来源证明由独立候选打包运行验收，不将它们混同。
+- 升级验收改为下载并校验已发布旧版的真实包体，覆盖 GitHub 制品摘要、清单、来源与标签提交；不再为此自动安装历史 Wails v3 Beta 工具，也不以重建旧源码的结果冒充用户正在使用的安装包。
+
+## English — rc.6
+
+- Create Windows media processes suspended, attach them to a kill-on-close Job Object, then resume. This closes the descendant escape window and retains cancellation received before attachment.
+- Coalesce queue snapshot recovery requests and retry transient IPC failures with 0.5–30-second backoff. Stop retrying after recovery or disposal.
+- Keep the app visible if its final history write fails, with explicit retry or exit-without-history actions. Flush off the native window thread; generated media files are unaffected.
+- Periodic security audits inspect both source and the actual Wails production EXE, including production-tag dependencies. Publication retains checksum, provenance and tag checks.
+- Includes the post-rc.5 process cleanup, trusted FFmpeg cache, background persistence, sequenced events, preview release, queue pagination and bounded recovery scanning changes, plus the x/net v0.62.0, x/crypto v0.58.0 and x/text v0.43.0 security fixes.
+- Remains a Windows x64 verification candidate. Main-branch checks do not establish package or installer acceptance; use the separate candidate packaging and attestation run.
+- CI upgrade acceptance now verifies the actual published baseline assets, GitHub digests, checksum manifest and exact tag provenance before execution, without bootstrapping historical Wails v3 Beta tooling.
+
+## Previous candidate: 0.2.0-rc.5
 
 - 新增轻量直跑 EXE、FFmpeg 内置单文件 EXE、内置 FFmpeg 便携 ZIP 和可选安装器四种发布形态；统一附带 SHA-256 清单。
 - 内置运行时固定为 Gyan FFmpeg 9.0.2 full build，打包时验证来源归档、`ffmpeg.exe`、`ffprobe.exe` 和实际版本。单文件版首次启动时原子解压到用户缓存并校验；ZIP 直接使用相邻 `runtime/ffmpeg`。

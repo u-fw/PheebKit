@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       upgrade_from_tag:
-        description: 'Optional reviewed previous version tag to build and upgrade from'
+        description: 'Optional reviewed published version tag to verify and upgrade from'
         type: string
         required: false
         default: ''
@@ -125,16 +125,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --exit-code
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Build optional previous-version upgrade candidate
+      - name: Download and verify published upgrade baseline
         if: steps.plan.outputs.package == 'true' && github.event_name == 'workflow_dispatch' && inputs.upgrade_from_tag != ''
         shell: pwsh
         env:
           PHEEBKIT_UPGRADE_FROM_TAG: ${{ inputs.upgrade_from_tag }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Historical v3 candidates are built only as isolated upgrade baselines.
-          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          ./scripts/prepare-upgrade-baseline.ps1 -Ref $env:PHEEBKIT_UPGRADE_FROM_TAG
+          ./scripts/prepare-upgrade-baseline.ps1 -Ref $env:PHEEBKIT_UPGRADE_FROM_TAG -Published
       - name: Install verified packaging compiler
         if: steps.plan.outputs.package == 'true'
         shell: pwsh

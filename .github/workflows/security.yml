@@ -76,3 +76,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 @packages
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Audit the actual production binary
+        shell: pwsh
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/build-windows.ps1 -SkipFrontend
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 -mode=binary bin/PheebKit.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

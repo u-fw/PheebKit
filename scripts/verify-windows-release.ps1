@@ -182,7 +182,14 @@ try {
         if ($priorSetups[0].Name -notmatch '^PheebKit-(.+)-windows-x64-(?:setup|setup-ffmpeg)\.exe$') { throw 'Cannot parse prior setup version.' }
         $priorVersion = $Matches[1]
         if ($priorZips[0].Name -notmatch "^PheebKit-$([regex]::Escape($priorVersion))-windows-x64-(?:standalone|portable-ffmpeg)\.zip$") { throw 'Previous artifacts use different versions.' }
-        Confirm-ReleaseChecksums $previous @($priorSetups[0].Name, $priorZips[0].Name)
+        $priorNames = @($priorSetups[0].Name, $priorZips[0].Name)
+        $priorLight = "PheebKit-$priorVersion-windows-x64.exe"
+        $priorBundled = "PheebKit-$priorVersion-windows-x64-ffmpeg.exe"
+        $hasLight = Test-Path -LiteralPath (Join-Path $previous $priorLight) -PathType Leaf
+        $hasBundled = Test-Path -LiteralPath (Join-Path $previous $priorBundled) -PathType Leaf
+        if ($hasLight -ne $hasBundled) { throw 'Previous direct executable pair is incomplete.' }
+        if ($hasLight) { $priorNames += @($priorLight, $priorBundled) }
+        Confirm-ReleaseChecksums $previous $priorNames
         Expand-Archive -LiteralPath $priorZips[0].FullName -DestinationPath (Join-Path $root 'previous-payload')
         $priorBinary = Join-Path $root 'previous-payload/PheebKit.exe'
         $priorInfo = (Get-Item -LiteralPath $priorBinary).VersionInfo

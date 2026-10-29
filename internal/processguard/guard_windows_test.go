@@ -84,9 +84,80 @@ func TestProcessGuardCleansDescendantsAfterNormalParentExit(t *testing.T) {
 	}
 }
 
+func TestProcessGuardWaitsForAttachmentBeforeRunning(t *testing.T) {
+	marker := filepath.Join(t.TempDir(), "started")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=^TestProcessGuardHelper$")
+	cmd.Env = append(os.Environ(), "PHEEBKIT_PROCESS_GUARD_TEST=marker", "PHEEBKIT_PROCESS_GUARD_PID_FILE="+marker)
+	guard, err := Prepare(cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer guard.Close()
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer cmd.Process.Kill()
+	// Model the caller being descheduled between Start and Attach.
+	time.Sleep(250 * time.Millisecond)
+	if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
+		t.Fatal("guarded program ran before job attachment")
+	}
+	if err := guard.Attach(cmd.Process); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Wait(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(marker); err != nil {
+		t.Fatalf("attached program did not run: %v", err)
+	}
+}
+
+func TestProcessGuardRemembersCancellationBeforeAttachment(t *testing.T) {
+	marker := filepath.Join(t.TempDir(), "must-not-start")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestProcessGuardHelper$")
+	cmd.Env = append(os.Environ(), "PHEEBKIT_PROCESS_GUARD_TEST=marker", "PHEEBKIT_PROCESS_GUARD_PID_FILE="+marker)
+	guard, err := Prepare(cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer guard.Close()
+	cancelled := make(chan struct{})
+	cmd.Cancel = func() error {
+		err := guard.Terminate()
+		close(cancelled)
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer cmd.Process.Kill()
+	cancel()
+	select {
+	case <-cancelled:
+	case <-time.After(time.Second):
+		t.Fatal("cancellation did not reach the process guard")
+	}
+	if err := guard.Attach(cmd.Process); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Wait(); err == nil {
+		t.Fatal("cancelled program reported success")
+	}
+	if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
+		t.Fatal("cancelled program ran after late attachment")
+	}
+}
+
 func TestProcessGuardHelper(t *testing.T) {
 	mode := os.Getenv("PHEEBKIT_PROCESS_GUARD_TEST")
 	switch mode {
+	case "marker":
+		if err := os.WriteFile(os.Getenv("PHEEBKIT_PROCESS_GUARD_PID_FILE"), []byte("started"), 0600); err != nil {
+			t.Fatal(err)
+		}
 	case "descendant":
 		time.Sleep(time.Hour)
 	case "parent", "exiting-parent":

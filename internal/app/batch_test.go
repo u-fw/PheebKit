@@ -21,7 +21,7 @@ func batchService(t *testing.T) (*Service, []core.Project) {
 	s := &Service{ctx: ctx, cancel: cancel, runner: &runnerProxy{current: newPlatformRunner(Environment{})}, jobs: jobs.New(runner, nil), media: make(map[string]core.Media),
 		caps: &core.Capabilities{Encoders: []core.Encoder{{Name: "libx264", MediaType: "video"}, {Name: "aac", MediaType: "audio"}}}}
 	s.jobs.SetQueuePaused(true)
-	t.Cleanup(s.Close)
+	t.Cleanup(func() { _ = s.Close() })
 	dir := t.TempDir()
 	projects := make([]core.Project, 2)
 	for i := range projects {

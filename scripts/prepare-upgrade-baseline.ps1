@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Ref)
+param([Parameter(Mandatory)][string]$Ref, [switch]$Published)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -6,6 +6,11 @@ Set-Location -LiteralPath $workspace
 if ($Ref -notmatch '^v\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$') { throw 'Upgrade baseline must be an exact version tag' }
 git show-ref --verify --quiet "refs/tags/$Ref"
 if ($LASTEXITCODE -ne 0) { throw 'Upgrade baseline tag is not available locally; fetch the reviewed tag first' }
+if ($Published) {
+    . (Join-Path $PSScriptRoot 'published-upgrade.ps1')
+    Save-PublishedUpgrade -Ref $Ref -Workspace $workspace
+    return
+}
 $toolsPrefix = [IO.Path]::GetFullPath((Join-Path $workspace '.tools')) + [IO.Path]::DirectorySeparatorChar
 $checkout = [IO.Path]::GetFullPath((Join-Path $toolsPrefix ('upgrade-source-' + [guid]::NewGuid().ToString('N'))))
 $destination = [IO.Path]::GetFullPath((Join-Path $toolsPrefix "upgrade-candidates/$Ref"))

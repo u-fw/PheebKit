@@ -19,55 +19,58 @@ import (
 
 // Service is the Wails boundary; the compiler and job engine know nothing of UI.
 type Service struct {
-	app                NativeHost
-	runner             *runnerProxy
-	jobs               *jobs.Manager
-	ctx                context.Context
-	cancel             context.CancelFunc
-	mediaMu            sync.RWMutex
-	media              map[string]core.Media
-	mediaUsed          map[string]uint64
-	mediaPinned        map[string]bool
-	mediaSequence      uint64
-	mediaRevision      uint64
-	capsMu             sync.Mutex
-	caps               *core.Capabilities
-	configMu           sync.RWMutex
-	environment        Environment
-	configuration      binaryConfig
-	configurationError string
-	setupMu            sync.Mutex
-	setupStatus        FFmpegSetupStatus
-	setupCancel        context.CancelFunc
-	setupBusy          atomic.Bool
-	setupSequence      uint64
-	workspaceOnce      sync.Once
-	workspaceMu        sync.Mutex
-	workspaceError     string
-	lifecycleMu        sync.Mutex
-	exiting            bool
-	unsavedEdits       bool
-	draftRevision      uint64
-	previewMu          sync.Mutex
-	previewTokens      map[string]*previewGrant
-	previewSequence    uint64
-	editorMu           sync.Mutex
-	editorSession      string
-	recoveryRevision   uint64
-	editorError        string
-	diagnosticsMu      sync.Mutex
-	diagnostics        map[string]diagnosticSnapshot
-	diagnosticSequence uint64
-	healthMu           sync.Mutex
-	health             core.MediaHealth
-	healthCancel       context.CancelFunc
-	healthBusy         atomic.Bool
-	healthWG           sync.WaitGroup
-	language           atomic.Uint32
-	jobFeedback        *jobFeedbackTracker
-	queueEmitMu        sync.Mutex
-	queueEmittedRev    uint64
-	queueEmitted       bool
+	app                 NativeHost
+	runner              *runnerProxy
+	jobs                *jobs.Manager
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	mediaMu             sync.RWMutex
+	media               map[string]core.Media
+	mediaUsed           map[string]uint64
+	mediaPinned         map[string]bool
+	mediaSequence       uint64
+	mediaRevision       uint64
+	capsMu              sync.Mutex
+	caps                *core.Capabilities
+	configMu            sync.RWMutex
+	environment         Environment
+	configuration       binaryConfig
+	configurationError  string
+	setupMu             sync.Mutex
+	setupStatus         FFmpegSetupStatus
+	setupCancel         context.CancelFunc
+	setupBusy           atomic.Bool
+	setupSequence       uint64
+	workspaceOnce       sync.Once
+	workspaceMu         sync.Mutex
+	workspaceError      string
+	lifecycleMu         sync.Mutex
+	closeMu             sync.Mutex
+	exiting             bool
+	shutdownFinished    bool
+	historyLossAccepted bool
+	unsavedEdits        bool
+	draftRevision       uint64
+	previewMu           sync.Mutex
+	previewTokens       map[string]*previewGrant
+	previewSequence     uint64
+	editorMu            sync.Mutex
+	editorSession       string
+	recoveryRevision    uint64
+	editorError         string
+	diagnosticsMu       sync.Mutex
+	diagnostics         map[string]diagnosticSnapshot
+	diagnosticSequence  uint64
+	healthMu            sync.Mutex
+	health              core.MediaHealth
+	healthCancel        context.CancelFunc
+	healthBusy          atomic.Bool
+	healthWG            sync.WaitGroup
+	language            atomic.Uint32
+	jobFeedback         *jobFeedbackTracker
+	queueEmitMu         sync.Mutex
+	queueEmittedRev     uint64
+	queueEmitted        bool
 }
 
 func (s *Service) SetLocale(language string) error {
@@ -113,9 +116,12 @@ func NewService() *Service {
 func (s *Service) Attach(a NativeHost) { s.app = a }
 
 //wails:ignore
-func (s *Service) Close() {
+func (s *Service) Close() error {
+	s.closeMu.Lock()
+	defer s.closeMu.Unlock()
 	s.lifecycleMu.Lock()
 	s.exiting = true
+	s.shutdownFinished = false
 	s.lifecycleMu.Unlock()
 	s.cancel()
 	if s.jobFeedback != nil {
@@ -124,8 +130,12 @@ func (s *Service) Close() {
 	if s.app != nil {
 		s.app.SetTaskbarProgress(TaskbarProgress{State: taskbarHidden})
 	}
-	s.jobs.Close()
+	err := s.jobs.Close()
 	s.healthWG.Wait()
+	s.lifecycleMu.Lock()
+	s.shutdownFinished = true
+	s.lifecycleMu.Unlock()
+	return err
 }
 
 func (s *Service) GetPlatform() string {

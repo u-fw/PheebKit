@@ -14,6 +14,7 @@ import { JobHistory } from "../jobHistory";
 import { refreshEnvironmentSnapshot } from "../environmentRefresh";
 import { latestFFmpegSetup } from "../ffmpegSetup";
 import { latestQueueStatus } from "../queueSchedule";
+import { createQueueReconciler } from "../queueReconciler";
 
 export function useStudio(protect?: (action: () => Promise<void>) => void) {
   const mediaRevision = useRef(0);
@@ -424,32 +425,28 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
     });
 
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let sequenceReconcileTimer: ReturnType<typeof setTimeout> | undefined;
-    const reconcileSequenceGap = () => {
-      if (sequenceReconcileTimer) return;
-      sequenceReconcileTimer = setTimeout(async () => {
-        sequenceReconcileTimer = undefined;
+    const sequenceReconciler = createQueueReconciler(
+      async () => {
         const requestedAt = jobHistory.current.revision;
-        try {
-          const [snapshot, status] = await Promise.all([
-            API.jobs(),
-            API.queueStatus(),
-          ]);
-          if (!alive) return;
-          setJobs(jobHistory.current.reconcile(snapshot, requestedAt));
-          setQueueStatus((current) => latestQueueStatus(current, status));
-        } catch (cause) {
-          if (alive) setError(`任务事件缺口同步失败：${errorMessage(cause)}`);
-        }
-      }, 0);
-    };
+        const [snapshot, status] = await Promise.all([
+          API.jobs(),
+          API.queueStatus(),
+        ]);
+        if (!alive) return;
+        setJobs(jobHistory.current.reconcile(snapshot, requestedAt));
+        setQueueStatus((current) => latestQueueStatus(current, status));
+      },
+      (cause) => {
+        if (alive) setError(`任务事件缺口同步失败：${errorMessage(cause)}`);
+      },
+    );
     const unsubscribe: (() => void)[] = [];
     try {
       unsubscribe.push(
         API.subscribeJobs((job) => {
           if (!alive) return;
           const update = jobHistory.current.updateWithSequence([job]);
-          if (update.sequenceGap) reconcileSequenceGap();
+          if (update.sequenceGap) sequenceReconciler.request();
           if (timer) return;
           timer = setTimeout(() => {
             timer = undefined;
@@ -478,7 +475,7 @@ export function useStudio(protect?: (action: () => Promise<void>) => void) {
       alive = false;
       generationRef.current++;
       if (timer) clearTimeout(timer);
-      if (sequenceReconcileTimer) clearTimeout(sequenceReconcileTimer);
+      sequenceReconciler.dispose();
       unsubscribe.forEach((off) => off());
     };
   }, [importPaths, protect]);

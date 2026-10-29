@@ -8,7 +8,7 @@
 
 A local-first Windows media toolkit powered by FFmpeg. Compress, trim, remux and process tracks with editable parameters, actual command previews and independent queued jobs. Media stays on your computer.
 
-Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Targets Windows 10/11 x64; Android is deferred. The current `0.2.0-rc.5` is the Material-workbench and bundled-FFmpeg distribution candidate. See the [stabilization evidence and remaining checks](docs/stability.md).
+Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Targets Windows 10/11 x64; Android is deferred. Source `0.2.0-rc.6` is the process-cleanup, queue-recovery and distribution verification candidate. Downloads still retain published `rc.5`; use the separate CI candidate run for new package results. See the [stabilization evidence and remaining checks](docs/stability.md).
 
 ## Real desktop screenshots
 

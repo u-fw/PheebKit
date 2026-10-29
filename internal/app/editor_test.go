@@ -48,7 +48,7 @@ func TestRecoveryDraftRevisionsRestoreAndActivityProtection(t *testing.T) {
 		t.Fatal(err)
 	}
 	reopened := NewService()
-	t.Cleanup(reopened.Close)
+	t.Cleanup(func() { _ = reopened.Close() })
 	reopened.runner.replace(&projectProbeRunner{})
 	if len(reopened.GetProjectLibrary().Drafts) != 1 || reopened.GetProjectLibrary().Drafts[0].Active {
 		t.Fatal("inactive previous-session draft was not offered")

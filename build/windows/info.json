@@ -1,14 +1,14 @@
 {
 	"fixed": {
-		"file_version": "0.2.0.20005",
-		"product_version": "0.2.0.20005"
+		"file_version": "0.2.0.20006",
+		"product_version": "0.2.0.20006"
 	},
 	"info": {
 		"0409": {
-			"FileVersion": "0.2.0-rc.5",
+			"FileVersion": "0.2.0-rc.6",
 			"InternalName": "PheebKit",
 			"OriginalFilename": "PheebKit.exe",
-			"ProductVersion": "0.2.0-rc.5",
+			"ProductVersion": "0.2.0-rc.6",
 			"CompanyName": "PheebKit",
 			"FileDescription": "菲比工具箱 · 本地媒体处理工具",
 			"LegalCopyright": "© 2026 PheebKit contributors",

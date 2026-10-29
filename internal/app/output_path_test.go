@@ -59,6 +59,8 @@ func TestUnsavedEditsProtectIdleCloseAndRejectStaleUpdates(t *testing.T) {
 		t.Fatal("unsaved edit bypassed close protection")
 	}
 	s.SetUnsavedEdits(false, 3)
+	s.CanClose()
+	awaitServiceShutdown(t, s)
 	if !s.CanClose() {
 		t.Fatal("saved idle project cannot close")
 	}

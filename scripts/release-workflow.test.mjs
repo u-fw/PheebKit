@@ -235,6 +235,18 @@ test("packaged artifacts are attested in an isolated OIDC job before publication
   assert.doesNotMatch(attest, /--build-info|Start-Process|release-windows/);
 });
 
+test("CI upgrades from verified published packages without bootstrapping historical Wails beta tooling", () => {
+  const upgrade = workflow
+    .split("      - name: Download and verify published upgrade baseline\n")[1]
+    .split("      - name:")[0];
+  assert.match(upgrade, /GH_TOKEN: \$\{\{ github\.token \}\}/);
+  assert.match(
+    upgrade,
+    /prepare-upgrade-baseline\.ps1 -Ref \$env:PHEEBKIT_UPGRADE_FROM_TAG -Published/,
+  );
+  assert.doesNotMatch(upgrade, /wails3|go install|worktree/);
+});
+
 test("planner CLI emits the actual checked-out revision and refuses a retargeted tag before writing outputs", () => {
   const tools = fileURLToPath(new URL("../.tools/", import.meta.url));
   mkdirSync(tools, { recursive: true });

@@ -29,7 +29,7 @@ export function ClearRecoveryDraft(arg1:number):Promise<void>;
 
 export function ConfigureFFmpeg(arg1:string,arg2:string):Promise<app.Environment>;
 
-export function ConfirmQuit():Promise<void>;
+export function ConfirmQuit(arg1:boolean):Promise<void>;
 
 export function DeletePreset(arg1:string):Promise<app.WorkspacePreferences>;
 

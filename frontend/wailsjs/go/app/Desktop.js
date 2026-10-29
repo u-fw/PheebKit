@@ -54,8 +54,8 @@ export function ConfigureFFmpeg(arg1, arg2) {
   return window['go']['app']['Desktop']['ConfigureFFmpeg'](arg1, arg2);
 }
 
-export function ConfirmQuit() {
-  return window['go']['app']['Desktop']['ConfirmQuit']();
+export function ConfirmQuit(arg1) {
+  return window['go']['app']['Desktop']['ConfirmQuit'](arg1);
 }
 
 export function DeletePreset(arg1) {

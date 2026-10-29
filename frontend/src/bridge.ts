@@ -367,12 +367,15 @@ export const API = {
   },
   deletePreset: async (id: string): Promise<WorkspacePreferences> =>
     preferencesView(await Service.DeletePreset(id)),
-  confirmQuit: async (): Promise<void> => Service.ConfirmQuit(),
+  confirmQuit: async (allowHistoryLoss = false): Promise<void> =>
+    Service.ConfirmQuit(allowHistoryLoss),
   onCloseRequested: (
     callback: (request: {
       jobs: number;
       downloading: boolean;
       unsaved?: boolean;
+      shutdownStarted?: boolean;
+      historySaveFailed?: boolean;
     }) => void,
   ): (() => void) =>
     EventsOn("app:close-requested", (request: Parameters<typeof callback>[0]) =>

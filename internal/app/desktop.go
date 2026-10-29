@@ -36,7 +36,7 @@ type DesktopAPI interface {
 	ClearRecentProjects() error
 	ClearRecoveryDraft(revision uint64) error
 	ConfigureFFmpeg(ffmpegPath, ffprobePath string) (Environment, error)
-	ConfirmQuit()
+	ConfirmQuit(allowHistoryLoss bool) error
 	DeletePreset(id string) (WorkspacePreferences, error)
 	ExportDiagnosticReport(token string) (string, error)
 	ExportPreset(id string) (string, error)

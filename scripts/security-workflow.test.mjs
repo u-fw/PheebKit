@@ -59,3 +59,14 @@ test("security audit builds embed assets before inspecting Go packages", () => {
     /Build frontend for embedded Go package inspection\n        shell: pwsh\n        run: \|\n          npm --prefix frontend run build/,
   );
 });
+
+test("periodic audit also inspects the production-tag dependency graph", () => {
+  assert.match(workflow, /wails\/v2\/cmd\/wails@v2\.17\.0/);
+  const build = workflow.indexOf("./scripts/build-windows.ps1 -SkipFrontend");
+  const binaryAudit = workflow.indexOf(
+    "govulncheck@v1.9.0 -mode=binary bin/PheebKit.exe",
+  );
+  assert.ok(build > workflow.indexOf("npm --prefix frontend run build"));
+  assert.ok(binaryAudit > build);
+  assert.match(workflow, /git diff --exit-code/);
+});

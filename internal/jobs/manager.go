@@ -52,6 +52,7 @@ type Manager struct {
 	eventDone        chan struct{}
 	closed           bool
 	closeOnce        sync.Once
+	persistMu        sync.Mutex
 	persist          func([]core.Job) error
 	persistenceError string
 	savedStates      map[string]string
@@ -303,8 +304,10 @@ func (m *Manager) Get(id string) (core.Job, bool) {
 	return job, true
 }
 
-func (m *Manager) Close() {
+func (m *Manager) Close() error {
+	first := false
 	m.closeOnce.Do(func() {
+		first = true
 		m.mu.Lock()
 		m.closed = true
 		m.pending = nil
@@ -324,6 +327,15 @@ func (m *Manager) Close() {
 		close(m.persistStop)
 		<-m.persistDone
 	})
+	// Once stopped, a caller may explicitly retry a failed final write without
+	// restarting any job or racing the persistence worker.
+	if !first && m.PersistenceError() != "" {
+		return m.persistCurrent()
+	}
+	if message := m.PersistenceError(); message != "" {
+		return errors.New(message)
+	}
+	return nil
 }
 
 func (m *Manager) work() {
@@ -502,6 +514,8 @@ func (m *Manager) persistenceWorker() {
 }
 
 func (m *Manager) persistCurrent() error {
+	m.persistMu.Lock()
+	defer m.persistMu.Unlock()
 	m.mu.Lock()
 	save := m.persist
 	if save == nil {

@@ -84,16 +84,23 @@ func TestHealthAdmissionDoesNotHoldLifecycleWhileWaitingForConfiguration(t *test
 	closed := make(chan bool, 1)
 	go func() { closed <- s.CanClose() }()
 	select {
-	case allowed := <-closed:
-		if !allowed {
+	case <-closed:
+		s.lifecycleMu.Lock()
+		closing := s.exiting
+		s.lifecycleMu.Unlock()
+		if !closing {
 			s.configMu.Unlock()
-			t.Fatal("idle close was blocked")
+			t.Fatal("idle close did not reserve shutdown")
 		}
 	case <-time.After(time.Second):
 		s.configMu.Unlock()
 		t.Fatal("configuration wait held lifecycle lock")
 	}
 	s.configMu.Unlock()
+	awaitServiceShutdown(t, s)
+	if !s.CanClose() {
+		t.Fatal("idle close did not finish after history flush")
+	}
 	if err := <-result; err == nil {
 		t.Fatal("scan admitted after idle close")
 	}
