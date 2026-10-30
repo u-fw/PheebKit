@@ -10,6 +10,8 @@
 
 技术栈：Go 核心、**稳定版 Wails v2.17.0**、React 与严格 TypeScript。目标平台为 Windows 10/11 x64；Android 暂缓。当前源码 `0.2.0-rc.6` 是进程回收、队列恢复与安全分发验收候选；下载页仍保留已发布的 `rc.5`，新包以独立 CI 候选运行结果为准。已验证范围和缺口见[稳定化记录](docs/stability.md)。
 
+[rc.6 候选包与验收运行](https://github.com/u-fw/PheebKit/actions/runs/40881301764)已通过四种包体、rc.5 升级和来源证明检查。包体对应源码 `bec31f6`，保存在该运行的 Artifacts 中，保留 14 天；尚未作为 Release 发布。
+
 ## 实际运行截图
 
 Material 3 / Material You 工作台支持跟随 Windows 强调色、预设或自定义主题色、明暗与界面密度、波纹和减少动效、`Ctrl+K` 快速操作、分组参数、固定输出检查栏、循环预览、近似按帧微调、缩略图与有界波形。桌面端在现有 React/Wails 外壳中实现 Compose 与 Material 3 的设计原则；未来 Android 端再使用原生 Jetpack Compose。下图来自 2026-10-25/26 本机 Wails **开发构建**的原始截图，使用自建测试视频，不代表安装包或干净客户端验收。界面支持简体中文与 English。[截图记录](docs/images/README.md) · [实测与边界](docs/uiux-iteration.md) · [设计与功能路线](docs/design-roadmap.md)

@@ -10,6 +10,8 @@ A local-first Windows media toolkit powered by FFmpeg. Compress, trim, remux and
 
 Built with a Go core, **stable Wails v2.17.0**, React and strict TypeScript. Targets Windows 10/11 x64; Android is deferred. Source `0.2.0-rc.6` is the process-cleanup, queue-recovery and distribution verification candidate. Downloads still retain published `rc.5`; use the separate CI candidate run for new package results. See the [stabilization evidence and remaining checks](docs/stability.md).
 
+The [rc.6 candidate and acceptance run](https://github.com/u-fw/PheebKit/actions/runs/40881301764) passed all four package forms, the rc.5 upgrade and provenance generation. Its packages correspond to source `bec31f6` and remain in the run's Artifacts for 14 days; they have not been published as a Release.
+
 ## Real desktop screenshots
 
 The Material 3 / Material You workbench can follow the Windows accent, use preset or custom seeds, and switch light/dark modes, density, ripples and reduced motion. It also adds a `Ctrl+K` command palette, grouped parameters, a persistent output dock, looping, nominal frame steps, filmstrip thumbnails and bounded waveforms. The desktop app applies Compose and Material 3 design principles inside the existing React/Wails shell; a future Android client can use native Jetpack Compose. These unedited captures are from actual Wails **development builds on 2026-10-25/26**, using owned test media. They are not package or clean-client acceptance records. Simplified Chinese and English are supported. [Capture record](docs/images/README.md) · [Evidence and limits](docs/uiux-iteration.md) · [Design and feature roadmap](docs/design-roadmap.md)
