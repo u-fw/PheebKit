@@ -1,5 +1,9 @@
 # Windows release acceptance
 
+## rc.6 native candidate — 2026-10-30
+
+The [exact CI candidate record](rc6-native-acceptance.md) covers downloaded artifact identity and all-five-file provenance verification, native import/thumbnail, qualified NVENC compression with independent full decoding, actual running CPU cancellation, and a controlled final-history lock failure with successful retry/exit. All test windows were closed afterward. This existing Windows 11 workstation record leaves the clean-client, CPU-only, missing-WebView2 and complete exact-candidate media/recovery/download matrices open; it does not authorize stable promotion.
+
 ## 0.2.0 stabilization — 2026-10-18
 
 The owner chose stable Wails v2.17.0 migration. [Stabilization](stability.md) is the active acceptance matrix; dated Beta entries below are historical. Final-version packaging now requires reviewed evidence matching the exact version/revision, while RC remains a verification candidate. The current workstation passes native import/cancel, qualified RTX 4070 GPU compression with event-driven completion/structure checks, independent complete output decoding, custom maximise/restore, and diagnostic preview/native save. Exact clean source `8f296f77e555469d3bdc6b9820441c3ad09568b5` also passed [hosted run 40259965174](https://github.com/u-fw/PheebKit/actions/runs/40259965174), including packaging and installer lifecycle. Clean Windows 10/11, CPU-only, missing-WebView2, signing and current-installer native click-through remain separate gates.

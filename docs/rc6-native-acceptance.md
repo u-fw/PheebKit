@@ -1,0 +1,37 @@
+# rc.6 native candidate verification — 2026-10-30
+
+This record covers the actual CI-built `0.2.0-rc.6` portable application on the existing Windows 11 Pro x64 build 26300 workstation with an NVIDIA GeForce RTX 4070. It is a scoped native interaction record, not clean-machine or stable-release acceptance. The test used isolated application data, self-generated media and application-owned output directories. No system environment, installed WebView2 runtime or personal media was changed.
+
+## Candidate identity
+
+- Source revision: `bec31f68659b9a4b4bd88d0ee45191dcdf932300`.
+- [Packaging and published rc.5 upgrade run](https://github.com/u-fw/PheebKit/actions/runs/40881301764): Windows and attestation jobs passed; publication was skipped.
+- [Candidate artifact 12901017212](https://github.com/u-fw/PheebKit/actions/runs/40881301764/artifacts/12901017212): 571,840,590 bytes, archive SHA-256 `56e9014c89ac43b5d82711d96cfac0139c4de4ce39e137813849afa60ba8f6b5`. Actions retention is 14 days; this is not a permanent Release download.
+- Executed portable ZIP SHA-256: `3dbc0589d71c7d63c2f63c4ee7f77285a3f1d03d32d6619a5dd13eaa5fc9b5c1`.
+- The downloaded archive digest and release checksum manifest matched. All five release files passed `gh attestation verify` with the exact source digest, repository `u-fw/PheebKit`, signer workflow `.github/workflows/windows.yml` and `--deny-self-hosted-runners`. [Published provenance](https://github.com/u-fw/PheebKit/attestations/61308434) binds those bytes to the CI workflow.
+- The executed EXE's `--build-info` exited 0 and reported schema 1, version `0.2.0-rc.6`, the source revision above, `modified: false` and `wails-v2.17.0`. The adjacent FFmpeg/ffprobe binaries matched the verified bundled-runtime manifest.
+
+No local rebuild was substituted for the downloaded candidate. Later documentation commits do not change its source identity.
+
+## Observed native results
+
+| Flow                                   | Result and evidence                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Portable startup and GPU qualification | The actual Wails window opened using its adjacent FFmpeg 9.0.2 runtime. The native environment check qualified NVIDIA NVENC through a trial encode.                                                                                                                                                                                                                                     |
+| Import, thumbnail and metadata         | The native file picker imported a generated filename containing Chinese characters and `&`. The application displayed its thumbnail, 1280×720 H.264 video, 30 FPS, 12-second duration and AAC audio.                                                                                                                                                                                    |
+| Default GPU compression                | Explicit submission completed with `hevc_nvenc` and copied AAC audio. The queue reported completion, successful structure verification and no warnings. Input size was 14,648,060 bytes; output size was 5,498,933 bytes. Independent ffprobe confirmed HEVC/AAC, 1280×720 and 12.000000 seconds. Strict full decoding with FFmpeg `-v error -xerror -i <output> -f null NUL` exited 0. |
+| Failed final history save              | A separate process held only the isolated history file's byte-range lock. Closing the application reached the bounded lock timeout and showed the failed-save explanation with retry and explicit exit-without-history choices. Returning to the closed editor was disabled. Alt+F4 did not bypass the warning.                                                                         |
+| Save retry and exit                    | Releasing that test lock and choosing retry saved valid history and exited the application. The completed GPU job was retained. Exit without saving history was not selected.                                                                                                                                                                                                           |
+| Restart and project restoration        | Restart did not automatically execute work. Loading a schema-1 project through the native picker restored a 1–11 second range, CPU HEVC and the `veryslow` preset. A trim combined with copied audio was correctly rejected by alignment validation; an AAC project could be submitted.                                                                                                 |
+| Running CPU cancellation               | The actual `libx265` task reached approximately 49% at about 7.3 FPS before native cancellation. It settled as cancelled with no active jobs. No final output was published, its temporary output directory was empty, and no FFmpeg process from the test runtime remained. History retained both the completed GPU task and cancelled CPU task.                                       |
+| Final native close                     | The restarted application exited normally after cancellation. No test application process remained.                                                                                                                                                                                                                                                                                     |
+
+The GPU completion and CPU cancellation are separate observations. CPU mode on a GPU-equipped workstation does not establish fallback behavior on a machine without a GPU. The cancelled trim does not establish successful final trimmed-output playback.
+
+## Remaining scope
+
+The [stable acceptance matrix](stability.md) remains open for clean Windows 10/11, an actual CPU-only machine, missing-WebView2 setup and the complete exact-candidate native media, recovery and dependency-download flows. This session did not retest successful trim completion, subtitle/audio processing, download cancellation/retry, interrupted draft recovery or the graphical installer wizard. Hosted installer lifecycle evidence is recorded separately in [Windows distribution](windows-distribution.md). Candidate assets remain unsigned; signing is an owner decision.
+
+A minor presentation issue was observed in the restored CPU plan: `CPU · CPU · libx265` repeats the CPU prefix. The recorded execution used the requested `libx265` encoder; this label issue remains a UI follow-up.
+
+Only this sanitized record is retained in source control. Test binaries, generated media and isolated profiles are disposable verification artifacts; raw history, local absolute paths, UI inventories and unrelated desktop content are excluded from the public report.
